@@ -330,7 +330,20 @@ let mediaAudio = null;   /* 当前播放的 <audio> 元素 */
 let mediaToken = 0;      /* 音频播放令牌（防竞态） */
 
 function sentenceAudioUrl(s){ return AUDIO_BASE + '/sentences/' + s.id + '.mp3'; }
-function wordAudioUrl(s, i){ return AUDIO_BASE + '/words/' + s.id + '-' + i + '.mp3'; }
+/* 逐词音频：按词形 slug 命名（sw-{slug}.mp3），同一个词复用同一份预录法音。
+   slug = 去掉重音/标点后的小写词形，例如 "Bonjour," -> "bonjour" -> sw-bonjour.mp3 */
+function wordSlug(w){
+  return String(w == null ? '' : w)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9'-]/g, '')
+    .replace(/^[-']+|[-']+$/g, '');
+}
+function wordAudioUrl(s, i){
+  const w = (s.words && s.words[i]) ? s.words[i].t : '';
+  const slug = wordSlug(w);
+  return slug ? (AUDIO_BASE + '/words/sw-' + slug + '.mp3') : '';
+}
 function cleanWordForTTS(t){
   let w = String(t).replace(/^[-\s]+/, '').replace(/[?!.,;:]+$/, '').trim();
   if (w === "J'") w = 'Je';   /* 单独的 J' 读作 Je */
@@ -441,10 +454,12 @@ async function speakWordByWord(){
     if (token !== mediaToken) return;
     highlightWord(i);
     const clean = cleanWordForTTS(s.words[i].t);
+    const url = wordAudioUrl(s, i);
+    if (!url){ await sleep(120); continue; }   /* 纯标点 token 无音频，直接跳过 */
     await new Promise(res => {
       let done = false;
       const finish = () => { if (!done){ done = true; res(); } };
-      const a = new Audio(wordAudioUrl(s, i));
+      const a = new Audio(url);
       mediaAudio = a;
       try{ a.preservesPitch = true; }catch(e){}
       a.playbackRate = 0.8;
@@ -482,7 +497,7 @@ function nextRead(step){
    ========================================================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const shadow = { recog: null, recorder: null, chunks: [], stream: null, timer: null,
-                 finalTranscript: '', audioUrl: null, active: false, session: 0 };
+                 finalTranscript: '', audioUrl: null, blob: null, active: false, session: 0 };
 let shadowFinishing = false;
 
 async function startShadow(){
@@ -518,6 +533,7 @@ async function startShadow(){
     shadow.recorder.onstop = () => {
       try{
         const blob = new Blob(shadow.chunks, { type: shadow.chunks[0] ? shadow.chunks[0].type : 'audio/webm' });
+        shadow.blob = blob;
         shadow.audioUrl = URL.createObjectURL(blob);
       }catch(e){}
     };
@@ -551,7 +567,7 @@ async function startShadow(){
       $('#mic-status').textContent = '🔴 录音中…读完后点「读完了」';
     }
   } else {
-    $('#mic-status').textContent = '🔴 录音中…读完后点「读完了」（此浏览器不支持自动评分）';
+    $('#mic-status').textContent = '🔴 录音中…读完后点「读完了」（会用你的声音和原音对比打分）';
   }
 
   shadow.timer = setTimeout(() => stopShadow(), 10000); /* 最长 10 秒 */
@@ -595,24 +611,15 @@ function finishShadow(){
   const mySession = shadow.session;
 
   /* 等录音 onstop 就绪后再渲染，保证「播放我的录音」可用 */
-  setTimeout(() => {
+  setTimeout(async () => {
     if (shadow.session !== mySession){ shadowFinishing = false; return; }
     $('#mic-panel').hidden = true;
 
     if (!heard){
-      if (!hasRec && shadow.audioUrl){
-        showSelfRate();
-      } else {
-        $('#score-panel').hidden = false;
-        $('#score-num').textContent = '—';
-        $('#score-stars').textContent = '☆☆☆';
-        $('#score-msg').textContent = '没有捕捉到声音，靠近麦克风再试一次吧';
-        $('#score-heard').textContent = '';
-        $('#diff-row').innerHTML = '';
-        $('#btn-play-rec').disabled = !shadow.audioUrl;
-        $('#self-rate').hidden = true;
-        setRing(0);
-      }
+      /* 没有识别文本：改用声学对比评分（不依赖联网的语音识别服务） */
+      const res = await analyzeShadow(s, shadow.blob);
+      if (res) renderAcousticScore(s, res);
+      else showSelfRate();
       shadowFinishing = false;
       return;
     }
@@ -667,6 +674,115 @@ function scoreShadow(s, heard){
     return { t: t, hit: false, got: '' };
   });
   return { marks: marks, score: Math.round(hits / target.length * 100) };
+}
+
+/* =========================================================
+   声学对比评分 —— 不依赖语音识别服务也能打分
+   把「自己的录音」和「原音」都解码成波形，比较三个维度：
+     节奏相似度 = 音量包络的相关系数
+     语速适中度 = 有声时长比（太快/太慢都会扣分）
+     清晰度     = 有声帧占比（太小声或没出声会被发现）
+   ========================================================= */
+function shadowEnvelope(buf){
+  const ch = buf.getChannelData(0);
+  const sr = buf.sampleRate || 44100;
+  const frame = Math.max(1, Math.floor(sr * 0.05));   /* 50ms 一帧 */
+  const env = [];
+  let peak = 0;
+  for (let i = 0; i + frame <= ch.length; i += frame){
+    let s = 0;
+    for (let j = 0; j < frame; j++) s += ch[i + j] * ch[i + j];
+    const rms = Math.sqrt(s / frame);
+    env.push(rms);
+    if (rms > peak) peak = rms;
+  }
+  if (!env.length || peak <= 0) return null;
+  const nenv = env.map(v => v / peak);
+  const voiced = nenv.filter(v => v > 0.12).length / nenv.length;
+  return { env: nenv, voiced: voiced, dur: buf.duration || (ch.length / sr) };
+}
+function resampleTo(arr, n){
+  if (!arr || !arr.length) return new Array(n).fill(0);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(arr[Math.min(arr.length - 1, Math.floor(i * arr.length / n))]);
+  return out;
+}
+function pearson(a, b){
+  const n = Math.min(a.length, b.length);
+  if (!n) return 0;
+  let ma = 0, mb = 0;
+  for (let i = 0; i < n; i++){ ma += a[i]; mb += b[i]; }
+  ma /= n; mb /= n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++){
+    const x = a[i] - ma, y = b[i] - mb;
+    num += x * y; da += x * x; db += y * y;
+  }
+  if (da <= 0 || db <= 0) return 0;
+  return num / Math.sqrt(da * db);
+}
+function clamp100(v){ return Math.max(0, Math.min(100, v)); }
+
+async function analyzeShadow(s, blob){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || !blob) return null;
+    const ctx = new AC();
+    let myBuf = null, refBuf = null;
+    try{ myBuf = await ctx.decodeAudioData(await blob.arrayBuffer()); }catch(e){ myBuf = null; }
+    try{
+      const r = await fetch(sentenceAudioUrl(s));
+      if (r.ok) refBuf = await ctx.decodeAudioData(await r.arrayBuffer());
+    }catch(e){ refBuf = null; }
+    try{ ctx.close(); }catch(e){}
+    if (!myBuf || !refBuf) return null;
+    const my = shadowEnvelope(myBuf), ref = shadowEnvelope(refBuf);
+    if (!my || !ref) return null;
+
+    const myVoiced = Math.max(0.05, my.dur * my.voiced);
+    const refVoiced = Math.max(0.2, ref.dur * ref.voiced);
+    const ratio = myVoiced / refVoiced;
+
+    const rhythmRaw = pearson(resampleTo(my.env, 48), resampleTo(ref.env, 48));
+    const rhythm  = clamp100(Math.round((rhythmRaw * 0.5 + 0.5) * 100));
+    const speed   = clamp100(Math.round(100 - Math.abs(Math.log(ratio)) * 58));
+    const clarity = clamp100(Math.round(Math.min(1, my.voiced / Math.max(0.25, ref.voiced)) * 100));
+    const score   = Math.round(rhythm * 0.45 + speed * 0.35 + clarity * 0.2);
+
+    let tip;
+    if (my.voiced < 0.06) tip = '几乎没有听到声音，靠近麦克风、大声一点再试～';
+    else if (ratio > 1.5) tip = '说得比原音慢不少，试着连贯一点，别一个个词断开～';
+    else if (ratio < 0.68) tip = '说得有点快，放慢到原音的速度，把每个音节读清楚～';
+    else if (rhythm < 45) tip = '节奏和原音差得比较多，先听两遍原音，再一句一句跟着读～';
+    else if (score >= 85) tip = 'Bravo ! 节奏和语调都很接近原音！';
+    else if (score >= 65) tip = 'Très bien ! 已经很像了，个别音节再清楚一点～';
+    else tip = '继续努力！点 🐢 慢速朗读，再一个词一个词跟着读～';
+
+    return { score: score, rhythm: rhythm, speed: speed, clarity: clarity,
+             myDur: my.dur, refDur: ref.dur, ratio: ratio, tip: tip };
+  }catch(e){ return null; }
+}
+
+function renderAcousticScore(s, res){
+  const pct = res.score;
+  const stars = pct >= 85 ? 3 : pct >= 65 ? 2 : 1;
+  $('#score-panel').hidden = false;
+  setRing(pct, pct >= 85 ? 'var(--sage)' : pct >= 65 ? 'var(--honey)' : 'var(--rose)');
+  $('#score-num').textContent = String(pct);
+  $('#score-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  $('#score-msg').textContent = res.tip;
+  $('#score-heard').textContent = '声音对比：你的 ' + res.myDur.toFixed(1) + ' 秒 / 原音 ' + res.refDur.toFixed(1) + ' 秒';
+  $('#diff-row').innerHTML =
+    '<span class="diff-chip ' + (res.rhythm >= 70 ? 'hit' : 'miss') + '">节奏 ' + res.rhythm + '%</span>' +
+    '<span class="diff-chip ' + (res.speed >= 70 ? 'hit' : 'miss') + '">语速 ' + res.speed + '%</span>' +
+    '<span class="diff-chip ' + (res.clarity >= 70 ? 'hit' : 'miss') + '">清晰度 ' + res.clarity + '%</span>';
+  $('#btn-play-rec').disabled = !shadow.audioUrl;
+  $('#self-rate').hidden = true;
+  if (stars > (state.progress.readStars[s.id] || 0)){
+    state.progress.readStars[s.id] = stars;
+    saveProgress(); renderHome(); renderPickers();
+  }
+  if (stars >= 2) confetti();
 }
 
 function setRing(pct, color){

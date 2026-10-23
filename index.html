@@ -287,6 +287,16 @@
     <div class="card words-tip" id="words-tip" hidden></div>
     <div class="word-grid" id="word-grid"></div>
 
+    <!-- 世界地图：点击国家看阴阳性 / 读音 / 趣闻 -->
+    <div class="card map-card" id="map-card" hidden>
+      <div class="game-head">
+        <h3>🗺️ 点击地图上的国家</h3>
+        <p><b>浅绿色</b>的国家已经收录了单词卡片，点一下就能看到它的<b>阴阳性、读音和一则趣闻</b>；灰色的国家还没收录。</p>
+      </div>
+      <div id="map-box"></div>
+      <div id="map-info"></div>
+    </div>
+
     <!-- 电话号码听写游戏 -->
     <div class="card game-card" id="game-phone" hidden>
       <div class="game-head">
@@ -307,6 +317,8 @@
         <button class="btn btn-ghost" id="ph-reveal">👀 看答案</button>
       </div>
       <div class="phone-inputs" id="phone-inputs"></div>
+      <!-- 屏幕数字键盘：部分手机浏览器/内置 WebView 里 inputMode=numeric 不弹键盘，用它兜底 -->
+      <div class="num-pad" id="phone-pad" aria-label="屏幕数字键盘"></div>
       <p class="phone-result" id="phone-result" aria-live="polite"></p>
       <p class="phone-hint">💡 法国电话读法：前两位「0X」也按数字读（06 读 zéro six）；70-99 要按法语构词想清楚，比如 90 是 quatre-vingt-dix。</p>
     </div>
@@ -324,6 +336,9 @@
 <script src="assets/js/data.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/words-data.js"></script>
+<script src="assets/js/countries-data.js"></script>
+<script src="assets/js/pron-rules.js"></script>
+<script src="assets/js/extras-data.js"></script>
 <script src="assets/js/words.js"></script>
 </body>
 </html>

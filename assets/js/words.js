@@ -14,12 +14,37 @@
    每个 parts 分段 = 一个「字母组合 + 小一号 IPA」小块；
    p 为空串表示该组合不发音。
    ========================================================= */
+/* 发音规则匹配：字母组合 → 规则（长组合优先，避免 "ain" 被 "a" 抢先命中） */
+let RULES_SORTED = null;
+function rulesSorted(){
+  if (RULES_SORTED) return RULES_SORTED;
+  const list = (typeof PRON_RULES !== 'undefined' ? PRON_RULES : []).slice();
+  RULES_SORTED = list.sort((a, b) => Math.max(...b.pat.map(p => p.length)) - Math.max(...a.pat.map(p => p.length)));
+  return RULES_SORTED;
+}
+function matchRule(t){
+  const s = String(t == null ? '' : t)
+    .toLowerCase()
+    .replace(/[^a-zàâäçéèêëîïôöùûüÿœæ'-]/g, '');
+  if (!s) return null;
+  for (const r of rulesSorted()){
+    for (const p of r.pat){ if (s.indexOf(p) >= 0) return r; }
+  }
+  return null;
+}
+function rulePlain(r){
+  return String(r.desc || '').replace(/<[^>]+>/g, '');
+}
+
 function segsHTML(parts){
   return '<div class="wc-segs">' + parts.map(p => {
     const silent = (p.p === '' || p.p == null);
-    return '<span class="wseg">' +
+    const r = silent ? { id: 'silent_final', title: '词尾不发音', desc: '法语词尾的辅音字母通常不发音，这是听力最难也最省力的一条规则。', ex: [] } : matchRule(p.t);
+    const why = r ? ' title="' + esc(r.title + '：' + rulePlain(r)) + '"' : '';
+    return '<span class="wseg' + (r ? ' has-rule' : '') + '"' + (r ? ' data-rule="' + esc(r.id) + '"' + why : '') + '>' +
       '<span class="wseg-t' + (silent ? ' silent' : '') + '">' + esc(p.t) + '</span>' +
       '<span class="wseg-p' + (silent ? ' silent-p' : '') + '">' + (silent ? '不发音' : esc(p.p)) + '</span>' +
+      (r ? '<span class="wseg-why">？</span>' : '') +
       '</span>';
   }).join('') + '</div>';
 }
@@ -367,18 +392,20 @@ let curCat = 'countries';
 function renderTabs(){
   const box = $('#word-tabs');
   box.innerHTML = '';
-  WORD_CATS.forEach(c => {
+  const add = (id, label, cls) => {
     const b = document.createElement('button');
-    b.className = 'wtab' + (c.id === curCat ? ' active' : '');
-    b.textContent = c.icon + ' ' + c.label;
-    b.onclick = () => selectCat(c.id);
+    b.className = 'wtab' + (cls ? ' ' + cls : '') + (id === curCat ? ' active' : '');
+    b.textContent = label;
+    b.onclick = () => selectCat(id);
     box.appendChild(b);
+  };
+  WORD_CATS.forEach(c => {
+    add(c.id, c.icon + ' ' + c.label, '');
+    if (c.id === 'countries') add('map', '🗺️ 世界地图', '');
   });
-  const g = document.createElement('button');
-  g.className = 'wtab wtab-game' + (curCat === 'phone' ? ' active' : '');
-  g.textContent = '📞 电话听写';
-  g.onclick = () => selectCat('phone');
-  box.appendChild(g);
+  add('pron', '🔤 发音规则', '');
+  add('stories', '📚 趣味故事', '');
+  add('phone', '📞 电话听写', 'wtab-game');
 }
 
 function selectCat(id){
@@ -388,23 +415,262 @@ function selectCat(id){
   const isPhone = (id === 'phone');
   const cat = WORD_CATS.find(c => c.id === id);
   $('#game-phone').hidden = !isPhone;
-  $('#word-grid').hidden = isPhone;
+  $('#map-card').hidden = (id !== 'map');
+  const grid = $('#word-grid');
   const tip = $('#words-tip');
+
+  /* 独立视图：地图 / 发音规则 / 趣味故事 */
+  if (id === 'map'){ grid.hidden = true; tip.hidden = true; renderMap(); return; }
+  if (id === 'pron'){ grid.hidden = false; tip.hidden = true; renderPron(); return; }
+  if (id === 'stories'){ grid.hidden = false; tip.hidden = true; renderStories(); return; }
+
+  grid.hidden = isPhone;
   if (!isPhone && cat){
     tip.hidden = false;
     tip.innerHTML = '💡 ' + esc(cat.tip);
-    const grid = $('#word-grid');
     grid.innerHTML = '';
-    cat.items.forEach((it, i) => {
-      const card = document.createElement('div');
-      card.className = 'word-card' + (id === 'numbers' ? ' num-card' : '');
-      card.innerHTML = CARD_RENDER[id](it, i);
-      grid.appendChild(card);
-    });
+    /* 板块顶部：本板块「怎么开口问」的句型模板 */
+    const qa = qaBlock(id);
+    if (qa){
+      const q = document.createElement('div');
+      q.className = 'qa-card';
+      q.innerHTML = qa;
+      grid.appendChild(q);
+    }
+    if (id === 'countries'){
+      renderCountriesInto(grid);
+    } else {
+      cat.items.forEach((it, i) => {
+        const card = document.createElement('div');
+        card.className = 'word-card' + (id === 'numbers' ? ' num-card' : '');
+        card.innerHTML = CARD_RENDER[id](it, i);
+        grid.appendChild(card);
+      });
+    }
   } else {
     tip.hidden = true;
     renderPhoneStats();
   }
+}
+
+/* =========================================================
+   五之二、国家分组渲染（国旗图 + 介词 + 趣闻）
+   ========================================================= */
+const COUNTRY_BY_ISO = {};
+(function(){ (typeof COUNTRIES !== 'undefined' ? COUNTRIES : []).forEach(c => { COUNTRY_BY_ISO[c.iso] = c; }); })();
+
+/* 国旗地址：单文件版用内置 data URI，在线版用真实文件 */
+function flagSrc(iso){
+  if (window.__FLAG_URI && window.__FLAG_URI[iso]) return window.__FLAG_URI[iso];
+  return 'assets/flags/' + iso + '.svg';
+}
+
+function countryCard2(c){
+  const gTag = c.num === 'pl' ? '<span class="wc-gender gt-pl">复数</span>'
+             : c.g === 'f' ? '<span class="wc-gender gt-f">阴性</span>'
+             : '<span class="wc-gender gt-m">阳性</span>';
+  const fAudio = c.same ? ('cty-' + c.iso + 'm') : ('cty-' + c.iso + 'f');
+  return '<div class="wc-head">' +
+    '<img class="wc-flag-img" src="' + flagSrc(c.iso) + '" alt="' + esc(c.zh) + '国旗" loading="lazy" />' +
+    '<div class="wc-title"><span class="wc-zh">' + esc(c.zh) + '</span>' +
+      gTag + '<span class="wc-prep">aller ' + esc(c.prep) + '</span>' +
+      (c.same ? '<span class="wc-gender gt-pl">阴阳同形</span>' : '') +
+    '</div></div><div class="wc-forms">' +
+    formRow('gt-pl', '国家名', c.name.fr, c.name.parts, 'cty-' + c.iso) +
+    formRow('tag-m', '男 · il est', c.nat.m.fr, c.nat.m.parts, 'cty-' + c.iso + 'm', c.nat.m.zh) +
+    formRow('tag-f', '女 · elle est', c.nat.f.fr, c.nat.f.parts, fAudio, c.nat.f.zh) +
+    '</div>' +
+    '<p class="wc-fact">🎉 ' + c.fact + '</p>';
+}
+
+function renderCountriesInto(grid){
+  COUNTRY_GROUPS.forEach(g => {
+    const items = COUNTRIES.filter(c => c.grp === g.id);
+    if (!items.length) return;
+    const h = document.createElement('div');
+    h.className = 'grp-head';
+    h.innerHTML = '<h3>' + g.icon + ' ' + esc(g.label) +
+      ' <span class="grp-prep">（' + esc(g.prep) + '）</span></h3>' +
+      '<p class="grp-tip">' + g.tip + '</p>';
+    grid.appendChild(h);
+    items.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'word-card country-card';
+      card.innerHTML = countryCard2(c);
+      grid.appendChild(card);
+    });
+  });
+}
+
+/* 展开 / 收起「这个字母组合为什么读这个音」 */
+function toggleRuleExp(seg){
+  const segs = seg.closest('.wc-segs');
+  if (!segs) return;
+  const next = segs.nextElementSibling;
+  if (next && next.classList.contains('rule-exp')){ next.remove(); return; }
+  const form = segs.parentElement;
+  if (form) form.querySelectorAll('.rule-exp').forEach(x => x.remove());
+  const r = (typeof PRON_RULES !== 'undefined' ? PRON_RULES : []).find(x => x.id === seg.dataset.rule);
+  const div = document.createElement('div');
+  div.className = 'rule-exp';
+  if (!r){
+    div.innerHTML = '<b>这个组合没有通用规则</b>：属于特殊情况，跟着音频记住就好。';
+  } else {
+    div.innerHTML = '<b>' + esc(r.title) + '</b> —— ' + esc(rulePlain(r)) +
+      ((r.ex && r.ex.length)
+        ? '<div class="re-ex">例：' + r.ex.map(e =>
+            '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>'
+        : '');
+  }
+  segs.insertAdjacentElement('afterend', div);
+}
+
+/* =========================================================
+   五之三、🗺️ 世界地图（点击国家 → 阴阳性 / 读音 / 趣闻）
+   ========================================================= */
+let mapText = null;
+async function renderMap(){
+  const box = $('#map-box');
+  const info = $('#map-info');
+  if (!box) return;
+  if (!mapText){
+    if (window.__MAP_SVG){ mapText = window.__MAP_SVG; }   /* 单文件版：地图内置 */
+    else {
+      box.innerHTML = '<p class="map-loading">🗺️ 地图加载中…</p>';
+      try{
+        const r = await fetch('assets/map/world.svg');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        mapText = await r.text();
+      }catch(e){
+        box.innerHTML = '<p class="map-loading">地图加载失败：' + esc(String((e && e.message) || e)) + '</p>';
+        return;
+      }
+    }
+  }
+  box.innerHTML = '<div class="map-wrap">' + mapText + '</div>';
+  const svg = box.querySelector('svg');
+  if (!svg) return;
+  svg.querySelectorAll('path').forEach(p => {
+    const iso = (p.getAttribute('data-iso') || p.getAttribute('id') || '').toLowerCase();
+    if (!iso || iso.length !== 2) return;
+    const rec = COUNTRY_BY_ISO[iso];
+    if (rec){
+      p.classList.add('has-data');
+      p.setAttribute('aria-label', rec.zh);
+    }
+    p.style.cursor = 'pointer';
+    p.addEventListener('click', () => showCountryInfo(iso, p));
+  });
+  if (!info.innerHTML) info.innerHTML = '<p class="map-hint">试试点一下浅绿色的国家（比如中国、法国、巴西）～</p>';
+}
+
+function showCountryInfo(iso, pathEl){
+  const info = $('#map-info');
+  const c = COUNTRY_BY_ISO[iso];
+  const svg = document.querySelector('#map-box svg');
+  if (svg) svg.querySelectorAll('path.sel').forEach(p => p.classList.remove('sel'));
+  if (pathEl) pathEl.classList.add('sel');
+  if (!c){
+    info.innerHTML = '<p class="map-miss">这个国家（' + esc(String(iso).toUpperCase()) + '）还没收录单词卡片。' +
+      '目前已收录 ' + COUNTRIES.length + ' 个国家，都标成了浅绿色～</p>';
+    return;
+  }
+  const gTxt = c.num === 'pl' ? '复数 · les' : (c.g === 'f' ? '阴性 · la' : '阳性 · le');
+  const bare = c.name.fr.replace(/^(la|le|l'|les)\s+/i, '');
+  const fAudio = c.same ? ('cty-' + c.iso + 'm') : ('cty-' + c.iso + 'f');
+  info.innerHTML =
+    '<div class="map-detail">' +
+      '<div class="md-head">' +
+        '<img class="md-flag" src="' + flagSrc(c.iso) + '" alt="' + esc(c.zh) + '" />' +
+        '<div><h4>' + esc(c.zh) + ' <small>' + esc(c.name.fr) + '</small></h4>' +
+        '<p class="md-gender">' + esc(gTxt) + ' · 「去那里」说 <b>' + esc(c.prep + ' ' + bare) + '</b></p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="wc-forms">' +
+        formRow('gt-pl', '国家名', c.name.fr, c.name.parts, 'cty-' + c.iso) +
+        formRow('tag-m', '男 · il est', c.nat.m.fr, c.nat.m.parts, 'cty-' + c.iso + 'm', c.nat.m.zh) +
+        formRow('tag-f', '女 · elle est', c.nat.f.fr, c.nat.f.parts, fAudio, c.nat.f.zh) +
+      '</div>' +
+      '<p class="wc-fact">🎉 ' + c.fact + '</p>' +
+    '</div>';
+  playWordAudio('cty-' + c.iso, c.name.fr, null, false);
+}
+
+/* =========================================================
+   五之四、🔤 发音规则（为什么这样读 + 不规则词）
+   ========================================================= */
+function renderPron(){
+  const grid = $('#word-grid');
+  grid.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'qa-card';
+  head.innerHTML = '<div class="qa-head"><h4>🔤 法语发音规则速查</h4>' +
+    '<p>单词卡上每个音标分段右上角有个「<b>？</b>」，点一下就会告诉你<b>这个字母组合为什么读这个音</b>。下面是完整规则表。</p></div>';
+  grid.appendChild(head);
+
+  PRON_RULES.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'word-card rule-card';
+    card.innerHTML =
+      '<div class="wc-head"><div class="wc-title">' +
+        '<span class="wc-zh">' + esc(r.title) + '</span>' +
+        '<span class="wc-ipa">' + esc(r.ipa) + '</span>' +
+      '</div></div>' +
+      '<p class="rule-desc">' + r.desc + '</p>' +
+      '<div class="rule-ex">' + (r.ex || []).map(e =>
+        '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>';
+    grid.appendChild(card);
+  });
+
+  const sp = document.createElement('div');
+  sp.className = 'qa-card';
+  sp.innerHTML = '<div class="qa-head"><h4>⚠️ 不按规则读的特殊词</h4>' +
+    '<p>下面这些词<b>猜不出读音</b>，只能单独记住——它们也是法国人自己都觉得「法语真难」的原因。</p></div>' +
+    '<div class="special-list">' + PRON_SPECIAL.map(s =>
+      '<div class="special-item"><span class="sp-w">' + esc(s.w) + '</span>' +
+      '<span class="sp-ipa">' + esc(s.ipa) + '</span>' +
+      '<span class="sp-note">' + esc(s.note) + '</span></div>').join('') + '</div>';
+  grid.appendChild(sp);
+}
+
+/* =========================================================
+   五之五、📚 趣味小故事
+   ========================================================= */
+function renderStories(){
+  const grid = $('#word-grid');
+  grid.innerHTML = '';
+  STORIES.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'word-card story-card';
+    card.innerHTML =
+      '<div class="wc-head"><div class="wc-title">' +
+        '<span class="wc-zh">' + s.emoji + ' ' + esc(s.title) + '</span>' +
+      '</div></div>' +
+      '<p class="wc-note">💡 ' + s.tip + '</p>' +
+      '<div class="story-lines">' + s.lines.map((l, i) =>
+        '<div class="story-line">' +
+          '<div class="sl-fr">' + esc(l.fr) + audioBtns('st-' + s.id + '-' + i, l.fr) + '</div>' +
+          '<div class="sl-zh">' + esc(l.zh) + '</div>' +
+          (l.note ? '<div class="sl-note">📌 ' + esc(l.note) + '</div>' : '') +
+        '</div>').join('') + '</div>';
+    grid.appendChild(card);
+  });
+}
+
+/* =========================================================
+   五之六、💬 板块提问模板（显示在对应板块顶部）
+   ========================================================= */
+function qaBlock(catId){
+  const qa = QA_TEMPLATES[catId];
+  if (!qa) return '';
+  return '<div class="qa-head"><h4>💬 ' + esc(qa.label) + '</h4><p>' + qa.tip + '</p></div>' +
+    '<div class="qa-list">' + qa.items.map((it, i) =>
+      '<div class="qa-row">' +
+        '<div class="qa-fr">' + esc(it.fr) + audioBtns('q-' + catId + '-' + i, it.fr) + '</div>' +
+        '<div class="wc-ipa">' + fullIPA(it.parts) + '</div>' +
+        segsHTML(it.parts) +
+        '<div class="qa-zh">' + esc(it.zh) + '</div>' +
+      '</div>').join('') + '</div>';
 }
 
 /* =========================================================
@@ -455,7 +721,17 @@ function renderPhoneInputs(){
   box.addEventListener('input', e => {
     const inp = e.target;
     if (!inp.matches('input')) return;
-    inp.value = inp.value.replace(/\D/g, '').slice(0, 2);
+    let v = inp.value.replace(/\D/g, '');
+    if (v.length > 2){
+      /* 粘贴/一次性输入了完整号码：自动分配到五组 */
+      const inputs = Array.from($$('#phone-inputs input'));
+      inputs.forEach(x => { x.value = ''; x.classList.remove('ok', 'bad'); });
+      for (let j = 0; j < inputs.length; j++) inputs[j].value = v.substr(j * 2, 2);
+      const free = inputs.find(x => x.value.length < 2);
+      if (free) free.focus();
+      return;
+    }
+    inp.value = v.slice(0, 2);
     inp.classList.remove('ok', 'bad');
     if (inp.value.length === 2){
       const next = box.querySelector('input[data-i="' + (parseInt(inp.dataset.i, 10) + 1) + '"]');
@@ -465,6 +741,67 @@ function renderPhoneInputs(){
   box.addEventListener('keydown', e => {
     if (e.key === 'Enter'){ e.preventDefault(); checkPhone(); }
   });
+  renderNumPad();
+}
+
+/* 屏幕数字键盘：点一下填一位，满两位自动跳下一组（不依赖系统键盘） */
+function renderNumPad(){
+  const pad = $('#phone-pad');
+  if (!pad) return;
+  pad.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','0'].forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pad-key'; b.dataset.k = k; b.textContent = k;
+    b.setAttribute('aria-label', '数字 ' + k);
+    pad.appendChild(b);
+  });
+  [{ k: 'del', t: '⌫ 退格' }, { k: 'clear', t: '清空' }].forEach(o => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pad-key pad-fn'; b.dataset.k = o.k; b.textContent = o.t;
+    pad.appendChild(b);
+  });
+  pad.addEventListener('click', e => {
+    const b = e.target.closest ? e.target.closest('.pad-key') : null;
+    if (b) padKey(b.dataset.k);
+  });
+}
+
+function padKey(k){
+  const inputs = Array.from($$('#phone-inputs input'));
+  if (!inputs.length) return;
+  let idx = inputs.findIndex(i => i === document.activeElement);
+  if (idx < 0) idx = inputs.findIndex(i => i.value.length < 2);
+  if (idx < 0) idx = inputs.length - 1;
+  const inp = inputs[idx];
+  if (k === 'del'){
+    if (inp.value){
+      inp.value = inp.value.slice(0, -1);
+      inp.classList.remove('ok', 'bad');
+    } else if (idx > 0){
+      const prev = inputs[idx - 1];
+      prev.value = ''; prev.classList.remove('ok', 'bad');
+      try{ prev.focus(); }catch(e){}
+    }
+  } else if (k === 'clear'){
+    inputs.forEach(i => { i.value = ''; i.classList.remove('ok', 'bad'); });
+    try{ inputs[0].focus(); }catch(e){}
+  } else if (/^\d$/.test(k)){
+    if (inp.value.length < 2){
+      inp.value = (inp.value + k).slice(0, 2);
+      inp.classList.remove('ok', 'bad');
+      if (inp.value.length === 2 && inputs[idx + 1]){
+        try{ inputs[idx + 1].focus(); }catch(e){}
+      }
+    } else {
+      const free = inputs.find(i => i.value.length < 2);
+      if (free){
+        free.value = k; free.classList.remove('ok', 'bad');
+        try{ free.focus(); }catch(e){}
+      }
+    }
+  }
+  const res = $('#phone-result');
+  if (res) res.textContent = '';
 }
 
 function newPhoneNumber(){
@@ -629,6 +966,22 @@ function initWords(){
     if (!btn) return;
     playWordAudio(btn.dataset.a, btn.dataset.t, btn, btn.dataset.slow === '1');
   });
+
+  /* 点击音标分段 → 展开「为什么这样读」的规则说明 */
+  $('#word-grid').addEventListener('click', e => {
+    const seg = e.target.closest('.wseg.has-rule');
+    if (seg) toggleRuleExp(seg);
+  });
+
+  /* 地图信息卡里的播放按钮 */
+  const mapInfo = $('#map-info');
+  if (mapInfo){
+    mapInfo.addEventListener('click', e => {
+      const btn = e.target.closest('.wc-play');
+      if (!btn) return;
+      playWordAudio(btn.dataset.a, btn.dataset.t, btn, btn.dataset.slow === '1');
+    });
+  }
 
   /* 游戏按钮 */
   $('#ph-new').onclick = newPhoneNumber;
