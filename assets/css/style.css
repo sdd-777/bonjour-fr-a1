@@ -603,6 +603,7 @@ main{
 .menu-grid{ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 .menu-card:nth-child(3)::after{ background: var(--sage-soft); }
 .icon-words{ background: linear-gradient(135deg, #E2EFE5, var(--sage-soft)); }
+.icon-videos{ background: linear-gradient(135deg, #F6E3F0, var(--rose-soft)); }
 
 /* —— 子分类页签 —— */
 .word-tabs{ display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .9rem; }
@@ -1015,3 +1016,102 @@ main{
   .verb-inf{ font-size: 1.35rem; }
   .verb-tense-btn{ padding: .38rem .6rem; }
 }
+
+/* =========================================================
+   视频小剧场
+   ========================================================= */
+.video-grid{
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem; align-items: start; margin-bottom: 1.2rem;
+}
+.video-card{
+  background: var(--card); border: 2px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  animation: fadeUp .35s ease both;
+}
+.video-card:hover{ transform: translateY(-3px); border-color: var(--line-strong); box-shadow: var(--shadow); }
+.video-card.playing{ border-color: var(--amber); }
+
+/* —— 封面区 —— */
+.vc-cover{
+  position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden;
+  background: linear-gradient(135deg, #ece2d4, #d8cbb9); cursor: pointer;
+}
+.vc-cover img{
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .35s ease;
+}
+.video-card:hover .vc-cover img{ transform: scale(1.05); }
+/* 封面加载失败时的平台品牌色占位 */
+.vc-ph{
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.1rem; letter-spacing: .05em; color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .28);
+}
+.ph-bili{ background: linear-gradient(135deg, #f7a8c0, #e2698c); }
+.ph-tv5{ background: linear-gradient(135deg, #5b8def, #3568c9); }
+.ph-yt{ background: linear-gradient(135deg, #ff6a5e, #d92d20); }
+.ph-tt{ background: linear-gradient(135deg, #45d9c3, #0d9a89); }
+.vc-play-icon{
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 2.6rem; color: #fff; opacity: 0; transition: opacity .2s ease;
+  text-shadow: 0 4px 14px rgba(90, 60, 20, .5);
+  background: rgba(95, 74, 51, .18);
+}
+.video-card:hover .vc-play-icon{ opacity: 1; }
+.video-card.playing .vc-play-icon{ display: none; }
+
+.vc-lv, .vc-dur, .vc-src, .vc-net{
+  position: absolute; font-size: .68rem; font-weight: 800; line-height: 1;
+  padding: .28rem .5rem; border-radius: 999px; backdrop-filter: blur(2px);
+}
+.vc-lv{ top: .5rem; left: .5rem; color: #fff; background: rgba(95, 74, 51, .78); }
+.vc-lv.lv-a1{ background: rgba(127, 168, 134, .92); }
+.vc-lv.lv-a2{ background: rgba(127, 163, 196, .92); }
+.vc-lv.lv-b1{ background: rgba(232, 154, 60, .92); }
+.vc-lv.lv-b2{ background: rgba(222, 132, 146, .92); }
+.vc-dur{ right: .5rem; bottom: .5rem; color: #fff; background: rgba(60, 45, 30, .82); }
+.vc-src{ left: .5rem; bottom: .5rem; color: #fff; }
+.vc-src.src-bili{ background: rgba(251, 114, 153, .92); }
+.vc-src.src-tv5{ background: rgba(60, 110, 160, .92); }
+.vc-src.src-yt{ background: rgba(200, 60, 50, .92); }
+.vc-src.src-tt{ background: rgba(50, 60, 70, .88); }
+.vc-net{ top: .5rem; right: .5rem; color: #7A4A2B; background: rgba(255, 244, 214, .94); border: 1px solid rgba(200, 150, 60, .5); }
+
+/* —— 文字区 —— */
+.vc-body{ padding: .85rem 1rem 1rem; }
+.vc-title{ font-size: 1.02rem; font-weight: 800; line-height: 1.45; margin-bottom: .3rem; }
+.vc-meta{ font-size: .78rem; font-weight: 700; color: var(--amber-deep); margin-bottom: .45rem; }
+.vc-desc{ font-size: .86rem; color: var(--ink-soft); line-height: 1.65; margin-bottom: .8rem; }
+.vc-actions{ display: flex; gap: .5rem; flex-wrap: wrap; }
+.vc-actions .btn{ font-size: .84rem; padding: .45rem .9rem; }
+
+/* —— 播放器 —— */
+.vc-player{ border-top: 2px dashed var(--line-strong); padding: .7rem; background: var(--paper); }
+.vc-player iframe{
+  width: 100%; aspect-ratio: 16 / 9; height: auto; min-height: 240px;
+  border: none; border-radius: 12px; background: #000; display: block;
+}
+.vc-player .vc-close{ margin-top: .55rem; }
+
+/* 外网条目：整卡虚化边框提示 */
+.video-card.need-net{ border-style: dashed; }
+
+/* 底部版权说明 */
+.video-note{
+  padding: .9rem 1.15rem; font-size: .86rem; color: var(--ink-soft);
+  line-height: 1.75; border-style: dashed;
+}
+.video-note b{ color: var(--ink); }
+
+@media (max-width: 640px){
+  .video-grid{ grid-template-columns: 1fr; }
+  .vc-title{ font-size: .98rem; }
+}
+.vc-fallback{
+  margin-top: .55rem; font-size: .78rem; line-height: 1.6; color: #8A6B3F;
+  background: #FFF6E3; border: 1.5px dashed var(--amber-soft);
+  border-radius: 10px; padding: .45rem .65rem;
+}
+.vc-fallback b{ color: var(--amber-deep); }

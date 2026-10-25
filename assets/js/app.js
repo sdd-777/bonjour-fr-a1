@@ -86,6 +86,7 @@ function showView(name){
   $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
   stopSpeak();
   abortShadow();
+  if (typeof stopVideoPlayers === 'function') stopVideoPlayers();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -948,6 +949,9 @@ function chime(ok){
 function init(){
   renderHome();
   renderPickers();
+
+  /* 视频模块 */
+  if (typeof initVideos === 'function') initVideos();
 
   /* 导航 */
   $$('.nav-btn').forEach(b => { b.onclick = () => showView(b.dataset.view); });

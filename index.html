@@ -61,6 +61,7 @@
       <button class="nav-btn" data-view="build">🧩 造句</button>
       <button class="nav-btn" data-view="read">🎧 朗读</button>
       <button class="nav-btn" data-view="words">📖 单词</button>
+      <button class="nav-btn" data-view="videos">🎬 视频</button>
     </nav>
   </div>
 </header>
@@ -155,6 +156,12 @@
         <h3>单词小图鉴</h3>
         <p>国家国旗与国籍、职业阴阳性、生活用品、法语数字，附音标拆解</p>
         <span class="menu-tag">📞 电话听写游戏</span>
+      </button>
+      <button class="menu-card" id="card-videos">
+        <div class="menu-icon icon-videos">🎬</div>
+        <h3>视频小剧场</h3>
+        <p>法国趣闻、热门法语歌、播客、街头采访、搞笑短剧，点开就能看</p>
+        <span class="menu-tag">📺 TV5MONDE 分级课</span>
       </button>
     </div>
 
@@ -335,6 +342,20 @@
       <p class="phone-hint">💡 法国电话读法：前两位「0X」也按数字读（06 读 zéro six）；70-99 要按法语构词想清楚，比如 90 是 quatre-vingt-dix。</p>
     </div>
   </section>
+
+  <!-- ===== 视频 ===== -->
+  <section id="view-videos" class="view" hidden>
+    <div class="view-head">
+      <h2>🎬 视频小剧场</h2>
+      <p>五个门类：法国趣闻 · 热门法语歌曲 · 法语播客 · 街头采访 · 搞笑抽象，另附 TV5MONDE 分级课与 YouTube / TikTok 精选；点封面或「站内播放」即可观看</p>
+    </div>
+    <div class="word-tabs" id="video-tabs" role="tablist" aria-label="视频门类"></div>
+    <div class="card words-tip" id="video-tip" hidden></div>
+    <div class="video-grid" id="video-grid"></div>
+    <div class="card video-note">
+      <b>📌 关于版权与播放：</b>站内不下载、不转存任何视频，B 站视频通过<b>官方嵌入播放器</b>直接播放（版权仍归原 UP 主与平台）；TV5MONDE 练习与 YouTube / TikTok 内容为官网链接，标 🔑 的条目需要外网环境。推荐用 <b>Chrome / Edge</b> 观看站内播放器；遇到无法播放的视频，点卡片上的「↗ B 站打开」去原页面观看即可。
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -352,6 +373,8 @@
 <script src="assets/js/pron-rules.js"></script>
 <script src="assets/js/extras-data.js"></script>
 <script src="assets/js/verbs-data.js"></script>
+<script src="assets/js/videos-data.js"></script>
+<script src="assets/js/videos.js"></script>
 <script src="assets/js/words.js"></script>
 </body>
 </html>
