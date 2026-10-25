@@ -76,6 +76,11 @@ function formRow(tagCls, tagText, fr, parts, name, zhInline){
    二、单词音频播放（与句子朗读同套路：文件优先 → 合成回退）
    ========================================================= */
 const WAUDIO_BASE = 'assets/audio/words';
+const VERB_AUDIO_BASE = 'assets/audio/verbs';
+/* vb- 前缀的音频（动词变位）放在 verbs/ 子目录 */
+function wAudioBase(name){
+  return String(name).indexOf('vb-') === 0 ? VERB_AUDIO_BASE : WAUDIO_BASE;
+}
 let wMedia = null;   /* 当前播放的 <audio> */
 let wToken = 0;      /* 播放令牌（防竞态） */
 let NUM_TEXT = {};   /* 数字读法表 0-100 */
@@ -105,7 +110,7 @@ function playWordAudio(name, text, btn, slow){
     u.onend = done; u.onerror = done;
     try{ speechSynthesis.speak(u); }catch(e){ done(); }
   };
-  const a = new Audio(WAUDIO_BASE + '/' + name + '.mp3');
+  const a = new Audio(wAudioBase(name) + '/' + name + '.mp3');
   wMedia = a;
   try{ a.preservesPitch = true; }catch(e){}
   a.playbackRate = slow ? 0.6 : 1;
@@ -404,6 +409,7 @@ function renderTabs(){
     if (c.id === 'countries') add('map', '🗺️ 世界地图', '');
   });
   add('pron', '🔤 发音规则', '');
+  add('verbs', '🔀 动词变位', '');
   add('stories', '📚 趣味故事', '');
   add('phone', '📞 电话听写', 'wtab-game');
 }
@@ -422,6 +428,7 @@ function selectCat(id){
   /* 独立视图：地图 / 发音规则 / 趣味故事 */
   if (id === 'map'){ grid.hidden = true; tip.hidden = true; renderMap(); return; }
   if (id === 'pron'){ grid.hidden = false; tip.hidden = true; renderPron(); return; }
+  if (id === 'verbs'){ grid.hidden = false; tip.hidden = true; renderVerbs(); return; }
   if (id === 'stories'){ grid.hidden = false; tip.hidden = true; renderStories(); return; }
 
   grid.hidden = isPhone;
@@ -655,6 +662,160 @@ function renderStories(){
         '</div>').join('') + '</div>';
     grid.appendChild(card);
   });
+}
+
+/* =========================================================
+   五之七、🔀 动词变位（30 个常见动词 × 直陈式 4 时态 × 6 人称）
+   ========================================================= */
+const VERB_LIST = (typeof VERBS !== 'undefined' ? VERBS : []);
+let curVerbId = 'etre';
+let curTenseId = 'pres';
+
+function verbById(id){
+  return VERB_LIST.find(v => v.id === id) || VERB_LIST[0];
+}
+function tenseById(id){
+  return (typeof VERB_TENSES !== 'undefined' ? VERB_TENSES : []).find(t => t.id === id) ||
+    { id: 'pres', label: '直陈式现在时', fr: 'Présent', use: '', color: '#d35400' };
+}
+
+function renderVerbs(){
+  const grid = $('#word-grid');
+  grid.innerHTML = '';
+
+  /* ---- 1. 标题说明 ---- */
+  const head = document.createElement('div');
+  head.className = 'qa-card verb-intro';
+  head.innerHTML = '<div class="qa-head"><h4>🔀 法语动词变位</h4>' +
+    '<p>收录 <b>30 个最常见动词</b>，覆盖直陈式四大时态：<b>现在时 / 复合过去时 / 未完成过去时 / 简单将来时</b>，每个变位都带真人读音与音标。点 🔊 听、点 🐢 慢速跟读，还能「整列连读」一口气听完六个变位。</p></div>';
+  grid.appendChild(head);
+
+  /* ---- 2. 动词选择器（按组分组 chips） ---- */
+  const picker = document.createElement('div');
+  picker.className = 'verb-picker';
+  (typeof VERB_GROUPS !== 'undefined' ? VERB_GROUPS : []).forEach(g => {
+    const gBox = document.createElement('div');
+    gBox.className = 'verb-group';
+    gBox.innerHTML = '<div class="verb-group-title">' + esc(g.label) +
+      '<span class="verb-group-desc">' + esc(g.desc) + '</span></div>';
+    const chips = document.createElement('div');
+    chips.className = 'verb-chips';
+    VERB_LIST.filter(v => v.grp === g.id).forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'verb-chip' + (v.id === curVerbId ? ' active' : '');
+      b.innerHTML = '<b>' + esc(v.inf) + '</b><span>' + esc(v.zh) + '</span>';
+      b.dataset.v = v.id;
+      b.onclick = () => { curVerbId = v.id; renderVerbs(); };
+      chips.appendChild(b);
+    });
+    gBox.appendChild(chips);
+    picker.appendChild(gBox);
+  });
+  grid.appendChild(picker);
+
+  /* ---- 3. 当前动词详情 ---- */
+  const v = verbById(curVerbId);
+  const card = document.createElement('div');
+  card.className = 'word-card verb-card';
+
+  const auxTxt = v.aux === 'etre'
+    ? '复合时态用 <b>être</b> 作助动词（过去分词要配合主语）'
+    : '复合时态用 <b>avoir</b> 作助动词';
+  const grpLabel = (typeof VERB_GROUPS !== 'undefined' ? VERB_GROUPS : [])
+    .filter(g => g.id === v.grp).map(g => g.label)[0] || '';
+
+  card.innerHTML =
+    '<div class="verb-head">' +
+      '<div class="verb-inf-box">' +
+        '<span class="verb-inf">' + esc(v.inf) + '</span>' +
+        '<span class="wc-ipa">' + esc(v.ipa) + '</span>' +
+        audioBtns('vb-' + v.id + '-inf', v.inf) +
+      '</div>' +
+      '<div class="verb-meta">' +
+        '<span class="verb-zh">' + esc(v.zh) + '</span>' +
+        '<span class="verb-badge">' + esc(grpLabel) + '</span>' +
+        '<span class="verb-badge vb-part">过去分词：' + esc(v.part) + '</span>' +
+        '<span class="verb-aux">' + auxTxt + '</span>' +
+      '</div>' +
+    '</div>';
+
+  /* ---- 4. 时态切换 ---- */
+  const tenseBar = document.createElement('div');
+  tenseBar.className = 'verb-tense-bar';
+  (typeof VERB_TENSES !== 'undefined' ? VERB_TENSES : []).forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'verb-tense-btn' + (t.id === curTenseId ? ' active' : '');
+    b.style.setProperty('--tc', t.color);
+    b.innerHTML = '<b>' + esc(t.label) + '</b><i>' + esc(t.fr) + '</i>';
+    b.onclick = () => { curTenseId = t.id; renderVerbs(); };
+    tenseBar.appendChild(b);
+  });
+  card.appendChild(tenseBar);
+
+  /* ---- 5. 变位表 ---- */
+  const t = tenseById(curTenseId);
+  const forms = (v.tenses[t.id] || {}).f || [];
+  const ipas = (v.tenses[t.id] || {}).i || [];
+  const PRON = (typeof VERB_PRONOUNS !== 'undefined' ? VERB_PRONOUNS :
+    ['je', 'tu', 'il / elle', 'nous', 'vous', 'ils / elles']);
+
+  const table = document.createElement('div');
+  table.className = 'verb-table';
+  table.style.setProperty('--tc', t.color);
+  table.innerHTML =
+    '<div class="verb-table-head">' +
+      '<span class="vt-h vt-use">' + esc(t.use) + '</span>' +
+      '<button class="vt-all" id="vt-play-all">▶️ 整列连读</button>' +
+    '</div>' +
+    '<div class="verb-rows">' +
+      PRON.map((p, i) =>
+        '<div class="verb-row">' +
+          '<span class="vt-pron">' + esc(p) + '</span>' +
+          '<span class="vt-form">' + esc(forms[i] || '—') + '</span>' +
+          '<span class="vt-ipa">' + esc(ipas[i] || '') + '</span>' +
+          audioBtns('vb-' + v.id + '-' + t.id + '-' + i, forms[i] || '') +
+        '</div>').join('') +
+    '</div>';
+  card.appendChild(table);
+
+  /* ---- 6. 语法要点 ---- */
+  const note = document.createElement('p');
+  note.className = 'verb-note';
+  note.innerHTML = '💡 ' + v.note;
+  card.appendChild(note);
+
+  /* ---- 7. 例句 ---- */
+  if (v.ex && v.ex.length){
+    const exBox = document.createElement('div');
+    exBox.className = 'verb-ex';
+    exBox.innerHTML = '<div class="verb-ex-title">📌 例句</div>' +
+      v.ex.map((e, i) =>
+        '<div class="verb-ex-line">' +
+          '<div class="ve-fr">' + esc(e.fr) + audioBtns('vb-' + v.id + '-ex' + i, e.fr) + '</div>' +
+          '<div class="ve-ipa">' + esc(e.i || '') + '</div>' +
+          '<div class="ve-zh">' + esc(e.zh) + '</div>' +
+        '</div>').join('');
+    card.appendChild(exBox);
+  }
+
+  grid.appendChild(card);
+
+  /* 整列连读：依次播放 6 个变位 */
+  const allBtn = $('#vt-play-all');
+  if (allBtn){
+    allBtn.onclick = () => {
+      let i = 0;
+      const step = () => {
+        if (i >= forms.length) return;
+        const idx = i++;
+        const btn = null;
+        playWordAudio('vb-' + v.id + '-' + t.id + '-' + idx, forms[idx], btn, false);
+        /* 每个音频约 1.1s，等它播完再播下一个 */
+        setTimeout(step, 1150);
+      };
+      step();
+    };
+  }
 }
 
 /* =========================================================
