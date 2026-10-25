@@ -134,6 +134,7 @@ function openBuild(i){
     solved: false
   };
   $('#analysis-panel').hidden = true;
+  $('#record-panel').hidden = true;
   renderBuild();
   showView('build');
   renderPickers();
@@ -154,6 +155,7 @@ function renderBuild(){
     const w = s.words[wi];
     const chip = document.createElement('button');
     chip.className = 'word-chip';
+    chip.dataset.wi = wi;
     chip.style.setProperty('--rc', ROLES[w.r].color);
     chip.innerHTML = '<span>' + esc(w.t) + '</span><span class="r">' + ROLES[w.r].label + '</span>';
     chip.onclick = () => placeWord(wi);
@@ -211,6 +213,7 @@ function checkBuild(){
     chime(true);
     renderAnalysis(s);
     $('#analysis-panel').hidden = false;
+    if (!$('#record-panel').hidden) renderBuildRecord();
     toast('太棒了！句子排对啦 🎉 +1 ⭐');
     renderHome();
     renderPickers();
@@ -235,6 +238,35 @@ function hintBuild(){
   } else {
     toast('结构提示：' + s.structure);
   }
+}
+
+/* =========================================================
+   练习记录（localStorage 存档，刷新/换句不丢失）
+   ========================================================= */
+function renderBuildRecord(){
+  const built = state.progress.built;
+  const stars = state.progress.readStars;
+  $('#record-stat').innerHTML = '已练对 <b>' + built.length + '</b> / ' + SENTENCES.length +
+    ' 句 · 累计 ⭐ ' + totalStars() + ' 颗';
+  const list = $('#record-list');
+  if (!built.length){
+    list.innerHTML = '<p class="record-empty">还没有记录～先去造对第一句吧！</p>';
+    return;
+  }
+  list.innerHTML = SENTENCES.filter(s => built.includes(s.id)).map(s =>
+    '<div class="record-item">' +
+      '<span class="ri-cat">' + s.emoji + ' ' + esc(s.cat) + '</span>' +
+      '<span class="ri-fr">' + esc(s.words.map(w => w.t).join(' ')) + '</span>' +
+      '<span class="ri-zh">' + esc(s.zh) + '</span>' +
+      '<span class="ri-star">' + (stars[s.id] ? '⭐'.repeat(stars[s.id]) : '🧩 造对') + '</span>' +
+    '</div>').join('');
+}
+
+function toggleBuildRecord(force){
+  const panel = $('#record-panel');
+  const show = force !== undefined ? force : panel.hidden;
+  panel.hidden = !show;
+  if (show) renderBuildRecord();
 }
 
 function renderAnalysis(s){
@@ -321,7 +353,7 @@ function speakText(text, rate, onBoundary, onEnd){
 }
 
 /* =========================================================
-   预录法语音频（edge-tts · fr-FR-DeniseNeural 标准法音）
+   预录法语音频（edge-tts 法语女声 · 标准法音）
    - 整句/逐词优先播放预录 MP3，任何设备都有声音
    - 音频缺失或加载失败时，自动回退浏览器语音合成
    ========================================================= */
@@ -348,13 +380,6 @@ function cleanWordForTTS(t){
   let w = String(t).replace(/^[-\s]+/, '').replace(/[?!.,;:]+$/, '').trim();
   if (w === "J'") w = 'Je';   /* 单独的 J' 读作 Je */
   return w;
-}
-function setAudioSource(kind){
-  const el = $('#read-audio');
-  if (!el) return;
-  el.textContent = kind === 'file'
-    ? '🔊 语音：Denise · 法法标准音（预录音频）'
-    : '🔊 语音：浏览器合成语音（预录音频不可用，已自动切换）';
 }
 /* 安全播放：同步异常 / 自动播放被拒 / 文件缺失都走回退 */
 function safePlay(a, fallback){
@@ -389,7 +414,6 @@ function renderRead(){
 
   $('#read-structure').textContent = '🧩 结构：' + s.structure;
   $('#read-note').textContent = '💡 ' + s.note;
-  setAudioSource('file');
   $('#score-panel').hidden = true;
   $('#mic-panel').hidden = true;
 }
@@ -414,7 +438,6 @@ function speakSentence(rate){
     if (fellBack || token !== mediaToken) return;
     fellBack = true;
     mediaAudio = null;
-    setAudioSource('synth');
     speakText(text, rate, charIndex => {
       let idx = 0;
       for (let i = 0; i < offs.length; i++) if (charIndex >= offs[i]) idx = i;
@@ -441,7 +464,6 @@ function speakSentence(rate){
     };
   };
   a.onended = () => { if (token === mediaToken){ clearHighlight(); mediaAudio = null; } };
-  setAudioSource('file');
   safePlay(a, fallback);
 }
 
@@ -467,7 +489,6 @@ async function speakWordByWord(){
       const fallback = () => {
         if (fellBack) return;
         fellBack = true;
-        setAudioSource('synth');
         if (!window.speechSynthesis){ finish(); return; }
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = 'fr-FR';
@@ -478,7 +499,6 @@ async function speakWordByWord(){
       };
       a.onerror = fallback;
       a.onended = finish;
-      setAudioSource('file');
       safePlay(a, fallback);
       setTimeout(finish, 4000);   /* 超时保护，防止卡死 */
     });
@@ -946,7 +966,23 @@ function init(){
   };
   $('#btn-prev').onclick = () => nextBuild(-1);
   $('#btn-next').onclick = () => nextBuild(1);
-  $('#btn-goread').onclick = () => openRead(state.build.idx);
+  $('#btn-record').onclick = () => toggleBuildRecord();
+  $('#btn-close-record').onclick = () => toggleBuildRecord(false);
+  $('#btn-clear-record').onclick = () => {
+    if (!confirm('确定清空全部练习记录吗？此操作不可恢复。')) return;
+    state.progress = { built: [], readStars: {} };
+    saveProgress();
+    renderBuildRecord();
+    renderHome();
+    renderPickers();
+    toast('练习记录已清空');
+  };
+  /* 造句正确后：点「去朗读这句」直接进入朗读界面，并自动播放一次原速朗读
+     （同步调用，保留在用户手势上下文内，确保 iOS / 自动播放策略下也能出声） */
+  $('#btn-goread').onclick = () => {
+    openRead(state.build.idx);
+    speakSentence(0.9);
+  };
 
   /* 朗读 */
   $('#btn-normal').onclick = () => speakSentence(0.9);
@@ -957,7 +993,12 @@ function init(){
   $('#btn-mic-stop').onclick = stopShadow;
   $('#btn-rprev').onclick = () => nextRead(-1);
   $('#btn-rnext').onclick = () => nextRead(1);
-  $('#btn-gobuild').onclick = () => openBuild(state.read.idx);
+  /* 朗读界面点「造句模式」：自动进入下一句的造句练习（已练对的记录保留） */
+  $('#btn-gobuild').onclick = () => {
+    const next = (state.read.idx + 1) % SENTENCES.length;
+    openBuild(next);
+    toast('进入下一句练习：' + SENTENCES[next].zh + '（之前的练习记录已保留 ✅）');
+  };
 
   /* 打分面板 */
   $('#btn-retry').onclick = () => { $('#score-panel').hidden = true; startShadow(); };

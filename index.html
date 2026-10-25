@@ -190,6 +190,7 @@
         <button class="btn btn-ghost" id="btn-reset">🔄 重来</button>
         <button class="btn btn-ghost" id="btn-prev">← 上一句</button>
         <button class="btn btn-ghost" id="btn-next">下一句 →</button>
+        <button class="btn btn-ghost" id="btn-record">📜 练习记录</button>
       </div>
     </div>
 
@@ -200,6 +201,18 @@
       <table class="word-table" id="analysis-table"></table>
       <div class="note-box" id="analysis-note"></div>
       <button class="btn btn-primary" id="btn-goread">🎧 去朗读这句</button>
+    </div>
+
+    <!-- 练习记录（本机存档，换句/刷新不丢失） -->
+    <div class="card record-card" id="record-panel" hidden>
+      <h3 class="record-title">📜 练习记录</h3>
+      <p class="record-tip">记录自动保存在本机浏览器里，刷新或下次打开都不会丢；从朗读切回造句进入下一句时，之前的对句记录也原样保留。</p>
+      <p class="record-stat" id="record-stat"></p>
+      <div class="record-list" id="record-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-clear-record">🗑 清空记录</button>
+        <button class="btn btn-ghost" id="btn-close-record">收起</button>
+      </div>
     </div>
   </section>
 
@@ -264,7 +277,6 @@
       </div>
 
       <div class="read-meta">
-        <p id="read-audio">🔊 语音：Denise · 法法标准音（预录音频）</p>
         <p id="read-structure"></p>
         <p id="read-note"></p>
       </div>

@@ -3,7 +3,7 @@
    + 📞 法国电话号码听写小游戏
    依赖：words-data.js（WORD_CATS / frenchNumber）
         app.js 的全局 esc / safePlay / frVoice / toast / confetti / showView
-   音频：assets/audio/words/{name}.mp3（edge-tts · fr-FR-DeniseNeural）
+   音频：assets/audio/words/{name}.mp3（edge-tts 法语女声预录）
    ========================================================= */
 'use strict';
 
