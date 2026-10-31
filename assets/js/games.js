@@ -442,6 +442,13 @@ function initGames(){
   initPrepGame();
   initFamilyGame();
   selectGameTab('prep');
+  gamesReady = true;
+}
+/* 惰性兜底：若启动时脚本尚未就绪，进入视图时再补一次初始化 */
+let gamesReady = false;
+function ensureGames(){
+  if (gamesReady && document.querySelector('#game-tabs .wtab')) return;
+  if (typeof renderGameTabs === 'function') initGames();
 }
 /* 切换视图时停止朗读 */
 function stopGames(){ stopSpeak(); }
