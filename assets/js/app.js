@@ -81,12 +81,32 @@ function totalStars(){
 }
 
 /* ---------- 视图切换 ---------- */
+/* ---------- 脚本加载失败自愈（CDN 抖动时重试一次） ---------- */
+function reloadScript(el){
+  if (!el || el.dataset.retried) return;
+  el.dataset.retried = '1';
+  const src = el.getAttribute('src');
+  if (!src) return;
+  const s = document.createElement('script');
+  s.src = src + '?retry=' + Date.now();
+  s.onload = function(){
+    /* 模块自举：脚本补加载成功后补齐初始化 */
+    try{
+      if (typeof initVideos === 'function') initVideos();
+      if (typeof initGames === 'function') initGames();
+    }catch(e){}
+  };
+  document.head.appendChild(s);
+}
+
 function showView(name){
   $$('.view').forEach(v => { v.hidden = (v.id !== 'view-' + name); });
   $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
   stopSpeak();
   abortShadow();
   if (typeof stopVideoPlayers === 'function') stopVideoPlayers();
+  if (typeof stopGames === 'function') stopGames();
+  if (name === 'games' && typeof ensureGames === 'function') ensureGames();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -953,10 +973,15 @@ function init(){
   /* 视频模块 */
   if (typeof initVideos === 'function') initVideos();
 
+  /* 游戏乐园 */
+  if (typeof initGames === 'function') initGames();
+
   /* 导航 */
   $$('.nav-btn').forEach(b => { b.onclick = () => showView(b.dataset.view); });
   $('#card-build').onclick = () => openBuild(Math.min(state.build.idx, SENTENCES.length - 1));
   $('#card-read').onclick  = () => openRead(Math.min(state.read.idx, SENTENCES.length - 1));
+  const cardGames = $('#card-games');
+  if (cardGames) cardGames.onclick = () => showView('games');
 
   /* 造句 */
   $('#btn-check').onclick = checkBuild;
