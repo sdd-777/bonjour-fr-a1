@@ -82,20 +82,22 @@ function totalStars(){
 
 /* ---------- 视图切换 ---------- */
 /* ---------- 脚本加载失败自愈（CDN 抖动时重试一次） ---------- */
-function reloadScript(el){
-  if (!el || el.dataset.retried) return;
-  el.dataset.retried = '1';
+function reloadScript(el, attempt){
+  if (!el) return;
+  attempt = attempt || 1;
+  if (attempt > 3) return;
   const src = el.getAttribute('src');
   if (!src) return;
   const s = document.createElement('script');
   s.src = src + '?retry=' + Date.now();
   s.onload = function(){
-    /* 模块自举：脚本补加载成功后补齐初始化 */
+    /* 仅在模块尚未初始化时补齐，避免重复渲染 */
     try{
-      if (typeof initVideos === 'function') initVideos();
-      if (typeof initGames === 'function') initGames();
+      if (typeof initVideos === 'function' && $('#video-tabs') && !$('#video-tabs .wtab')) initVideos();
+      if (typeof initGames === 'function' && $('#game-tabs') && !$('#game-tabs .wtab')) initGames();
     }catch(e){}
   };
+  s.onerror = function(){ setTimeout(function(){ reloadScript(el, attempt + 1); }, 800); };
   document.head.appendChild(s);
 }
 
