@@ -313,6 +313,84 @@ const WORD_CATS = [
       { zh: "经常（副）", adv: true, w: { fr: "souvent", parts: [ {t:"sou",p:"[su]"}, {t:"vent",p:"[vɑ̃]"} ] } },
       { zh: "今天（副）", adv: true, w: { fr: "aujourd'hui", parts: [ {t:"au",p:"[o]"}, {t:"jour",p:"[ʒuʁ]"}, {t:"d'hui",p:"[dɥi]"} ] } }
     ]
+  },
+  {
+    id: "animals",
+    icon: "🐾",
+    label: "动物",
+    tip: "动物名词同样分阴阳性：le chien（公狗）/ la chienne（母狗）。说「一只猫」用 un chat，说「我喜欢猫」用 j'aime les chats（复数带 les）。",
+    items: [
+      { zh: "猫", a: "an-0",  w: { fr: "le chat", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"chat",p:"[ʃa]"} ] } },
+      { zh: "狗", a: "an-1",  w: { fr: "le chien", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"chien",p:"[ʃjɛ̃]"} ] } },
+      { zh: "兔子", a: "an-2", w: { fr: "le lapin", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"la",p:"[la]"}, {t:"pin",p:"[pɛ̃]"} ] } },
+      { zh: "老鼠", a: "an-3", w: { fr: "la souris", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"sou",p:"[su]"}, {t:"ris",p:"[ʁi]"} ] } },
+      { zh: "鸟", a: "an-4",  w: { fr: "l'oiseau", g: "m", parts: [ {t:"l'oi",p:"[lwa]"}, {t:"seau",p:"[zo]"} ] } },
+      { zh: "鱼", a: "an-5",  w: { fr: "le poisson", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"pois",p:"[pwa]"}, {t:"son",p:"[sɔ̃]"} ] } },
+      { zh: "奶牛", a: "an-6", w: { fr: "la vache", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"va",p:"[va]"}, {t:"che",p:"[ʃ]"} ] } },
+      { zh: "马", a: "an-7",  w: { fr: "le cheval", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"che",p:"[ʃə]"}, {t:"val",p:"[val]"} ] } },
+      { zh: "鸡", a: "an-8",  w: { fr: "le poulet", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"pou",p:"[pu]"}, {t:"let",p:"[lɛ]"} ] } },
+      { zh: "熊", a: "an-9",  w: { fr: "l'ours", g: "m", parts: [ {t:"l'ours",p:"[luʁs]"} ] } },
+      { zh: "乌龟", a: "an-10", w: { fr: "la tortue", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"tor",p:"[tɔʁ]"}, {t:"tue",p:"[ty]"} ] } },
+      { zh: "鸭子", a: "an-11", w: { fr: "le canard", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"ca",p:"[ka]"}, {t:"nard",p:"[naʁ]"} ] } }
+    ]
+  },
+  {
+    id: "food",
+    icon: "🍎",
+    label: "食物与饮品",
+    tip: "表示「一些」用 du（阳性）/ de la（阴性）：du pain 一点面包、de l'eau 一点水。点餐最简单的说法：le pain, s'il vous plaît（请给我面包）。",
+    items: [
+      { zh: "面包", a: "fo-0",  w: { fr: "le pain", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"pain",p:"[pɛ̃]"} ] } },
+      { zh: "牛角包", a: "fo-1", w: { fr: "le croissant", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"croi",p:"[kʁwa]"}, {t:"ssant",p:"[sɑ̃]"} ] } },
+      { zh: "奶酪", a: "fo-2", w: { fr: "le fromage", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"fro",p:"[fʁɔ]"}, {t:"mage",p:"[maʒ]"} ] } },
+      { zh: "黄油", a: "fo-3", w: { fr: "le beurre", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"beurre",p:"[bœʁ]"} ] } },
+      { zh: "牛奶", a: "fo-4", w: { fr: "le lait", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"lait",p:"[lɛ]"} ] } },
+      { zh: "水", a: "fo-5",  w: { fr: "l'eau", g: "f", parts: [ {t:"l'eau",p:"[lo]"} ] } },
+      { zh: "葡萄酒", a: "fo-6", w: { fr: "le vin", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"vin",p:"[vɛ̃]"} ] } },
+      { zh: "苹果", a: "fo-7", w: { fr: "la pomme", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"pomme",p:"[pɔm]"} ] } },
+      { zh: "香蕉", a: "fo-8", w: { fr: "la banane", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"ba",p:"[ba]"}, {t:"na",p:"[na]"}, {t:"ne",p:""} ] } },
+      { zh: "胡萝卜", a: "fo-9", w: { fr: "la carotte", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"ca",p:"[ka]"}, {t:"rotte",p:"[ʁɔt]"} ] } },
+      { zh: "肉", a: "fo-10", w: { fr: "la viande", g: "f", parts: [ {t:"la",p:"[la]"}, {t:"vian",p:"[vjɑ̃]"}, {t:"de",p:""} ] } },
+      { zh: "蛋糕", a: "fo-11", w: { fr: "le gâteau", g: "m", parts: [ {t:"le",p:"[lə]"}, {t:"gâ",p:"[ɡɑ]"}, {t:"teau",p:"[to]"} ] } }
+    ]
+  },
+  {
+    id: "colors",
+    icon: "🎨",
+    label: "颜色",
+    tip: "颜色是形容词，放在名词后面：une voiture rouge（一辆红色汽车）。常见阴性变化：vert → verte，blanc → blanche；marron 和 orange 阴阳性同形。",
+    items: [
+      { zh: "红色", a: "co-0", color: "#D9483B", w: { fr: "rouge", parts: [ {t:"rouge",p:"[ʁuʒ]"} ] } },
+      { zh: "蓝色", a: "co-1", color: "#3B6ED9", w: { fr: "bleu", parts: [ {t:"bleu",p:"[blø]"} ] } },
+      { zh: "绿色", a: "co-2", color: "#4E9E4E", w: { fr: "vert", parts: [ {t:"vert",p:"[vɛʁ]"} ] } },
+      { zh: "黄色", a: "co-3", color: "#E3C23C", w: { fr: "jaune", parts: [ {t:"jaune",p:"[ʒon]"} ] } },
+      { zh: "黑色", a: "co-4", color: "#3A3934", w: { fr: "noir", parts: [ {t:"noir",p:"[nwaʁ]"} ] } },
+      { zh: "白色", a: "co-5", color: "#F5F2EA", w: { fr: "blanc", parts: [ {t:"blanc",p:"[blɑ̃]"} ] } },
+      { zh: "橙色", a: "co-6", color: "#E38B3C", w: { fr: "orange", parts: [ {t:"orange",p:"[ɔʁɑ̃ʒ]"} ] } },
+      { zh: "粉色", a: "co-7", color: "#E88BA6", w: { fr: "rose", parts: [ {t:"rose",p:"[ʁoz]"} ] } },
+      { zh: "紫色", a: "co-8", color: "#8E5B8E", w: { fr: "violet", parts: [ {t:"vio",p:"[vjɔ]"}, {t:"let",p:"[lɛ]"} ] } },
+      { zh: "棕色", a: "co-9", color: "#8A5A3B", w: { fr: "marron", parts: [ {t:"mar",p:"[ma]"}, {t:"ron",p:"[ʁɔ̃]"} ] } }
+    ]
+  },
+  {
+    id: "time",
+    icon: "📅",
+    label: "时间与天气",
+    tip: "法语里星期和月份的首字母不大写（lundi, avril）。问「几点了」说 Quelle heure est-il ?；聊天气用 il fait...：il fait beau（天气好）、il fait chaud（很热）。",
+    items: [
+      { zh: "星期一", a: "tm-0",  w: { fr: "lundi", parts: [ {t:"lun",p:"[lœ̃]"}, {t:"di",p:"[di]"} ] } },
+      { zh: "星期日", a: "tm-1",  w: { fr: "dimanche", parts: [ {t:"di",p:"[di]"}, {t:"man",p:"[mɑ̃]"}, {t:"che",p:"[ʃ]"} ] } },
+      { zh: "早上", a: "tm-2",  w: { fr: "le matin", parts: [ {t:"le",p:"[lə]"}, {t:"ma",p:"[ma]"}, {t:"tin",p:"[tɛ̃]"} ] } },
+      { zh: "晚上", a: "tm-3",  w: { fr: "le soir", parts: [ {t:"le",p:"[lə]"}, {t:"soir",p:"[swaʁ]"} ] } },
+      { zh: "春天", a: "tm-4",  w: { fr: "le printemps", parts: [ {t:"le",p:"[lə]"}, {t:"prin",p:"[pʁɛ̃]"}, {t:"temps",p:"[tɑ̃]"} ] } },
+      { zh: "夏天", a: "tm-5",  w: { fr: "l'été", parts: [ {t:"l'é",p:"[le]"}, {t:"té",p:"[te]"} ] } },
+      { zh: "秋天", a: "tm-6",  w: { fr: "l'automne", parts: [ {t:"l'au",p:"[lo]"}, {t:"tomne",p:"[tɔn]"} ] } },
+      { zh: "冬天", a: "tm-7",  w: { fr: "l'hiver", parts: [ {t:"l'hi",p:"[li]"}, {t:"ver",p:"[vɛʁ]"} ] } },
+      { zh: "太阳；晴天", a: "tm-8", w: { fr: "le soleil", parts: [ {t:"le",p:"[lə]"}, {t:"so",p:"[sɔ]"}, {t:"leil",p:"[lɛj]"} ] } },
+      { zh: "雨", a: "tm-9",  w: { fr: "la pluie", parts: [ {t:"la",p:"[la]"}, {t:"pluie",p:"[plɥi]"} ] } },
+      { zh: "风", a: "tm-10", w: { fr: "le vent", parts: [ {t:"le",p:"[lə]"}, {t:"vent",p:"[vɑ̃]"} ] } },
+      { zh: "雪", a: "tm-11", w: { fr: "la neige", parts: [ {t:"la",p:"[la]"}, {t:"nei",p:"[nɛ]"}, {t:"ge",p:"[ʒ]"} ] } }
+    ]
   }
 ];
 

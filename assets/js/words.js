@@ -344,7 +344,17 @@ function thingCard(it, i){
     '<div class="wc-title"><span class="wc-zh">' + esc(it.zh) + '</span>' +
     (g === 'm' ? '<span class="wc-gender gt-m">le · 阳性</span>' : '<span class="wc-gender gt-f">la · 阴性</span>') +
     '</div></div><div class="wc-forms">' +
-    formRow(g === 'm' ? 'tag-m' : 'tag-f', g === 'm' ? 'le' : 'la', it.w.fr, it.w.parts, 'h-' + i) +
+    formRow(g === 'm' ? 'tag-m' : 'tag-f', g === 'm' ? 'le' : 'la', it.w.fr, it.w.parts, it.a || ('h-' + i)) +
+    '</div>';
+}
+
+/* 通用词卡（颜色 / 时间天气等单形名词与形容词）：可带色块 */
+function wordCard(it, i){
+  const swatch = it.color ? '<span class="wc-swatch" style="background:' + it.color + '"></span>' : '';
+  return '<div class="wc-head">' +
+    '<div class="wc-title"><span class="wc-zh">' + esc(it.zh) + '</span>' + swatch + '</div>' +
+    '</div><div class="wc-forms">' +
+    formRow('', '', it.w.fr, it.w.parts, it.a || ('w-' + i)) +
     '</div>';
 }
 
@@ -386,7 +396,11 @@ const CARD_RENDER = {
   jobs: jobCard,
   things: thingCard,
   numbers: numberCard,
-  adjs: adjCard
+  adjs: adjCard,
+  animals: thingCard,
+  food: thingCard,
+  colors: wordCard,
+  time: wordCard
 };
 
 /* =========================================================

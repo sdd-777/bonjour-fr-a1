@@ -64,23 +64,34 @@ function selectGameTab(id){
 function renderPrepLearn(){
   const box = $('#prep-learn');
   let html = '<h3 class="learn-title">📖 方位介词总表 <small>Les prépositions de lieu</small></h3>';
-  html += '<p class="learn-tip">先认识这 13 个介词：每张卡片有<b>图示</b>（红点 📍 相对方块的位置）、法语介词、中文意思和例句。点 🔊 可以听例句。</p>';
+  html += '<p class="learn-tip">先认识这 13 个介词：每张卡片有<b>图示</b>（红点 📍 相对方块的位置）、法语介词、中文意思和例句。点 🔊 听介词读音，点例句听整句。</p>';
   html += '<div class="prep-grid">';
   PREPS.forEach(p => {
     html +=
-      '<div class="prep-item">' +
+      '<div class="prep-item" data-prep="' + esc(p.id) + '">' +
         prepIcon(p.id) +
         '<div class="prep-fr">' + esc(p.fr) + '</div>' +
         '<div class="prep-zh">' + esc(p.zh) + '</div>' +
         '<p class="prep-ex">' + esc(p.ex) + '</p>' +
-        '<button class="btn btn-ghost prep-ex-btn" data-ex="' + esc(p.ex) + '">🔊</button>' +
+        '<button class="btn btn-ghost prep-ex-btn">🔊</button>' +
       '</div>';
   });
   html += '</div>';
-  html += '<p class="learn-tip">💡 小提示：<b>à côté de / à gauche de / à droite de</b> 这类以 de 结尾的介词，后面遇到 le 要缩合成 <b>du</b>（à côté <b>du</b> canapé），遇到 les 变 <b>des</b>。看图判断方位时，<b>左 / 右以你看图的方向为准</b>。</p>';
+  html += '<p class="learn-tip">💡 小提示：<b>à côté de / à gauche de / à droite de</b> 这类以 de 结尾的介词，后面遇到 le 要缩合成 <b>du</b>（à côté <b>du</b> canapé），遇到 les 变 <b>des</b>。看图判断方位时，<b>左 / 右以你看图的方向为准</b>。点 🔊 听介词读音，点例句听整句。</p>';
   box.innerHTML = html;
-  box.querySelectorAll('.prep-ex-btn').forEach(b => {
-    b.onclick = () => speakText(b.dataset.ex, 0.85);
+  box.querySelectorAll('.prep-item').forEach(item => {
+    const p = PREPS.find(x => x.id === item.dataset.prep);
+    if (!p) return;
+    /* 🔊 = 介词单词（预录 prep-*.mp3，缺省走 TTS 兜底） */
+    const b = item.querySelector('.prep-ex-btn');
+    b.onclick = () => {
+      if (typeof playWordAudio === 'function') playWordAudio('prep-' + p.id, p.fr, b, false);
+      else speakText(p.fr, 0.85);
+    };
+    /* 点例句 = 听整句 */
+    const ex = item.querySelector('.prep-ex');
+    ex.classList.add('prep-ex-play');
+    ex.onclick = () => speakText(p.ex, 0.85);
   });
 }
 

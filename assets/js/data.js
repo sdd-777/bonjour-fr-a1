@@ -26,7 +26,14 @@ const ROLES = {
   salutation:    { label: '问候语',   color: '#C25E6E' },
   presentation:  { label: '提示词',   color: '#8A6BB8' },
   preposition:   { label: '介词',     color: '#6B8455' },
-  'nom-propre':  { label: '专有名词', color: '#9C7423' }
+  'nom-propre':  { label: '专有名词', color: '#9C7423' },
+  nom:           { label: '名词',     color: '#4E7FA6' },
+  temps:         { label: '时间词',   color: '#C9A227' },
+  direction:     { label: '方位词',   color: '#6B8455' },
+  'manière':     { label: '方式词',   color: '#8A6BB8' },
+  lieu:          { label: '地点词',   color: '#7E8AA8' },
+  adverbe:       { label: '副词',     color: '#9C8A3C' },
+  'négation':    { label: '否定词',   color: '#B04E4E' }
 };
 
 const SENTENCES = [
@@ -1839,6 +1846,295 @@ const SENTENCES = [
         r: 'politesse',
         zh: '取悦（s\'il te plaît 请）'
       }
+    ]
+  },
+  {
+    id: 79,
+    cat: '餐厅',
+    emoji: '🥖',
+    fr: 'Je voudrais une baguette, s\'il vous plaît.',
+    zh: '我想要一根法棍，麻烦您。',
+    structure: '主语 + 条件式（voudrais 委婉想要）+ 数量词 + 名词 + 礼貌插入语',
+    note: 'voudrais 是 vouloir 的条件式，比 je veux（我想要）礼貌得多，买东西点餐都用它。面包店说这句 + Merci, au revoir 就是一套完整对话。',
+    words: [
+      { t: 'Je', r: 'sujet', zh: '我' },
+      { t: 'voudrais', r: 'verbe', zh: '想要（vouloir 条件式，委婉）' },
+      { t: 'une', r: 'determinant', zh: '一根（阴性不定冠词）' },
+      { t: 'baguette,', r: 'nom', zh: '法棍面包（阴性）' },
+      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您（敬语）' }
+    ]
+  },
+  {
+    id: 80,
+    cat: '餐厅',
+    emoji: '🥘',
+    fr: 'C\'est délicieux !',
+    zh: '太好吃了！',
+    structure: '指示代词 + 系动词 + 品质形容词',
+    note: '饭桌上最讨喜的一句话！也常缩成 Mmm, c\'est bon !（嗯，真好吃！）。形容词 délicieux 阴性是 délicieuse。',
+    words: [
+      { t: 'C\'est', r: 'verbe', zh: '这是' },
+      { t: 'délicieux !', r: 'adjectif', zh: '美味的，好吃的' }
+    ]
+  },
+  {
+    id: 81,
+    cat: '餐厅',
+    emoji: '🧾',
+    fr: 'L\'addition, s\'il vous plaît.',
+    zh: '请结账（买单）。',
+    structure: '名词 + 礼貌插入语（省略句）',
+    note: '法国餐厅不会主动送账单，吃完了要自己喊 L\'addition, s\'il vous plaît !（请拿账单来）。addition 是阴性名词。',
+    words: [
+      { t: 'L\'addition,', r: 'nom', zh: '账单（阴性）' },
+      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您' }
+    ]
+  },
+  {
+    id: 82,
+    cat: '餐厅',
+    emoji: '☕',
+    fr: 'Un café, s\'il vous plaît.',
+    zh: '请来一杯咖啡。',
+    structure: '数量词（不定冠词）+ 名词 + 礼貌插入语（省略句）',
+    note: '吧台点咖啡的万能短句。一杯浓缩就是 un café，un café allongé 是加水拉长的美式，un cappuccino 就是卡布奇诺。',
+    words: [
+      { t: 'Un', r: 'determinant', zh: '一杯（阳性不定冠词）' },
+      { t: 'café,', r: 'nom', zh: '咖啡（阳性）' },
+      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您' }
+    ]
+  },
+  {
+    id: 83,
+    cat: '天气',
+    emoji: '☀️',
+    fr: 'Il fait beau aujourd\'hui.',
+    zh: '今天天气很好。',
+    structure: '无人称主语 + fait（faire）+ 形容词 + 时间副词',
+    note: '谈天气一律用无人称 il fait...：beau 好 / chaud 热 / froid 冷 / du vent 有风。Aujourd\'hui（今天）是超高频副词。',
+    words: [
+      { t: 'Il', r: 'sujet', zh: '它（无人称主语）' },
+      { t: 'fait', r: 'verbe', zh: '做（faire 变位，此处表天气）' },
+      { t: 'beau', r: 'adjectif', zh: '好的（beau 的阳性形）' },
+      { t: 'aujourd\'hui.', r: 'temps', zh: '今天' }
+    ]
+  },
+  {
+    id: 84,
+    cat: '天气',
+    emoji: '🌧️',
+    fr: 'Il pleut beaucoup en automne.',
+    zh: '秋天经常下雨。',
+    structure: '无人称主语 + pleuvoir 变位 + 副词 + 季节',
+    note: 'il pleut（在下雨）是 pleuvoir 的第三人称单数变位，只有这一种常用形式。季节前用 en：en automne、en été。',
+    words: [
+      { t: 'Il', r: 'sujet', zh: '它（无人称）' },
+      { t: 'pleut', r: 'verbe', zh: '下雨（pleuvoir 变位）' },
+      { t: 'beaucoup', r: 'adverbe', zh: '很多，非常' },
+      { t: 'en automne.', r: 'temps', zh: '在秋天' }
+    ]
+  },
+  {
+    id: 85,
+    cat: '时间',
+    emoji: '⏰',
+    fr: 'Quelle heure est-il ?',
+    zh: '现在几点了？',
+    structure: '疑问词 + 名词 + 倒装疑问（est-il）',
+    note: '问时间的固定句式，倒装语序显得正式。口语里更常直接说 Il est quelle heure ?（几点啦？）',
+    words: [
+      { t: 'Quelle', r: 'interrogation', zh: '哪一（阴性，配 heure）' },
+      { t: 'heure', r: 'nom', zh: '小时；钟点（阴性）' },
+      { t: 'est-il ?', r: 'verbe', zh: '是……吗（倒装）' }
+    ]
+  },
+  {
+    id: 86,
+    cat: '时间',
+    emoji: '🕗',
+    fr: 'Il est huit heures.',
+    zh: '现在是八点。',
+    structure: '无人称 il est + 数字 + heures',
+    note: '报时间用 il est...：il est huit heures（八点）、huit heures et demie（八点半）、huit heures et quart（八点一刻）。中午十二点后用 il est huit heures du soir（晚上八点）。',
+    words: [
+      { t: 'Il est', r: 'verbe', zh: '现在是（无人称）' },
+      { t: 'huit', r: 'numeral', zh: '八' },
+      { t: 'heures.', r: 'nom', zh: '小时（复数）' }
+    ]
+  },
+  {
+    id: 87,
+    cat: '时间',
+    emoji: '📅',
+    fr: 'On est lundi aujourd\'hui.',
+    zh: '今天是星期一。',
+    structure: 'on（泛指主语）+ est + 星期名词 + 时间副词',
+    note: '说周几用 on est + 星期，也可以说 Aujourd\'hui, c\'est lundi。法语星期不大写，日子从周一开始数。',
+    words: [
+      { t: 'On est', r: 'verbe', zh: '今天是（on 泛指我们）' },
+      { t: 'lundi', r: 'nom', zh: '星期一（不大写）' },
+      { t: 'aujourd\'hui.', r: 'temps', zh: '今天' }
+    ]
+  },
+  {
+    id: 88,
+    cat: '方位',
+    emoji: '🚉',
+    fr: 'Où est la gare, s\'il vous plaît ?',
+    zh: '请问火车站在哪里？',
+    structure: '疑问副词 où + est + 名词 + 礼貌插入语',
+    note: '问路的万能开头：Où est... ?（……在哪里？）。加上 s\'il vous plaît 更礼貌。la gare 是火车站，l\'arrêt de bus 是公交站。',
+    words: [
+      { t: 'Où', r: 'interrogation', zh: '哪里（带音符）' },
+      { t: 'est', r: 'verbe', zh: '是，在' },
+      { t: 'la gare,', r: 'nom', zh: '火车站（阴性）' },
+      { t: 's\'il vous plaît ?', r: 'politesse', zh: '请问（敬语）' }
+    ]
+  },
+  {
+    id: 89,
+    cat: '方位',
+    emoji: '➡️',
+    fr: 'Tournez à droite ici.',
+    zh: '在这里右转。',
+    structure: '命令式（tourner）+ 方位短语 + 地点副词',
+    note: '命令式去掉主语：Tournez à droite 右转 / Tournez à gauche 左转 / Tout droit 直走。导路人最常说的三个短语。',
+    words: [
+      { t: 'Tournez', r: 'verbe', zh: '转（命令式，礼貌）' },
+      { t: 'à droite', r: 'direction', zh: '向右' },
+      { t: 'ici.', r: 'lieu', zh: '在这里' }
+    ]
+  },
+  {
+    id: 90,
+    cat: '购物',
+    emoji: '🛒',
+    fr: 'Je voudrais acheter ce livre.',
+    zh: '我想买这本书。',
+    structure: '主语 + voudrais + 动词不定式 + 指示形容词 + 名词',
+    note: 'voudrais + 动词原形表示委婉的意愿。ce（这个）是阳性指示形容词，阴性是 cette（cette pomme 这个苹果）。',
+    words: [
+      { t: 'Je', r: 'sujet', zh: '我' },
+      { t: 'voudrais', r: 'verbe', zh: '想要（委婉）' },
+      { t: 'acheter', r: 'verbe', zh: '买（动词原形）' },
+      { t: 'ce livre.', r: 'nom', zh: '这本书（阳性）' }
+    ]
+  },
+  {
+    id: 91,
+    cat: '购物',
+    emoji: '💳',
+    fr: 'Je peux payer par carte ?',
+    zh: '可以刷卡吗？',
+    structure: '主语 + pouvoir + 动词原形 + 支付方式（语调疑问）',
+    note: '语调上扬就是疑问句，口语最常用。cash 是 espèces：Je peux payer en espèces ?（可以付现金吗？）',
+    words: [
+      { t: 'Je', r: 'sujet', zh: '我' },
+      { t: 'peux', r: 'verbe', zh: '能，可以（pouvoir 变位）' },
+      { t: 'payer', r: 'verbe', zh: '支付（动词原形）' },
+      { t: 'par carte ?', r: 'manière', zh: '用卡（刷卡）' }
+    ]
+  },
+  {
+    id: 92,
+    cat: '家庭',
+    emoji: '👨‍👩‍👧',
+    fr: 'J\'ai un frère et une sœur.',
+    zh: '我有一个兄弟和一个姐妹。',
+    structure: '主语 + avoir + 数量冠词 + 名词并列（et）',
+    note: '介绍家庭成员用 avoir（有）：J\'ai deux frères（我有两个兄弟，注意复数）。frère 是兄弟，sœur 是姐妹。',
+    words: [
+      { t: 'J\'ai', r: 'verbe', zh: '我有（avoir 变位）' },
+      { t: 'un frère', r: 'nom', zh: '一个兄弟（阳性）' },
+      { t: 'et', r: 'conjonction', zh: '和' },
+      { t: 'une sœur.', r: 'nom', zh: '一个姐妹（阴性）' }
+    ]
+  },
+  {
+    id: 93,
+    cat: '家庭',
+    emoji: '👵',
+    fr: 'Ma grand-mère est très gentille.',
+    zh: '我的奶奶（外婆）很和蔼。',
+    structure: '主有形容词 + 名词 + 系动词 + 副词 + 形容词（阴性）',
+    note: 'grand-mère 阴性所以用 ma，形容词也要阴性 gentille。阳性：Mon grand-père est très gentil（我的爷爷很和蔼）。',
+    words: [
+      { t: 'Ma', r: 'adjectif', zh: '我的（阴性主有词）' },
+      { t: 'grand-mère', r: 'nom', zh: '奶奶/外婆（阴性）' },
+      { t: 'est', r: 'verbe', zh: '是' },
+      { t: 'très gentille.', r: 'adjectif', zh: '很和蔼（阴性形）' }
+    ]
+  },
+  {
+    id: 94,
+    cat: '喜好',
+    emoji: '🎵',
+    fr: 'J\'adore écouter de la musique.',
+    zh: '我特别喜欢听音乐。',
+    structure: '主语 + aimer/adorer + 动词不定式 + 部分冠词 + 名词',
+    note: 'adorer 比 aimer 程度更强。喜欢做某事：adorer/aimer + 动词原形。écouter 后接部分冠词 de la（一些，阴性）。',
+    words: [
+      { t: 'J\'adore', r: 'verbe', zh: '我酷爱（adorer 变位）' },
+      { t: 'écouter', r: 'verbe', zh: '听（动词原形）' },
+      { t: 'de la musique.', r: 'nom', zh: '音乐（部分冠词 + 阴性）' }
+    ]
+  },
+  {
+    id: 95,
+    cat: '喜好',
+    emoji: '⚽',
+    fr: 'Je joue au football le week-end.',
+    zh: '我周末踢足球。',
+    structure: '主语 + jouer à（缩合 au）+ 运动 + 定冠词表时间',
+    note: '玩球类用 jouer au + 阳性名词（au foot / au basket），乐器用 jouer du piano。le week-end 里的 le 表示「每逢」。',
+    words: [
+      { t: 'Je joue', r: 'verbe', zh: '我玩/打（jouer 变位）' },
+      { t: 'au football,', r: 'nom', zh: '足球（à + le 缩合成 au）' },
+      { t: 'le week-end.', r: 'temps', zh: '每逢周末' }
+    ]
+  },
+  {
+    id: 96,
+    cat: '否定',
+    emoji: '🚫',
+    fr: 'Je n\'aime pas le froid.',
+    zh: '我不喜欢冷天。',
+    structure: 'ne + 动词 + pas（否定夹心）+ 定冠词表泛指',
+    note: '法语否定是 ne...pas 一对括号夹住动词。泛指一类事物用定冠词：le froid（寒冷这种东西）。也可以说 Je n\'aime pas l\'hiver（我不喜欢冬天）。',
+    words: [
+      { t: 'Je', r: 'sujet', zh: '我' },
+      { t: 'n\'aime', r: 'verbe', zh: '不喜欢（ne + aime 缩合）' },
+      { t: 'pas', r: 'négation', zh: '不（否定后半）' },
+      { t: 'le froid.', r: 'nom', zh: '寒冷，冷天' }
+    ]
+  },
+  {
+    id: 97,
+    cat: '存在',
+    emoji: '🏙️',
+    fr: 'Il y a beaucoup de touristes ici.',
+    zh: '这里有很多游客。',
+    structure: 'il y a（有）+ 数量副词 + de + 复数名词 + 地点副词',
+    note: 'il y a 表示「有/存在着」，万能开头。数量多时复数名词前加 de：beaucoup de（很多）、un peu de（一点）、trop de（太多）。',
+    words: [
+      { t: 'Il y a', r: 'verbe', zh: '有（无人称存在句）' },
+      { t: 'beaucoup de', r: 'adverbe', zh: '很多的（后接 de）' },
+      { t: 'touristes', r: 'nom', zh: '游客（复数）' },
+      { t: 'ici.', r: 'lieu', zh: '在这里' }
+    ]
+  },
+  {
+    id: 98,
+    cat: '约定',
+    emoji: '📆',
+    fr: 'On se voit samedi ?',
+    zh: '我们周六见面？',
+    structure: 'on + 相互代词 se + voir + 星期（语调疑问）',
+    note: '约人的超实用短句。更完整：On se voit samedi matin ?（周六上午见？）。回答 OK, à samedi !（好，周六见！）',
+    words: [
+      { t: 'On', r: 'sujet', zh: '我们（口语泛指）' },
+      { t: 'se voit', r: 'verbe', zh: '见面（相互 voir）' },
+      { t: 'samedi ?', r: 'temps', zh: '周六（语调上扬表疑问）' }
     ]
   }
 ];
