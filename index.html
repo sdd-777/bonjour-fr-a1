@@ -61,6 +61,7 @@
       <button class="nav-btn" data-view="build">🧩 造句</button>
       <button class="nav-btn" data-view="read">🎧 朗读</button>
       <button class="nav-btn" data-view="words">📖 单词</button>
+      <button class="nav-btn" data-view="games">🎮 游戏</button>
       <button class="nav-btn" data-view="videos">🎬 视频</button>
     </nav>
   </div>
@@ -156,6 +157,12 @@
         <h3>单词小图鉴</h3>
         <p>国家国旗与国籍、职业阴阳性、生活用品、法语数字，附音标拆解</p>
         <span class="menu-tag">📞 电话听写游戏</span>
+      </button>
+      <button class="menu-card" id="card-games">
+        <div class="menu-icon icon-games">🎮</div>
+        <h3>游戏乐园</h3>
+        <p>介词方位选一选：看房间插画选对介词；家庭关系对对碰：随机 Moi 输称谓</p>
+        <span class="menu-tag">📍 介词 · 👨‍👩‍👧 家族树</span>
       </button>
       <button class="menu-card" id="card-videos">
         <div class="menu-icon icon-videos">🎬</div>
@@ -343,6 +350,69 @@
     </div>
   </section>
 
+  <!-- ===== 游戏乐园 ===== -->
+  <section id="view-games" class="view" hidden>
+    <div class="view-head">
+      <h2>🎮 游戏乐园</h2>
+      <p>两个关卡：📍 介词方位——看房间插画，选出正确的方位介词；👨‍👩‍👧 家庭关系——随机 Moi 推理称谓，打字作答</p>
+    </div>
+    <div class="word-tabs" id="game-tabs" role="tablist" aria-label="游戏选择"></div>
+
+    <!-- 介词方位 -->
+    <div id="game-prep" hidden>
+      <div class="card learn-card" id="prep-learn"></div>
+      <div class="card game-card">
+        <div class="game-head">
+          <h3>🏠 方位判官：选介词</h3>
+          <p>看图找一找：<b>题目里的两样东西</b>在图中会闪光 ✨，判断它们的位置关系，从 4 个介词里选出正确的那个。</p>
+        </div>
+        <div class="game-stats">
+          <span>已答 <b id="pg-round">0</b> 题</span>
+          <span>连对 <b id="pg-streak">0</b></span>
+          <span>最佳连对 <b id="pg-best">0</b></span>
+          <span>正确率 <b id="pg-acc">—</b></span>
+        </div>
+        <div class="scene-box" id="prep-scene"></div>
+        <div class="prep-q" id="prep-q" aria-live="polite"></div>
+        <div class="prep-opts" id="prep-opts"></div>
+        <div class="prep-result" id="prep-result" hidden></div>
+        <div class="btn-row">
+          <button class="btn btn-slow" id="pg-listen">🔊 听这句话</button>
+          <button class="btn btn-primary" id="pg-new">🎲 换一题（换场景）</button>
+          <button class="btn btn-ghost" id="pg-same">🔄 同场景换一题</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 家庭关系 -->
+    <div id="game-family" hidden>
+      <div class="card learn-card" id="family-learn"></div>
+      <div class="card game-card">
+        <div class="game-head">
+          <h3>👨‍👩‍👧 家庭关系对对碰</h3>
+          <p>每轮随机指定一个 <b>Moi</b>（家族树上标了 Moi !），看 ❓ 标记的人是谁，<b>打字</b>输入法语称谓后回车。</p>
+        </div>
+        <div class="game-stats">
+          <span>已答 <b id="fg-round">0</b> 题</span>
+          <span>连对 <b id="fg-streak">0</b></span>
+          <span>最佳连对 <b id="fg-best">0</b></span>
+          <span>正确率 <b id="fg-acc">—</b></span>
+        </div>
+        <div id="fg-tree"></div>
+        <div class="fg-q" id="fg-q" aria-live="polite"></div>
+        <div class="fg-input-row">
+          <input type="text" id="fg-input" class="fg-input" placeholder="输入法语称谓，如：oncle" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="btn btn-primary" id="fg-check">✅ 就是 TA</button>
+        </div>
+        <div class="fg-result" id="fg-result" hidden></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="fg-new">🎲 下一位（随机 Moi）</button>
+          <button class="btn btn-ghost" id="fg-reveal">👀 看答案</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== 视频 ===== -->
   <section id="view-videos" class="view" hidden>
     <div class="view-head">
@@ -375,6 +445,8 @@
 <script src="assets/js/verbs-data.js"></script>
 <script src="assets/js/videos-data.js"></script>
 <script src="assets/js/videos.js"></script>
+<script src="assets/js/games-data.js"></script>
+<script src="assets/js/games.js"></script>
 <script src="assets/js/words.js"></script>
 </body>
 </html>

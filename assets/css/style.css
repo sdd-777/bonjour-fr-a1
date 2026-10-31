@@ -1115,3 +1115,125 @@ main{
   border-radius: 10px; padding: .45rem .65rem;
 }
 .vc-fallback b{ color: var(--amber-deep); }
+
+/* =========================================================
+   游戏乐园（介词方位 + 家庭关系）
+   ========================================================= */
+.icon-games{ background: linear-gradient(135deg, #E3EFDA, #C9E3B4); }
+
+.learn-card{ margin-bottom: 1rem; }
+.learn-title{ margin: 0 0 .4rem; color: var(--ink); font-size: 1.15rem; }
+.learn-title small{ font-size: .8rem; color: #A08862; font-weight: 600; }
+.learn-tip{ margin: .35rem 0 .75rem; font-size: .86rem; color: #8A6B3F; line-height: 1.65; }
+
+/* —— 介词总表 —— */
+.prep-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .7rem; }
+.prep-item{
+  position: relative; background: #FFFDF6; border: 2px solid var(--line);
+  border-radius: var(--radius-sm); padding: .6rem .6rem .55rem; text-align: center;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.prep-item:hover{ transform: translateY(-3px); box-shadow: 0 6px 16px rgba(107, 79, 53, .12); }
+.prep-ic{ width: 84px; height: 58px; display: block; margin: 0 auto .25rem; }
+.prep-fr{ font-size: 1.02rem; font-weight: 800; color: #8E5B8E; }
+.prep-zh{ font-size: .82rem; color: #6B4F35; margin-top: .15rem; }
+.prep-ex{ margin: .4rem 0 .1rem; font-size: .76rem; color: #A08862; line-height: 1.5; font-style: italic; }
+.prep-ex-btn{ position: absolute; top: .4rem; right: .4rem; padding: .12rem .4rem; font-size: .85rem; }
+
+/* —— 场景与题面 —— */
+.scene-box{
+  background: #FFFDF6; border: 2.5px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: .8rem;
+}
+.scene-svg svg{ display: block; width: 100%; height: auto; max-height: 460px; }
+.scene-label{ margin: 0; padding: .45rem .8rem; font-size: .82rem; color: #A08862; background: #FFF6E3; border-top: 1.5px dashed var(--line); }
+.scene-svg .gobj{ cursor: pointer; }
+.scene-svg .gobj:hover{ opacity: .82; }
+.scene-svg .gobj.flash{ animation: objPulse 1.1s ease-in-out infinite; }
+@keyframes objPulse{
+  0%, 100%{ filter: drop-shadow(0 0 2px rgba(242, 193, 78, .8)); }
+  50%{ filter: drop-shadow(0 0 9px rgba(226, 87, 76, .95)); }
+}
+
+.game-stats{
+  display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; margin: .2rem 0 .8rem;
+  font-size: .85rem; color: #8A6B3F;
+}
+.game-stats b{ color: var(--ink); }
+
+.prep-q{ text-align: center; margin: .2rem 0 .8rem; }
+.prep-q-fr{ font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: .2rem 0 .3rem; }
+.q-gap{
+  display: inline-block; min-width: 130px; padding: 0 .45rem;
+  border-bottom: 3px solid var(--rose-soft); color: #C2547E; font-weight: 800;
+}
+.q-blank{
+  display: inline-block; min-width: 140px;
+  border-bottom: 3px solid var(--rose-soft); color: #C2547E; font-weight: 800;
+}
+.prep-q-zh{ font-size: .88rem; color: #8A6B3F; margin: .2rem 0; }
+
+.prep-opts{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; max-width: 640px; margin: 0 auto; }
+.prep-opt{
+  background: #FFFDF6; border: 2.5px solid var(--line); border-radius: var(--radius-sm);
+  padding: .55rem .4rem; cursor: pointer; text-align: center;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  font-family: inherit;
+}
+.prep-opt b{ display: block; font-size: 1rem; color: #8E5B8E; }
+.prep-opt small{ display: block; font-size: .74rem; color: #A08862; margin-top: .15rem; }
+.prep-opt:hover{ transform: translateY(-2px); border-color: var(--rose-soft); }
+.prep-opt.correct{ background: #EAF5E4; border-color: #7FA86B; }
+.prep-opt.correct b{ color: #4E7A38; }
+.prep-opt.wrong{ background: #FBE9E7; border-color: #E2574C; animation: shakeX .3s ease; }
+.prep-opt:disabled{ cursor: default; }
+@keyframes shakeX{ 0%,100%{ transform: translateX(0); } 25%{ transform: translateX(-4px); } 75%{ transform: translateX(4px); } }
+
+.prep-result, .fg-result{
+  margin: .8rem auto 0; max-width: 620px; text-align: center;
+  background: #FFF6E3; border: 1.5px dashed var(--amber-soft);
+  border-radius: var(--radius-sm); padding: .6rem .8rem;
+}
+.ok-msg{ margin: 0 0 .25rem; font-weight: 800; color: #4E7A38; }
+.no-msg{ margin: 0 0 .25rem; font-weight: 800; color: #C2547E; }
+.expl{ margin: 0; font-size: .86rem; color: #6B4F35; line-height: 1.65; }
+
+/* —— 家庭关系 —— */
+.family-tree-box{ background: #FFFDF6; border: 2px solid var(--line); border-radius: var(--radius-sm); padding: .5rem; margin-bottom: .8rem; }
+.family-tree-svg{ display: block; width: 100%; height: auto; }
+.tree-node{ cursor: pointer; }
+.tree-node:hover rect{ fill: #FFF3D9; }
+
+.fam-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .6rem; }
+.fam-item{
+  background: #FFFDF6; border: 2px solid #C9D8F0; border-radius: var(--radius-sm); padding: .5rem .7rem;
+}
+.fam-item.is-f{ border-color: #F0C9D8; }
+.fam-fr{ font-size: .95rem; color: #8A8A85; }
+.fam-fr b{ color: #4E7A9E; font-size: 1.05rem; }
+.fam-item.is-f .fam-fr b{ color: #C2547E; }
+.fam-zh{ font-size: .84rem; font-weight: 700; color: var(--ink); margin: .1rem 0 .2rem; }
+.fam-ex{ margin: 0; font-size: .76rem; color: #A08862; line-height: 1.55; }
+
+.fg-q{ text-align: center; margin: .2rem 0 .8rem; }
+.fg-role{ font-size: .92rem; color: #8A6B3F; margin: .2rem 0 .35rem; }
+.fg-role b{ color: #D9A21B; }
+.fg-q-fr{ font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: .2rem 0 .3rem; }
+.fg-q-fr .q-gap{ min-width: auto; }
+.fg-q-zh{ font-size: .88rem; color: #8A6B3F; margin: .2rem 0; }
+.fg-input-row{ display: flex; gap: .6rem; justify-content: center; max-width: 480px; margin: 0 auto; }
+.fg-input{
+  flex: 1; min-width: 0; font-family: inherit; font-size: 1.05rem; font-weight: 700;
+  color: var(--ink); text-align: center;
+  background: #FFFDF6; border: 2.5px solid var(--line); border-radius: var(--radius-sm);
+  padding: .5rem .7rem; outline: none;
+}
+.fg-input:focus{ border-color: var(--rose-soft); box-shadow: 0 0 0 3px rgba(240, 183, 192, .35); }
+.fg-input:disabled{ opacity: .6; }
+
+@media (max-width: 640px){
+  .prep-q-fr, .fg-q-fr{ font-size: 1.15rem; }
+  .prep-grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .fam-grid{ grid-template-columns: 1fr; }
+  .fg-input-row{ flex-direction: column; }
+}
