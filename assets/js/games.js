@@ -12,6 +12,14 @@ function gNorm(s){
 }
 function gObj(scene, id){ return scene.objs[id]; }
 
+/* 点击场景物体时的预录音频名：assets/audio/words/obj-{slug}.mp3
+   slug = 「冠词+名词」去掉重音、空格与标点的小写形式（如 la fenêtre → obj-lafenetre） */
+function objAudioName(t){
+  return 'obj-' + String(t == null ? '' : t)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 /* 数据修补：objs 的键即 id，把 id 注入每个物品对象（gSubject/gWithPrep 依赖 obj.id），
    并记录场景画布尺寸，供渲染时包裹 <svg> 用 */
 if (typeof SCENES !== 'undefined'){
@@ -136,7 +144,12 @@ function prepNewRound(keepScene){
   box.querySelectorAll('.gobj').forEach(g => {
     g.addEventListener('click', () => {
       const o = gObj(sc, g.dataset.obj);
-      if (o) speakText((o.art === "l'" ? "l'" : o.art + ' ') + g.dataset.obj, 0.8);
+      if (!o) return;
+      const txt = (o.art === "l'" ? "l'" : o.art + ' ') + g.dataset.obj;
+      /* 优先播放预录音频（assets/audio/words/obj-{slug}.mp3），
+         文件缺失时自动回退浏览器语音合成 —— 保证任何设备点图都有声音 */
+      if (typeof playWordAudio === 'function') playWordAudio(objAudioName(txt), txt, null, false);
+      else speakText(txt, 0.8);
       highlightObjs([g.dataset.obj]);
     });
   });
