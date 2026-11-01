@@ -61,6 +61,7 @@
       <button class="nav-btn" data-view="build">🧩 造句</button>
       <button class="nav-btn" data-view="read">🎧 朗读</button>
       <button class="nav-btn" data-view="words">📖 单词</button>
+      <button class="nav-btn" data-view="textbook">📚 教材</button>
       <button class="nav-btn" data-view="games">🎮 游戏</button>
       <button class="nav-btn" data-view="videos">🎬 视频</button>
     </nav>
@@ -157,6 +158,12 @@
         <h3>单词小图鉴</h3>
         <p>国家国旗与国籍、职业阴阳性、生活用品、法语数字，附音标拆解</p>
         <span class="menu-tag">📞 电话听写游戏</span>
+      </button>
+      <button class="menu-card" id="card-textbook">
+        <div class="menu-icon icon-textbook">📚</div>
+        <h3>教材同步</h3>
+        <p>《你好！法语 1》逐课录入：课文朗读、单词表带发音、语法注释，按单元推进</p>
+        <span class="menu-tag">Unité 1 → Unité 2</span>
       </button>
       <button class="menu-card" id="card-games">
         <div class="menu-icon icon-games">🎮</div>
@@ -350,6 +357,16 @@
     </div>
   </section>
 
+  <!-- ===== 教材同步 ===== -->
+  <section id="view-textbook" class="view" hidden>
+    <div class="view-head">
+      <h2>📚 教材同步 ·《你好！法语 1》</h2>
+      <p>按课录入教材内容：📖 课文（逐句朗读 + 整课连播）、📗 单词表（全部带发音）、📐 语法注释。点左下角课次切换。</p>
+    </div>
+    <div id="tb-lessons"></div>
+    <div id="tb-detail"></div>
+  </section>
+
   <!-- ===== 游戏乐园 ===== -->
   <section id="view-games" class="view" hidden>
     <div class="view-head">
@@ -448,5 +465,7 @@
 <script src="assets/js/games-data.js" onerror="reloadScript(this)"></script>
 <script src="assets/js/games.js" onerror="reloadScript(this)"></script>
 <script src="assets/js/words.js"></script>
+<script src="assets/js/textbook-data.js" onerror="reloadScript(this)"></script>
+<script src="assets/js/textbook.js" onerror="reloadScript(this)"></script>
 </body>
 </html>

@@ -86,11 +86,14 @@ function formRow(tagCls, tagText, fr, parts, name, zhInline){
 const WAUDIO_BASE = 'assets/audio/words';
 const VERB_AUDIO_BASE = 'assets/audio/verbs';
 const IPA_AUDIO_BASE = 'assets/audio/ipa';
-/* vb- 前缀的音频（动词变位）放在 verbs/ 子目录；ipa- 前缀（音标示范音）放在 ipa/ */
+const TB_AUDIO_BASE = 'assets/audio/textbook';
+/* vb- 前缀的音频（动词变位）放在 verbs/ 子目录；ipa- 前缀（音标示范音）放在 ipa/；
+   tb- 前缀（教材课文/单词）放在 textbook/ */
 function wAudioBase(name){
   const n = String(name);
   if (n.indexOf('vb-') === 0) return VERB_AUDIO_BASE;
   if (n.indexOf('ipa-') === 0) return IPA_AUDIO_BASE;
+  if (n.indexOf('tb-') === 0) return TB_AUDIO_BASE;
   return WAUDIO_BASE;
 }
 let wMedia = null;   /* 当前播放的 <audio> */

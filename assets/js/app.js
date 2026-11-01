@@ -95,6 +95,7 @@ function reloadScript(el, attempt){
     try{
       if (typeof initVideos === 'function' && $('#video-tabs') && !$('#video-tabs .wtab')) initVideos();
       if (typeof initGames === 'function' && $('#game-tabs') && !$('#game-tabs .wtab')) initGames();
+      if (typeof initTextbook === 'function' && $('#tb-lessons') && !$('#tb-lessons .tb-unit')) initTextbook();
     }catch(e){}
   };
   s.onerror = function(){ setTimeout(function(){ reloadScript(el, attempt + 1); }, 800); };
@@ -108,6 +109,7 @@ function showView(name){
   abortShadow();
   if (typeof stopVideoPlayers === 'function') stopVideoPlayers();
   if (typeof stopGames === 'function') stopGames();
+  if (typeof stopTbSeq === 'function') stopTbSeq();
   if (name === 'games' && typeof ensureGames === 'function') ensureGames();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -978,12 +980,17 @@ function init(){
   /* 游戏乐园 */
   if (typeof initGames === 'function') initGames();
 
+  /* 教材同步 */
+  if (typeof initTextbook === 'function') initTextbook();
+
   /* 导航 */
   $$('.nav-btn').forEach(b => { b.onclick = () => showView(b.dataset.view); });
   $('#card-build').onclick = () => openBuild(Math.min(state.build.idx, SENTENCES.length - 1));
   $('#card-read').onclick  = () => openRead(Math.min(state.read.idx, SENTENCES.length - 1));
   const cardGames = $('#card-games');
   if (cardGames) cardGames.onclick = () => showView('games');
+  const cardTextbook = $('#card-textbook');
+  if (cardTextbook) cardTextbook.onclick = () => showView('textbook');
 
   /* 造句 */
   $('#btn-check').onclick = checkBuild;
