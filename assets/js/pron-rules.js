@@ -160,7 +160,62 @@ const PRON_SPECIAL = [
   { w: "Monsieur", ipa: "[mə.sjø]", note: "（重复提醒）这是 A1 最早遇到、也最容易读错的词，务必单独练。" }
 ];
 
+/* =========================================================
+   🔊 每个规则的「音标示范音」
+   点规则卡上的小喇叭，就朗读这个音最纯净的示范词（预录 pron-{id}.mp3）。
+   例如 in→[ɛ̃]、an→[ɑ̃]、é→[e]，nose 类词直接读，靠它把抽象的方括号和真实声音连起来。
+   ========================================================= */
+const PRON_SOUND = {
+  nasal_in: "in",       nasal_an: "an",       nasal_on: "on",       nasal_un: "un",
+  ai: "est",            eau: "eau",           ou: "ou",             oi: "moi",
+  eu: "eux",            ui: "nuit",           er: "é",              tion: "nation",
+  e_acute: "é",         e_grave: "è",         e_muet: "le",         u_hat: "û",
+  o_hat: "ô",           trema: "naïf",        ch: "chat",           gn: "gnon",
+  qu: "qui",            ph: "photo",          th: "thé",            c_doux: "ça",
+  c_ei: "ce",           g_ei: "je",           s_z: "rose",          ill: "famille",
+  r: "roue",            silent_final: "Paris"
+};
+
+/* =========================================================
+   🎯 发音小练习：看单词 → 选正确音标（3-4 个易混选项）
+   每条规则至少覆盖一题；distractors 选「长得像 / 容易错选」的读法。
+   ========================================================= */
+const PRON_QUIZ = [
+  { w: "vin",        ipa: "[vɛ̃]",       rule: "nasal_in", dis: ["[vɑ̃]", "[vɔ̃]", "[vɛn]"] },
+  { w: "temps",      ipa: "[tɑ̃]",       rule: "nasal_an", dis: ["[tɛ̃]", "[tɔ̃]", "[tan]"] },
+  { w: "bon",        ipa: "[bɔ̃]",       rule: "nasal_on", dis: ["[bɔn]", "[bɑ̃]", "[bɔ]"] },
+  { w: "un",         ipa: "[œ̃]",        rule: "nasal_un", dis: ["[ɔ̃]", "[ɛ̃]", "[œ]"] },
+  { w: "neige",      ipa: "[nɛʒ]",      rule: "ai",       dis: ["[neʒ]", "[nɛz]", "[naʒ]"] },
+  { w: "eau",        ipa: "[o]",        rule: "eau",      dis: ["[ɔ]", "[u]", "[ə]"] },
+  { w: "nous",       ipa: "[nu]",       rule: "ou",       dis: ["[no]", "[ny]", "[nɔ]"] },
+  { w: "trois",      ipa: "[tʁwa]",     rule: "oi",       dis: ["[tʁwɛ]", "[tʁɔi]", "[tʁa]"] },
+  { w: "neuf",       ipa: "[nœf]",      rule: "eu",       dis: ["[nøf]", "[nyf]", "[nof]"] },
+  { w: "nuit",       ipa: "[nɥi]",      rule: "ui",       dis: ["[nwi]", "[ni]", "[nyi]"] },
+  { w: "parler",     ipa: "[paʁ.le]",   rule: "er",       dis: ["[paʁ.lɛ]", "[paʁ.lə]", "[paʁ]"] },
+  { w: "nation",     ipa: "[na.sjɔ̃]",   rule: "tion",     dis: ["[na.sjɔn]", "[na.zjɔ̃]", "[na.sjə]"] },
+  { w: "café",       ipa: "[ka.fe]",    rule: "e_acute",  dis: ["[ka.fɛ]", "[ka.fø]", "[ka.fɑ]"] },
+  { w: "mère",       ipa: "[mɛʁ]",      rule: "e_grave",  dis: ["[mer]", "[mar]", "[məʁ]"] },
+  { w: "le",         ipa: "[lə]",       rule: "e_muet",   dis: ["[le]", "[lø]", "[li]"] },
+  { w: "sûr",        ipa: "[syʁ]",      rule: "u_hat",    dis: ["[suʁ]", "[siʁ]", "[sœʁ]"] },
+  { w: "hôtel",      ipa: "[o.tɛl]",    rule: "o_hat",    dis: ["[ɔ.tɛl]", "[u.tɛl]", "[ø.tɛl]"] },
+  { w: "naïf",       ipa: "[na.if]",    rule: "trema",    dis: ["[nɛf]", "[najf]", "[ne.if]"] },
+  { w: "chat",       ipa: "[ʃa]",       rule: "ch",       dis: ["[tʃa]", "[sa]", "[ka]"] },
+  { w: "montagne",   ipa: "[mɔ̃.taɲ]",  rule: "gn",       dis: ["[mɔ̃.tan]", "[mɔ̃.taɡ]", "[mɔ̃.tajn]"] },
+  { w: "qui",        ipa: "[ki]",       rule: "qu",       dis: ["[kwi]", "[kɥi]", "[si]"] },
+  { w: "photo",      ipa: "[fɔ.to]",    rule: "ph",       dis: ["[pɔ.to]", "[fɔ.tɔ]", "[fo.to]"] },
+  { w: "thé",        ipa: "[te]",       rule: "th",       dis: ["[θe]", "[se]", "[de]"] },
+  { w: "français",   ipa: "[fʁɑ̃.sɛ]",  rule: "c_doux",   dis: ["[fʁɑ̃.ke]", "[fʁɑ̃.ʃɛ]", "[fʁɑ̃.kɛ]"] },
+  { w: "merci",      ipa: "[mɛʁ.si]",   rule: "c_ei",     dis: ["[mɛʁ.ki]", "[mɛʁ.ʃi]", "[mɛʁ.zi]"] },
+  { w: "manger",     ipa: "[mɑ̃.ʒe]",    rule: "g_ei",     dis: ["[mɑ̃.ɡe]", "[mɑ̃.ʃe]", "[mɑ̃.de]"] },
+  { w: "rose",       ipa: "[ʁoz]",      rule: "s_z",      dis: ["[ʁos]", "[ʁɔz]", "[ʁɔs]"] },
+  { w: "famille",    ipa: "[fa.mij]",   rule: "ill",      dis: ["[fa.mil]", "[fa.mi]", "[famij]"] },
+  { w: "Paris",      ipa: "[pa.ʁi]",    rule: "r",        dis: ["[pa.ri]", "[pa.li]", "[pa.ɣi]"] },
+  { w: "tard",       ipa: "[taʁ]",      rule: "silent_final", dis: ["[taʁd]", "[taʁt]", "[taʁs]"] }
+];
+
 if (typeof window !== "undefined"){
   window.__PRON_RULES = PRON_RULES;
   window.__PRON_SPECIAL = PRON_SPECIAL;
+  window.__PRON_SOUND = PRON_SOUND;
+  window.__PRON_QUIZ = PRON_QUIZ;
 }

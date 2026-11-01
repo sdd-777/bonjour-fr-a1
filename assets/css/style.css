@@ -1246,3 +1246,50 @@ main{
 }
 .prep-ex-play{ cursor: pointer; border-radius: 6px; transition: background .15s ease; }
 .prep-ex-play:hover{ background: #FFF3D9; }
+
+/* —— 发音规则卡：右上角小喇叭 🔊 —— */
+.rule-card .wc-head{ display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.rule-sound{
+  flex: 0 0 auto;
+  border: none; cursor: pointer;
+  font-size: 1rem; line-height: 1;
+  background: var(--amber-soft, #FBEBC8);
+  color: var(--amber-deep, #B5791E);
+  border-radius: 999px; padding: .3rem .55rem;
+  box-shadow: 0 2px 0 rgba(107,79,53,.18);
+  transition: transform .12s ease, background .15s ease;
+}
+.rule-sound:hover{ background: #F7D9A8; }
+.rule-sound:active{ transform: scale(.92); }
+.rule-sound.playing{ background: var(--amber-deep, #B5791E); color: #fff; }
+
+/* —— 🎯 发音小练习 —— */
+.pron-quiz-card{ border-color: var(--blue-soft); }
+.quiz-progress{ font-size: .85rem; color: var(--ink-soft); margin-bottom: .5rem; }
+.quiz-progress b{ color: var(--rose-deep, #C25B7C); }
+.quiz-q{ display: flex; align-items: center; gap: .8rem; margin: .2rem 0 .7rem; flex-wrap: wrap; }
+.quiz-word{
+  font-size: 1.7rem; font-weight: 800; color: var(--ink);
+  font-family: var(--font-fr, 'Baloo 2', 'Caveat', cursive);
+}
+.quiz-hear{ font-size: .85rem; }
+.quiz-opts{ display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .5rem; }
+.quiz-opt{
+  border: 2px solid var(--blue-soft); background: #fff;
+  border-radius: 12px; padding: .7rem .5rem;
+  font-size: 1.15rem; font-weight: 700; color: var(--ink);
+  cursor: pointer; transition: all .15s ease; letter-spacing: .5px;
+}
+.quiz-opt:hover:not(:disabled){ background: var(--blue-soft); transform: translateY(-2px); }
+.quiz-opt.correct{ background: #D8F0DC; border-color: #4CAF72; color: #1f7a45; }
+.quiz-opt.wrong{ background: #FBDDE3; border-color: #E2768E; color: #B23A57; }
+.quiz-opt:disabled{ cursor: default; }
+.quiz-feedback{ margin-top: .8rem; border-top: 1px dashed #E7D7BE; padding-top: .7rem; }
+.quiz-fb-ok{ color: #1f7a45; font-weight: 700; margin: 0 0 .4rem; }
+.quiz-fb-bad{ color: #B23A57; font-weight: 700; margin: 0 0 .4rem; }
+.quiz-exp{ font-size: .9rem; line-height: 1.7; color: var(--ink-soft); }
+.quiz-exp .re-ex{ margin-top: .35rem; }
+.quiz-fb-actions{ display: flex; gap: .6rem; margin-top: .7rem; flex-wrap: wrap; }
+.quiz-done{ text-align: center; padding: 1rem .4rem; }
+.quiz-done-title{ font-size: 1.2rem; font-weight: 800; color: var(--rose-deep, #C25B7C); margin-bottom: .3rem; }
+.quiz-done-tip{ font-size: .88rem; color: var(--ink-soft); margin-bottom: .8rem; }

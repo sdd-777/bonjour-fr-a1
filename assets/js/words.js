@@ -626,16 +626,32 @@ function renderPron(){
   const head = document.createElement('div');
   head.className = 'qa-card';
   head.innerHTML = '<div class="qa-head"><h4>🔤 法语发音规则速查</h4>' +
-    '<p>单词卡上每个音标分段右上角有个「<b>？</b>」，点一下就会告诉你<b>这个字母组合为什么读这个音</b>。下面是完整规则表。</p></div>';
+    '<p>单词卡上每个音标分段右上角有个「<b>？</b>」，点一下就会告诉你<b>这个字母组合为什么读这个音</b>。下面是完整规则表，每张卡右上角的小喇叭 🔊 能直接听这个音的读法。</p></div>';
   grid.appendChild(head);
 
+  /* 🎯 发音小练习：先看单词选正确音标，再听音验证 */
+  const quizCard = document.createElement('div');
+  quizCard.className = 'qa-card pron-quiz-card';
+  quizCard.innerHTML =
+    '<div class="qa-head"><h4>🎯 发音小练习</h4>' +
+    '<p>给出一个单词，从下面几个<b>长得像、容易选错</b>的读音里挑出正确的音标。答完会立刻告诉你为什么，点 🔊 还能听这个音到底怎么读。覆盖了上面每一条发音规则。</p></div>' +
+    '<div id="pron-quiz"></div>';
+  grid.appendChild(quizCard);
+  initPronQuiz($('#pron-quiz'));
+
   PRON_RULES.forEach(r => {
+    const snd = (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[r.id];
+    const soundBtn = snd
+      ? '<button class="rule-sound" data-snd="' + esc(snd) + '" data-rule="' + esc(r.id) +
+        '" title="听这个音的读法">🔊</button>'
+      : '';
     const card = document.createElement('div');
     card.className = 'word-card rule-card';
     card.innerHTML =
       '<div class="wc-head"><div class="wc-title">' +
         '<span class="wc-zh">' + esc(r.title) + '</span>' +
         '<span class="wc-ipa">' + esc(r.ipa) + '</span>' +
+        soundBtn +
       '</div></div>' +
       '<p class="rule-desc">' + r.desc + '</p>' +
       '<div class="rule-ex">' + (r.ex || []).map(e =>
@@ -652,6 +668,96 @@ function renderPron(){
       '<span class="sp-ipa">' + esc(s.ipa) + '</span>' +
       '<span class="sp-note">' + esc(s.note) + '</span></div>').join('') + '</div>';
   grid.appendChild(sp);
+}
+
+/* =========================================================
+   五之四·二、🔊 音标卡发音 + 🎯 发音小练习
+   ========================================================= */
+function playRuleSound(ruleId, btn){
+  const snd = (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[ruleId];
+  if (!snd) return;
+  playWordAudio('pron-' + ruleId, snd, btn, false);
+}
+
+const PRON_QUIZ_STATE = { list: [], idx: 0, score: 0, total: 0, answered: false };
+function shuffleArr(a){
+  for (let i = a.length - 1; i > 0; i--){
+    const j = (Math.random() * (i + 1)) | 0;
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function initPronQuiz(box){
+  const src = (typeof PRON_QUIZ !== 'undefined' ? PRON_QUIZ : []).slice();
+  PRON_QUIZ_STATE.list = shuffleArr(src.slice());
+  PRON_QUIZ_STATE.idx = 0;
+  PRON_QUIZ_STATE.score = 0;
+  PRON_QUIZ_STATE.total = PRON_QUIZ_STATE.list.length;
+  renderPronQuiz(box);
+}
+function pronSndFor(ruleId){
+  return (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[ruleId] || '';
+}
+function renderPronQuiz(box){
+  if (!box) return;
+  const st = PRON_QUIZ_STATE;
+  if (st.idx >= st.list.length){
+    box.innerHTML =
+      '<div class="quiz-done">' +
+        '<p class="quiz-done-title">🎉 本轮 <b>' + st.score + '</b> / ' + st.total + ' 题答对！</p>' +
+        '<p class="quiz-done-tip">每一条发音规则都过了一遍，把答错的音多听几遍 🔊 效果更好。</p>' +
+        '<button class="btn btn-primary quiz-restart" type="button">🔁 再来一轮</button>' +
+      '</div>';
+    const b = box.querySelector('.quiz-restart');
+    if (b) b.onclick = () => initPronQuiz(box);
+    return;
+  }
+  const q = st.list[st.idx];
+  const opts = shuffleArr([q.ipa].concat(q.dis));
+  st.answered = false;
+  box.innerHTML =
+    '<div class="quiz-progress">第 <b>' + (st.idx + 1) + '</b> / ' + st.total + ' 题 · 已答对 <b>' + st.score + '</b></div>' +
+    '<div class="quiz-q">' +
+      '<span class="quiz-word">' + esc(q.w) + '</span>' +
+      '<button class="rule-sound quiz-hear" data-snd="' + esc(pronSndFor(q.rule)) + '" data-rule="' + esc(q.rule) + '" type="button" title="听这个音的读法">🔊 听发音</button>' +
+    '</div>' +
+    '<div class="quiz-opts">' + opts.map(o =>
+      '<button class="quiz-opt" type="button" data-ipa="' + esc(o) + '">' + esc(o) + '</button>').join('') +
+    '</div>' +
+    '<div class="quiz-feedback" hidden></div>';
+  box.querySelectorAll('.quiz-opt').forEach(btn => {
+    btn.onclick = () => {
+      if (st.answered) return;
+      st.answered = true;
+      const chosen = btn.dataset.ipa;
+      const correct = (chosen === q.ipa);
+      if (correct) st.score++;
+      box.querySelectorAll('.quiz-opt').forEach(b => {
+        if (b.dataset.ipa === q.ipa) b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+        b.disabled = true;
+      });
+      const r = (typeof PRON_RULES !== 'undefined' ? PRON_RULES : []).find(x => x.id === q.rule);
+      const fb = box.querySelector('.quiz-feedback');
+      fb.hidden = false;
+      fb.innerHTML =
+        (correct ? '<p class="quiz-fb-ok">✅ 答对啦！</p>' : '<p class="quiz-fb-bad">❌ 正确读音是 <b>' + esc(q.ipa) + '</b></p>') +
+        '<div class="quiz-exp"><b>' + esc(r ? r.title : q.rule) + '</b> —— ' + esc(r ? rulePlain(r) : '') +
+          (r && r.ex && r.ex.length ? '<div class="re-ex">例：' + r.ex.map(e =>
+            '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>' : '') +
+        '</div>' +
+        '<div class="quiz-fb-actions">' +
+          '<button class="btn btn-slow quiz-listen" type="button" data-snd="' + esc(pronSndFor(q.rule)) + '" data-rule="' + esc(q.rule) + '">🔊 听这个音</button>' +
+          '<button class="btn btn-primary quiz-next" type="button">' + (st.idx + 2 >= st.total ? '看成绩 →' : '下一题 →') + '</button>' +
+        '</div>';
+      const nb = fb.querySelector('.quiz-next');
+      if (nb) nb.onclick = () => { st.idx++; renderPronQuiz(box); };
+      const lb = fb.querySelector('.quiz-listen');
+      if (lb) lb.onclick = () => playRuleSound(q.rule, lb);
+    };
+  });
+  const hb = box.querySelector('.quiz-hear');
+  if (hb) hb.onclick = () => playRuleSound(q.rule, hb);
 }
 
 /* =========================================================
@@ -979,13 +1085,98 @@ function padKey(k){
   if (res) res.textContent = '';
 }
 
+/* 历史窗口：记下最近 10 个号码的「成对数字」，用来保证连续十次覆盖广、重复率低 */
+const PHONE_HIST_KEY = 'bonjour-fr-a1-phone-hist-v2';
+let phoneHist = [];
+function phoneHistLoad(){
+  try{
+    const r = JSON.parse(localStorage.getItem(PHONE_HIST_KEY) || '[]');
+    phoneHist = Array.isArray(r) ? r.slice(-10) : [];
+  }catch(e){ phoneHist = []; }
+  if (phoneHist.length > 10) phoneHist = phoneHist.slice(-10);
+}
+function phoneHistSave(){
+  try{ localStorage.setItem(PHONE_HIST_KEY, JSON.stringify(phoneHist)); }catch(e){}
+}
+
 function newPhoneNumber(){
   stopWordAudio();
-  /* 法国号码：0 开头 + 第二位 1-9 + 8 位随机，共 10 位 */
-  let d = [0, 1 + Math.floor(Math.random() * 9)];
-  for (let i = 0; i < 8; i++) d.push(Math.floor(Math.random() * 10));
-  phone.num = d.join('');
+  phoneHistLoad();
+  /* recent：最近 10 个号码用过的所有成对数字（0-99），用来避免重复 */
+  const recent = new Set();
+  phoneHist.forEach(g => g.forEach(v => recent.add(v)));
+  /* firsts：最近 10 个号码的首对（01-09 中 X 的值），用来尽量覆盖 01-09 */
+  const firsts = phoneHist.map(g => g[0]);
+
+  /* 1) 首对始终为 0X（X∈1-9）；优先挑窗口里还没出现过的值，确保连续十次尽量覆盖 01-09 */
+  let X;
+  {
+    const unused = [];
+    for (let i = 1; i <= 9; i++) if (firsts.indexOf(i) < 0) unused.push(i);
+    if (unused.length){
+      X = unused[(Math.random() * unused.length) | 0];
+    } else {
+      /* 9 个都用过了：挑「最近最少出现」的 X */
+      const cnt = {};
+      firsts.forEach(v => { cnt[v] = (cnt[v] || 0) + 1; });
+      let best = 1, bestScore = 1e9;
+      for (let i = 1; i <= 9; i++){
+        const s = cnt[i] || 0;
+        if (s < bestScore){ bestScore = s; best = i; }
+      }
+      X = best;
+    }
+  }
+
+  /* 2) 其余 4 对：范围锁定 11-99（用户要求覆盖 11-99；01-09 已由首对承担）。
+        本号码内部 5 个成对数字互不相同，杜绝「90 90」「06 06」这类重复。 */
+  const usedInNum = new Set([X]);
+  const pairs = [];
+  const pool = (zone, allowAll) => {
+    const lo = allowAll ? 0 : 11, hi = 99;
+    const out = [];
+    for (let v = lo; v <= hi; v++){
+      if (v === X) continue;            /* 不会等于首对（首对是 0X） */
+      if (usedInNum.has(v)) continue;   /* 本号码内部不重复 */
+      if (recent.has(v)) continue;      /* 最近 10 个号码里没出现过 → 重复率极低 */
+      if (zone && (v < zone[0] || v > zone[1])) continue;
+      out.push(v);
+    }
+    return out;
+  };
+  /* 2a) 优先保证「十几 / 五十几 / 六十几」每组在窗口里至少出现一次 */
+  [[11, 19], [50, 59], [60, 69]].forEach(z => {
+    const covered = [...recent].some(v => v >= z[0] && v <= z[1]);
+    if (!covered){
+      const p = pool(z, false);
+      if (p.length){
+        const v = p[(Math.random() * p.length) | 0];
+        pairs.push(v); usedInNum.add(v);
+      }
+    }
+  });
+  /* 2b) 填满剩余格子：优先用「没在最近 10 个号码里出现过的 11-99」 */
+  while (pairs.length < 4){
+    let p = pool(null, false);
+    if (!p.length) p = pool(null, true);   /* 极端兜底：放宽到 0-99 */
+    if (!p.length){ for (let v = 0; v < 100; v++) if (!usedInNum.has(v)) p.push(v); }
+    const v = p[(Math.random() * p.length) | 0];
+    pairs.push(v); usedInNum.add(v);
+  }
+  shuffleArr(pairs);
+
+  /* 3) 组装 10 位号码：首对 0X，其余 4 对两位两位拼上 */
+  const all = [X].concat(pairs);
+  const digits = [0, X];
+  all.slice(1).forEach(v => { digits.push((v / 10) | 0, v % 10); });
+  phone.num = digits.join('');
   phone.solved = false;
+
+  /* 4) 更新历史窗口（保留最近 10 个） */
+  phoneHist.push(all);
+  if (phoneHist.length > 10) phoneHist = phoneHist.slice(-10);
+  phoneHistSave();
+
   const disp = $('#phone-display');
   disp.textContent = '·· ·· ·· ·· ··';
   disp.classList.remove('revealed');
@@ -1132,6 +1323,7 @@ function initWords(){
   renderTabs();
   selectCat('countries');
   loadPhone();
+  phoneHistLoad();
   renderPhoneStats();
   renderPhoneInputs();
 
@@ -1140,6 +1332,13 @@ function initWords(){
     const btn = e.target.closest('.wc-play');
     if (!btn) return;
     playWordAudio(btn.dataset.a, btn.dataset.t, btn, btn.dataset.slow === '1');
+  });
+
+  /* 发音规则卡上的小喇叭 🔊：听这个音标的读法 */
+  $('#word-grid').addEventListener('click', e => {
+    const sb = e.target.closest('.rule-card .rule-sound');
+    if (!sb) return;
+    playRuleSound(sb.dataset.rule, sb);
   });
 
   /* 点击音标分段 → 展开「为什么这样读」的规则说明 */
