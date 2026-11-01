@@ -12,6 +12,15 @@ function gNorm(s){
 }
 function gObj(scene, id){ return scene.objs[id]; }
 
+/* 数据修补：objs 的键即 id，把 id 注入每个物品对象（gSubject/gWithPrep 依赖 obj.id），
+   并记录场景画布尺寸，供渲染时包裹 <svg> 用 */
+if (typeof SCENES !== 'undefined'){
+  SCENES.forEach(sc => {
+    Object.keys(sc.objs || {}).forEach(k => { sc.objs[k].id = k; });
+    if (!sc.viewBox) sc.viewBox = '0 0 640 400';
+  });
+}
+
 /* 介词 + 冠词 + 名词：à côté de + le canapé → à côté du canapé */
 function gWithPrep(prepFr, obj){
   const art = obj.art;
@@ -119,9 +128,10 @@ function prepNewRound(keepScene){
   const dis = shuffle(pool).slice(0, 3);
   prepGame.opts = shuffle([ans].concat(dis));
 
-  /* 渲染场景 */
+  /* 渲染场景（sc.svg 是裸图形元素，必须包上 <svg> 才能显示） */
   const box = $('#prep-scene');
-  box.innerHTML = '<div class="scene-svg">' + sc.svg + '</div>' +
+  box.innerHTML = '<div class="scene-svg"><svg viewBox="' + esc(sc.viewBox || '0 0 640 400') +
+    '" role="img" aria-label="房间场景图">' + sc.svg + '</svg></div>' +
     '<p class="scene-label">' + esc(sc.emoji + ' ' + sc.label) + ' · 点图里的东西可以听它的法语名字</p>';
   box.querySelectorAll('.gobj').forEach(g => {
     g.addEventListener('click', () => {
