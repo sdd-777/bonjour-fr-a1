@@ -1293,3 +1293,34 @@ main{
 .quiz-done{ text-align: center; padding: 1rem .4rem; }
 .quiz-done-title{ font-size: 1.2rem; font-weight: 800; color: var(--rose-deep, #C25B7C); margin-bottom: .3rem; }
 .quiz-done-tip{ font-size: .88rem; color: var(--ink-soft); margin-bottom: .8rem; }
+
+/* —— 发音规则：分组标题 —— */
+.pron-group-title{
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: .5rem;
+  margin: 1.1rem 0 .2rem; padding: .55rem .8rem;
+  background: var(--blue-soft, #EAF2FB);
+  border-left: 5px solid var(--blue-deep, #4A90D9);
+  border-radius: 10px;
+  font-size: 1.18rem; font-weight: 800; color: var(--ink);
+}
+.pg-icon{ font-size: 1.4rem; }
+.pg-count{ font-size: .82rem; font-weight: 600; color: var(--ink-soft); background: #fff; border-radius: 999px; padding: .1rem .6rem; }
+.pron-group-tip{ grid-column: 1 / -1; margin: 0 0 .4rem; padding: 0 .8rem; font-size: .85rem; color: var(--ink-soft); line-height: 1.6; }
+
+/* —— 音标卡：大号 IPA —— */
+.rule-card .wc-title{ align-items: center; gap: .6rem; flex-wrap: wrap; }
+.ipa-big{
+  font-family: var(--font-ipa, 'Cambria', 'Times New Roman', serif);
+  font-size: 1.7rem; font-weight: 800; line-height: 1;
+  color: var(--rose-deep, #C25B7C);
+  background: #FFF1F5; border: 1px solid #F3CFDB;
+  border-radius: 8px; padding: .15rem .5rem;
+  letter-spacing: .5px;
+}
+.rule-rows{ display: flex; flex-direction: column; gap: .35rem; margin-top: .5rem; }
+.rule-row{ display: grid; grid-template-columns: minmax(140px, 38%) 1fr; gap: .6rem; align-items: center; padding: .3rem .4rem; border-radius: 8px; }
+.rule-row:nth-child(odd){ background: #FBF7F0; }
+.rr-sp{ font-weight: 700; color: var(--ink); font-size: .92rem; }
+.rr-ex{ display: flex; flex-wrap: wrap; gap: .35rem; }
+.rule-chip i{ font-style: italic; color: var(--ink-soft); font-family: var(--font-ipa, 'Cambria', serif); }

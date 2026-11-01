@@ -35,6 +35,14 @@ function matchRule(t){
 function rulePlain(r){
   return String(r.desc || '').replace(/<[^>]+>/g, '');
 }
+/* 把一条规则的所有例词拍平成 rule-chip 串（适配新结构 r.rules[].ex） */
+function ruleExHTML(r){
+  if (!r) return '';
+  const arr = [];
+  (r.rules || []).forEach(rl => (rl.ex || []).forEach(e =>
+    arr.push('<span class="rule-chip"><b>' + esc(e.w) + '</b> <i>' + esc(e.ipa) + '</i></span>')));
+  return arr.join('');
+}
 
 function segsHTML(parts){
   return '<div class="wc-segs">' + parts.map(p => {
@@ -77,9 +85,13 @@ function formRow(tagCls, tagText, fr, parts, name, zhInline){
    ========================================================= */
 const WAUDIO_BASE = 'assets/audio/words';
 const VERB_AUDIO_BASE = 'assets/audio/verbs';
-/* vb- 前缀的音频（动词变位）放在 verbs/ 子目录 */
+const IPA_AUDIO_BASE = 'assets/audio/ipa';
+/* vb- 前缀的音频（动词变位）放在 verbs/ 子目录；ipa- 前缀（音标示范音）放在 ipa/ */
 function wAudioBase(name){
-  return String(name).indexOf('vb-') === 0 ? VERB_AUDIO_BASE : WAUDIO_BASE;
+  const n = String(name);
+  if (n.indexOf('vb-') === 0) return VERB_AUDIO_BASE;
+  if (n.indexOf('ipa-') === 0) return IPA_AUDIO_BASE;
+  return WAUDIO_BASE;
 }
 let wMedia = null;   /* 当前播放的 <audio> */
 let wToken = 0;      /* 播放令牌（防竞态） */
@@ -538,10 +550,7 @@ function toggleRuleExp(seg){
     div.innerHTML = '<b>这个组合没有通用规则</b>：属于特殊情况，跟着音频记住就好。';
   } else {
     div.innerHTML = '<b>' + esc(r.title) + '</b> —— ' + esc(rulePlain(r)) +
-      ((r.ex && r.ex.length)
-        ? '<div class="re-ex">例：' + r.ex.map(e =>
-            '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>'
-        : '');
+      (ruleExHTML(r) ? '<div class="re-ex">例：' + ruleExHTML(r) + '</div>' : '');
   }
   segs.insertAdjacentElement('afterend', div);
 }
@@ -620,13 +629,53 @@ function showCountryInfo(iso, pathEl){
 /* =========================================================
    五之四、🔤 发音规则（为什么这样读 + 不规则词）
    ========================================================= */
+function buildRuleCard(r){
+  const hasSound = !(typeof PRON_NOSOUND !== 'undefined' && PRON_NOSOUND[r.id]);
+  const soundBtn = hasSound
+    ? '<button class="rule-sound" data-rule="' + esc(r.id) + '" title="听这个音的读法（音素本音）">🔊</button>'
+    : '';
+  const card = document.createElement('div');
+  card.className = 'word-card rule-card';
+  card.innerHTML =
+    '<div class="wc-head"><div class="wc-title">' +
+      '<span class="ipa-big">' + esc(r.ipa) + '</span>' +
+      '<span class="wc-zh">' + esc(r.title) + '</span>' +
+      soundBtn +
+    '</div></div>' +
+    '<p class="rule-desc">' + r.desc + '</p>' +
+    '<div class="rule-rows">' + (r.rules || []).map(rl =>
+      '<div class="rule-row"><div class="rr-sp">' + esc(rl.sp) + '</div>' +
+      '<div class="rr-ex">' + rl.ex.map(e =>
+        '<span class="rule-chip"><b>' + esc(e.w) + '</b> <i>' + esc(e.ipa) + '</i></span>').join('') + '</div></div>'
+    ).join('') + '</div>';
+  return card;
+}
+
+function renderPronGroups(grid){
+  const GROUPS = (typeof PRON_GROUPS !== 'undefined' ? PRON_GROUPS : []);
+  GROUPS.forEach(g => {
+    const cards = PRON_RULES.filter(r => r.group === g.id);
+    if (!cards.length) return;
+    const gt = document.createElement('div');
+    gt.className = 'pron-group-title';
+    gt.innerHTML = '<span class="pg-icon">' + g.icon + '</span> ' + esc(g.label) +
+      ' <span class="pg-count">' + cards.length + ' 个音标</span>';
+    grid.appendChild(gt);
+    const tp = document.createElement('div');
+    tp.className = 'pron-group-tip';
+    tp.textContent = g.tip;
+    grid.appendChild(tp);
+    cards.forEach(r => grid.appendChild(buildRuleCard(r)));
+  });
+}
+
 function renderPron(){
   const grid = $('#word-grid');
   grid.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'qa-card';
-  head.innerHTML = '<div class="qa-head"><h4>🔤 法语发音规则速查</h4>' +
-    '<p>单词卡上每个音标分段右上角有个「<b>？</b>」，点一下就会告诉你<b>这个字母组合为什么读这个音</b>。下面是完整规则表，每张卡右上角的小喇叭 🔊 能直接听这个音的读法。</p></div>';
+  head.innerHTML = '<div class="qa-head"><h4>🔤 法语发音规则速查（按《你好！法语 1》）</h4>' +
+    '<p>每张卡是一个<b>音标</b>，下面列出它的<b>各种拼写方式</b>与例词。点卡片右上角的 🔊 听这个音<b>本身的发音</b>（音素，不是单词）。</p></div>';
   grid.appendChild(head);
 
   /* 🎯 发音小练习：先看单词选正确音标，再听音验证 */
@@ -639,25 +688,7 @@ function renderPron(){
   grid.appendChild(quizCard);
   initPronQuiz($('#pron-quiz'));
 
-  PRON_RULES.forEach(r => {
-    const snd = (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[r.id];
-    const soundBtn = snd
-      ? '<button class="rule-sound" data-snd="' + esc(snd) + '" data-rule="' + esc(r.id) +
-        '" title="听这个音的读法">🔊</button>'
-      : '';
-    const card = document.createElement('div');
-    card.className = 'word-card rule-card';
-    card.innerHTML =
-      '<div class="wc-head"><div class="wc-title">' +
-        '<span class="wc-zh">' + esc(r.title) + '</span>' +
-        '<span class="wc-ipa">' + esc(r.ipa) + '</span>' +
-        soundBtn +
-      '</div></div>' +
-      '<p class="rule-desc">' + r.desc + '</p>' +
-      '<div class="rule-ex">' + (r.ex || []).map(e =>
-        '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>';
-    grid.appendChild(card);
-  });
+  renderPronGroups(grid);
 
   const sp = document.createElement('div');
   sp.className = 'qa-card';
@@ -674,9 +705,9 @@ function renderPron(){
    五之四·二、🔊 音标卡发音 + 🎯 发音小练习
    ========================================================= */
 function playRuleSound(ruleId, btn){
-  const snd = (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[ruleId];
-  if (!snd) return;
-  playWordAudio('pron-' + ruleId, snd, btn, false);
+  if (typeof PRON_NOSOUND !== 'undefined' && PRON_NOSOUND[ruleId]) return;
+  const fb = (typeof PRON_FALLBACK !== 'undefined' ? PRON_FALLBACK : {})[ruleId] || '';
+  playWordAudio('ipa-' + ruleId, fb, btn, false);
 }
 
 const PRON_QUIZ_STATE = { list: [], idx: 0, score: 0, total: 0, answered: false };
@@ -695,9 +726,6 @@ function initPronQuiz(box){
   PRON_QUIZ_STATE.total = PRON_QUIZ_STATE.list.length;
   renderPronQuiz(box);
 }
-function pronSndFor(ruleId){
-  return (typeof PRON_SOUND !== 'undefined' ? PRON_SOUND : {})[ruleId] || '';
-}
 function renderPronQuiz(box){
   if (!box) return;
   const st = PRON_QUIZ_STATE;
@@ -714,12 +742,13 @@ function renderPronQuiz(box){
   }
   const q = st.list[st.idx];
   const opts = shuffleArr([q.ipa].concat(q.dis));
+  const noSound = (typeof PRON_NOSOUND !== 'undefined' && PRON_NOSOUND[q.rule]);
   st.answered = false;
   box.innerHTML =
     '<div class="quiz-progress">第 <b>' + (st.idx + 1) + '</b> / ' + st.total + ' 题 · 已答对 <b>' + st.score + '</b></div>' +
     '<div class="quiz-q">' +
       '<span class="quiz-word">' + esc(q.w) + '</span>' +
-      '<button class="rule-sound quiz-hear" data-snd="' + esc(pronSndFor(q.rule)) + '" data-rule="' + esc(q.rule) + '" type="button" title="听这个音的读法">🔊 听发音</button>' +
+      (noSound ? '' : '<button class="rule-sound quiz-hear" data-rule="' + esc(q.rule) + '" type="button" title="听这个音的读法">🔊 听发音</button>') +
     '</div>' +
     '<div class="quiz-opts">' + opts.map(o =>
       '<button class="quiz-opt" type="button" data-ipa="' + esc(o) + '">' + esc(o) + '</button>').join('') +
@@ -743,11 +772,10 @@ function renderPronQuiz(box){
       fb.innerHTML =
         (correct ? '<p class="quiz-fb-ok">✅ 答对啦！</p>' : '<p class="quiz-fb-bad">❌ 正确读音是 <b>' + esc(q.ipa) + '</b></p>') +
         '<div class="quiz-exp"><b>' + esc(r ? r.title : q.rule) + '</b> —— ' + esc(r ? rulePlain(r) : '') +
-          (r && r.ex && r.ex.length ? '<div class="re-ex">例：' + r.ex.map(e =>
-            '<span class="rule-chip"><b>' + esc(e.w) + '</b> ' + esc(e.ipa) + '</span>').join('') + '</div>' : '') +
+          (ruleExHTML(r) ? '<div class="re-ex">例：' + ruleExHTML(r) + '</div>' : '') +
         '</div>' +
         '<div class="quiz-fb-actions">' +
-          '<button class="btn btn-slow quiz-listen" type="button" data-snd="' + esc(pronSndFor(q.rule)) + '" data-rule="' + esc(q.rule) + '">🔊 听这个音</button>' +
+          (noSound ? '' : '<button class="btn btn-slow quiz-listen" type="button" data-rule="' + esc(q.rule) + '">🔊 听这个音</button>') +
           '<button class="btn btn-primary quiz-next" type="button">' + (st.idx + 2 >= st.total ? '看成绩 →' : '下一题 →') + '</button>' +
         '</div>';
       const nb = fb.querySelector('.quiz-next');
