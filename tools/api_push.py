@@ -8,23 +8,41 @@
     GH_TOKEN=ghp_xxx REPO=owner/repo python3.11 tools/api_push.py # 指定仓库
     MSG="说明" GH_TOKEN=... python3.11 tools/api_push.py           # 自定义提交信息
 """
-import base64, json, os, sys, urllib.request
+import base64, json, os, sys, time, urllib.error, urllib.request
 
 API = "https://api.github.com"
 TOKEN = os.environ.get("GH_TOKEN", "").strip()
 if not TOKEN:
     sys.exit("缺少 GH_TOKEN 环境变量")
 
-def req(method, path, body=None, raw=False):
+def req(method, path, body=None, raw=False, attempts=6):
+    """带重试：大批量 blob 上传时 GitHub 偶发断连 / 429 / 5xx，指数退避后重试。
+    blob 按内容 SHA 去重，POST 重试不会产生重复对象。"""
     data = json.dumps(body).encode() if body is not None else None
-    r = urllib.request.Request(API + path, data=data, method=method)
-    r.add_header("Authorization", "token " + TOKEN)
-    r.add_header("Accept", "application/vnd.github+json")
-    if data:
-        r.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(r, timeout=180) as f:
-        txt = f.read()
-    return txt if raw else json.loads(txt)
+    for i in range(attempts):
+        try:
+            r = urllib.request.Request(API + path, data=data, method=method)
+            r.add_header("Authorization", "token " + TOKEN)
+            r.add_header("Accept", "application/vnd.github+json")
+            r.add_header("User-Agent", "bonjour-fr-a1-push")
+            if data:
+                r.add_header("Content-Type", "application/json")
+            with urllib.request.urlopen(r, timeout=180) as f:
+                txt = f.read()
+            return txt if raw else json.loads(txt)
+        except urllib.error.HTTPError as e:
+            retryable = e.code in (429, 500, 502, 503, 504)
+            if not retryable or i == attempts - 1:
+                raise
+            wait = min(int(e.headers.get("Retry-After") or 2 ** i), 30)
+            print("  HTTP %d，%ds 后重试 (%d/%d)" % (e.code, wait, i + 1, attempts), flush=True)
+            time.sleep(wait)
+        except Exception as e:
+            if i == attempts - 1:
+                raise
+            wait = min(2 ** i, 15)
+            print("  %s，%ds 后重试 (%d/%d)" % (type(e).__name__, wait, i + 1, attempts), flush=True)
+            time.sleep(wait)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -41,15 +59,20 @@ def collect():
         for f in sorted(os.listdir(p)):
             if f.endswith((".js", ".py")) and "__pycache__" not in f:
                 files.append(d + "/" + f)
-    if "--with-audio" in sys.argv:
+    # 音频：--with-audio 推全部；AUDIO_PREFIX 只推指定前缀（增量推送时用，省时）
+    audio_prefix = [x for x in os.environ.get("AUDIO_PREFIX", "").split(",") if x.strip()]
+    if "--with-audio" in sys.argv or audio_prefix:
         for d in ["assets/audio/textbook", "assets/audio/words",
                   "assets/audio/ipa", "assets/audio/verbs", "assets/audio/sentences"]:
             p = os.path.join(ROOT, d)
             if not os.path.isdir(p):
                 continue
             for f in sorted(os.listdir(p)):
-                if f.endswith(".mp3"):
-                    files.append(d + "/" + f)
+                if not f.endswith(".mp3"):
+                    continue
+                if audio_prefix and not any(f.startswith(pre.strip()) for pre in audio_prefix):
+                    continue
+                files.append(d + "/" + f)
     if "--with-bundle" in sys.argv:
         for rel in ["french-a1-bonjour.html", "french-a1-portable.zip"]:
             if os.path.exists(os.path.join(ROOT, rel)):
@@ -82,15 +105,23 @@ def main():
                 {"content": base64.b64encode(content).decode(), "encoding": "base64"})
         tree.append({"path": rel, "mode": "100644", "type": "blob", "sha": b["sha"]})
         if i % 50 == 0 or i == len(files):
-            print("  已上传 %d/%d" % (i, len(files)))
+            print("  已上传 %d/%d" % (i, len(files)), flush=True)
 
     msg = os.environ.get("MSG", "").strip() or \
           "修复 Apple 移动端单词模块打不开：iOS SpeechSynthesis 兼容 + 单词卡延迟/分批渲染"
     new_tree = req("POST", "/repos/%s/git/trees" % repo_full, {"base_tree": parent, "tree": tree})
     commit = req("POST", "/repos/%s/git/commits" % repo_full,
                  {"message": msg, "tree": new_tree["sha"], "parents": [parent]})
-    req("PATCH", "/repos/%s/git/refs/heads/%s" % (repo_full, branch), {"sha": commit["sha"]})
-    print("完成：%s  %s" % (commit["sha"][:8], msg))
+    ref_path = "/repos/%s/git/refs/heads/%s" % (repo_full, branch)
+    try:
+        req("PATCH", ref_path, {"sha": commit["sha"]})
+    except Exception:
+        # 可能首次 PATCH 已生效但响应丢失：核验 ref 后再决定是否算失败
+        cur = req("GET", ref_path)
+        if cur["object"]["sha"] != commit["sha"]:
+            raise
+        print("  ref 已更新（响应丢失，已核验）", flush=True)
+    print("完成：%s  %s" % (commit["sha"][:8], msg), flush=True)
 
 if __name__ == "__main__":
     main()

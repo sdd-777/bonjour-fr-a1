@@ -13,7 +13,8 @@ const SCRIPTS = [
   'assets/js/countries-data.js', 'assets/js/pron-rules.js', 'assets/js/extras-data.js',
   'assets/js/verbs-data.js', 'assets/js/videos-data.js', 'assets/js/videos.js',
   'assets/js/games-data.js', 'assets/js/games.js', 'assets/js/words.js',
-  'assets/js/textbook-data.js', 'assets/js/textbook.js'
+  'assets/js/textbook-data.js', 'assets/js/textbook-u3.js', 'assets/js/textbook-u4.js',
+  'assets/js/textbook.js'
 ];
 const AUDIO_DIRS = ['words', 'verbs', 'ipa', 'textbook', 'sentences'];
 

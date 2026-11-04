@@ -29,7 +29,9 @@ function renderTbLessons(){
       const b = document.createElement('button');
       b.className = 'tb-chip' + (tbCur === id ? ' active' : '') + (l.empty ? ' todo' : '');
       b.dataset.id = id;
-      b.innerHTML = '<b>' + esc(l.no) + '</b><span>' + esc(l.title.replace(/^[^ ]+ /, '')) + '</span>';
+      /* 徽章只显示标题里的中文主题（原写法会截掉法语首词，长标题会显示成残句） */
+      const zhTitle = (l.title.match(/[\u4e00-\u9fa5].*$/) || [l.title])[0];
+      b.innerHTML = '<b>' + esc(l.no) + '</b><span>' + esc(zhTitle) + '</span>';
       b.onclick = () => { tbCur = id; renderTbLessons(); renderTbDetail(); };
       chips.appendChild(b);
     });
