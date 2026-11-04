@@ -734,6 +734,10 @@ main{
   .phone-display{ font-size: 1.5rem; }
   .pair-box input{ width: 52px; height: 54px; font-size: 1.4rem; }
   .wc-flag{ font-size: 1.7rem; }
+  /* 移动端减负：大量卡片同时跑入场动画/阴影会让 WebKit 掉帧甚至卡死 */
+  .word-card{ animation: none; box-shadow: none; }
+  .word-card:hover{ transform: none; }
+  .wc-flag-img{ max-width: 64px; }
 }
 
 /* —— 词形行内布局 / 冠词徽章 / 听写播放高亮 —— */
@@ -748,6 +752,22 @@ main{
 .wc-badge.gt-f{ background: var(--rose-soft); border-color: #EAB9C2; color: var(--rose-deep); }
 .pair-box.playing input{ border-color: var(--blue); box-shadow: 0 0 0 4px rgba(127,163,196,.28); }
 .pair-box.playing::after{ content: '🔊'; font-size: .9rem; }
+
+/* ===== 分批加载按钮（移动端渲染保护：一次只追加一屏卡片） ===== */
+.word-more{
+  grid-column: 1 / -1;
+  display: block; width: 100%;
+  margin: .6rem 0 .3rem; padding: .85rem 1rem;
+  font-family: inherit; font-size: .95rem; font-weight: 700;
+  color: var(--amber-deep); background: var(--card);
+  border: 2px dashed var(--line-strong); border-radius: var(--radius);
+  cursor: pointer;
+}
+.word-more:active{ background: var(--amber-soft); }
+.word-more-done{
+  border-style: solid; color: var(--ink-soft);
+  background: transparent; cursor: default;
+}
 
 /* [hidden] 必须赢过组件类的 display（如 .word-grid 的 grid），否则隐藏属性失效 */
 [hidden]{ display: none !important; }

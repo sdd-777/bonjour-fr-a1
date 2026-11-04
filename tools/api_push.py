@@ -2,9 +2,11 @@
 """把本地文件推送到 GitHub 仓库（Git Data API，逐文件 blob → 单次 tree → commit）。
 
 用法：
-    GH_TOKEN=ghp_xxx python3.11 tools/api_push.py                 # 推送默认清单（代码 + 音频）
-    GH_TOKEN=ghp_xxx python3.11 tools/api_push.py --with-bundle   # 连同单文件 HTML / zip 一起推
-    GH_TOKEN=ghp_xxx REPO=owner/repo python3.11 tools/api_push.py # 指定仓库（不指定则取最近推送的仓库）
+    GH_TOKEN=ghp_xxx python3.11 tools/api_push.py                 # 推送全站代码/样式/数据（小文件，默认）
+    GH_TOKEN=ghp_xxx python3.11 tools/api_push.py --with-audio    # 额外重推音频目录
+    GH_TOKEN=ghp_xxx python3.11 tools/api_push.py --with-bundle   # 额外推送单文件 HTML / zip
+    GH_TOKEN=ghp_xxx REPO=owner/repo python3.11 tools/api_push.py # 指定仓库
+    MSG="说明" GH_TOKEN=... python3.11 tools/api_push.py           # 自定义提交信息
 """
 import base64, json, os, sys, urllib.request
 
@@ -27,18 +29,27 @@ def req(method, path, body=None, raw=False):
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def collect():
+    """默认推送全部站点代码/样式/数据（体积都很小），避免固定清单漏掉改动文件。"""
     files = []
-    for rel in ["assets/js/games.js", "assets/js/textbook-data.js",
-                "tools/bundle.js", "tools/api_push.py"]:
+    for rel in ["index.html", "assets/css/style.css"]:
         if os.path.exists(os.path.join(ROOT, rel)):
             files.append(rel)
-    for d in ["assets/audio/textbook", "assets/audio/words"]:
+    for d in ["assets/js", "tools"]:
         p = os.path.join(ROOT, d)
         if not os.path.isdir(p):
             continue
         for f in sorted(os.listdir(p)):
-            if f.endswith(".mp3") and (d.endswith("textbook") or f.startswith("obj-")):
+            if f.endswith((".js", ".py")) and "__pycache__" not in f:
                 files.append(d + "/" + f)
+    if "--with-audio" in sys.argv:
+        for d in ["assets/audio/textbook", "assets/audio/words",
+                  "assets/audio/ipa", "assets/audio/verbs", "assets/audio/sentences"]:
+            p = os.path.join(ROOT, d)
+            if not os.path.isdir(p):
+                continue
+            for f in sorted(os.listdir(p)):
+                if f.endswith(".mp3"):
+                    files.append(d + "/" + f)
     if "--with-bundle" in sys.argv:
         for rel in ["french-a1-bonjour.html", "french-a1-portable.zip"]:
             if os.path.exists(os.path.join(ROOT, rel)):
@@ -73,7 +84,8 @@ def main():
         if i % 50 == 0 or i == len(files):
             print("  已上传 %d/%d" % (i, len(files)))
 
-    msg = "教材 L1-L8 全部录入 + 点击场景物体发音 + 打包更新"
+    msg = os.environ.get("MSG", "").strip() or \
+          "修复 Apple 移动端单词模块打不开：iOS SpeechSynthesis 兼容 + 单词卡延迟/分批渲染"
     new_tree = req("POST", "/repos/%s/git/trees" % repo_full, {"base_tree": parent, "tree": tree})
     commit = req("POST", "/repos/%s/git/commits" % repo_full,
                  {"message": msg, "tree": new_tree["sha"], "parents": [parent]})

@@ -328,9 +328,18 @@ let voices = [];
 function refreshVoices(){
   try{ voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; }catch(e){ voices = []; }
 }
+/* iOS Safari 兼容：部分版本（尤其 iOS 12~15）的 SpeechSynthesis 不是 EventTarget，
+   没有 addEventListener；此处若无保护会抛 TypeError，中断整个 app.js 顶层执行，
+   导致 DOMContentLoaded 的 init() 永不注册、所有导航按钮失效（表现为「模块打不开」）。*/
 if (window.speechSynthesis){
   refreshVoices();
-  speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+  try{
+    if (typeof speechSynthesis.addEventListener === 'function'){
+      speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+    } else if ('onvoiceschanged' in speechSynthesis){
+      speechSynthesis.onvoiceschanged = refreshVoices;   /* 旧版 Safari 只支持属性回调 */
+    }
+  }catch(e){}
 }
 let frVoiceWarned = false;
 let noSynthWarned = false;
@@ -971,19 +980,9 @@ function chime(ok){
    初始化
    ========================================================= */
 function init(){
-  renderHome();
-  renderPickers();
-
-  /* 视频模块 */
-  if (typeof initVideos === 'function') initVideos();
-
-  /* 游戏乐园 */
-  if (typeof initGames === 'function') initGames();
-
-  /* 教材同步 */
-  if (typeof initTextbook === 'function') initTextbook();
-
-  /* 导航 */
+  /* iOS Safari 保护①：先把「导航 + 首页菜单卡」入口绑好。
+     以前它们排在各子模块初始化之后，只要某个模块在 iOS 上抛错（媒体/语音 API 缺失等），
+     init() 就会中断，所有页面切换按钮失效 —— 用户看到的就是「某个模块打不开」。*/
   $$('.nav-btn').forEach(b => { b.onclick = () => showView(b.dataset.view); });
   $('#card-build').onclick = () => openBuild(Math.min(state.build.idx, SENTENCES.length - 1));
   $('#card-read').onclick  = () => openRead(Math.min(state.read.idx, SENTENCES.length - 1));
@@ -991,6 +990,17 @@ function init(){
   if (cardGames) cardGames.onclick = () => showView('games');
   const cardTextbook = $('#card-textbook');
   if (cardTextbook) cardTextbook.onclick = () => showView('textbook');
+
+  /* iOS Safari 保护②：子模块初始化互相隔离，一个失败不影响其余 */
+  const safeInit = (label, fn) => {
+    try{ fn(); }
+    catch(e){ try{ console.warn('[init] ' + label + ' 初始化跳过：' + ((e && e.message) || e)); }catch(_){} }
+  };
+  safeInit('home', renderHome);
+  safeInit('pickers', renderPickers);
+  safeInit('videos', () => { if (typeof initVideos === 'function') initVideos(); });
+  safeInit('games', () => { if (typeof initGames === 'function') initGames(); });
+  safeInit('textbook', () => { if (typeof initTextbook === 'function') initTextbook(); });
 
   /* 造句 */
   $('#btn-check').onclick = checkBuild;
@@ -1061,3 +1071,12 @@ function init(){
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* iOS Safari 兜底：万一 init() 仍被某个缺失的 API 中断，导航按钮也不会彻底失灵。
+   用捕获阶段监听；已由 init() 绑定 onclick 的按钮会跳过，避免重复切换。*/
+document.addEventListener('click', e => {
+  const t = e.target;
+  const b = (t && t.closest) ? t.closest('.nav-btn') : null;
+  if (!b || b.onclick) return;
+  if (b.dataset.view) showView(b.dataset.view);
+}, true);

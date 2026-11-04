@@ -423,6 +423,23 @@ const CARD_RENDER = {
    ========================================================= */
 let curCat = 'countries';
 
+/* ===== iOS Safari / 移动端保护：延迟 + 分批渲染 =====
+   原先 initWords() 在页面加载阶段就同步生成 195 张国家卡（约 19000 个 DOM 节点、
+   15 万像素高的视图），移动端 WebKit 内存与主线程压力大，常表现为卡死、白屏或
+   「单词模块打不开」。现在改为：进入单词视图才渲染，且每次只追加一屏。*/
+let wordsReady = false;       /* 是否已在单词视图渲染过当前分类 */
+let wordsRenderToken = 0;     /* 分批渲染代号：切换分类时作废旧任务 */
+let wordsObserver = null;
+
+function stopCountryRender(){
+  wordsRenderToken++;
+  if (wordsObserver){ try{ wordsObserver.disconnect(); }catch(e){} wordsObserver = null; }
+}
+function ensureWordsRendered(){
+  if (wordsReady) return;
+  selectCat(curCat);
+}
+
 function renderTabs(){
   const box = $('#word-tabs');
   box.innerHTML = '';
@@ -445,6 +462,8 @@ function renderTabs(){
 
 function selectCat(id){
   stopWordAudio();
+  stopCountryRender();   /* 作废上一分类尚未完成的滚动追加任务 */
+  wordsReady = true;     /* 标记已渲染，避免 showView 重复触发 */
   curCat = id;
   renderTabs();
   const isPhone = (id === 'phone');
@@ -520,22 +539,79 @@ function countryCard2(c){
 }
 
 function renderCountriesInto(grid){
+  stopCountryRender();
+  const token = wordsRenderToken;
+
+  /* 先只整理任务清单（纯数据），不创建任何 DOM */
+  const jobs = [];
   COUNTRY_GROUPS.forEach(g => {
     const items = COUNTRIES.filter(c => c.grp === g.id);
     if (!items.length) return;
-    const h = document.createElement('div');
-    h.className = 'grp-head';
-    h.innerHTML = '<h3>' + g.icon + ' ' + esc(g.label) +
-      ' <span class="grp-prep">（' + esc(g.prep) + '）</span></h3>' +
-      '<p class="grp-tip">' + g.tip + '</p>';
-    grid.appendChild(h);
-    items.forEach(c => {
-      const card = document.createElement('div');
-      card.className = 'word-card country-card';
-      card.innerHTML = countryCard2(c);
-      grid.appendChild(card);
-    });
+    jobs.push({ head: g });
+    items.forEach(c => jobs.push({ card: c }));
   });
+
+  const CHUNK = 16;
+  let idx = 0;
+  const more = document.createElement('button');   /* 用 button，保证 iOS 上 click 一定触发 */
+  more.type = 'button';
+  more.className = 'word-more';
+  more.textContent = '⬇️ 加载更多国家';
+  grid.appendChild(more);
+
+  function append(n){
+    if (token !== wordsRenderToken) return;       /* 已切换分类：作废旧任务 */
+    const end = Math.min(idx + n, jobs.length);
+    const frag = document.createDocumentFragment();
+    for (; idx < end; idx++){
+      const j = jobs[idx];
+      const el = document.createElement('div');
+      if (j.head){
+        el.className = 'grp-head';
+        el.innerHTML = '<h3>' + j.head.icon + ' ' + esc(j.head.label) +
+          ' <span class="grp-prep">（' + esc(j.head.prep) + '）</span></h3>' +
+          '<p class="grp-tip">' + j.head.tip + '</p>';
+      } else {
+        el.className = 'word-card country-card';
+        el.innerHTML = countryCard2(j.card);
+      }
+      frag.appendChild(el);
+    }
+    grid.insertBefore(frag, more);
+    if (idx >= jobs.length){
+      more.textContent = '✅ 已显示全部 ' + COUNTRIES.length + ' 个国家';
+      more.className = 'word-more word-more-done';
+      more.disabled = true;
+      if (wordsObserver){ try{ wordsObserver.disconnect(); }catch(e){} wordsObserver = null; }
+    }
+  }
+
+  append(CHUNK);   /* 首屏只渲染 16 项，页面瞬间可交互 */
+
+  /* 手动追加：旧版 iOS / 不支持 IntersectionObserver 时的兜底 */
+  more.addEventListener('click', () => append(CHUNK));
+
+  /* 滚动到底自动追加（节流：每 250ms 最多一批，避免快速滚动瞬间铺开 195 张） */
+  if (typeof IntersectionObserver !== 'undefined'){
+    try{
+      let autoBusy = false;
+      const ob = new IntersectionObserver(entries => {
+        if (token !== wordsRenderToken || !wordsObserver || autoBusy) return;
+        if (entries.some(e => e.isIntersecting)){
+          autoBusy = true;
+          append(CHUNK);
+          setTimeout(() => {
+            autoBusy = false;
+            if (wordsObserver && token === wordsRenderToken){
+              try{ wordsObserver.unobserve(more); wordsObserver.observe(more); }catch(e){}
+            }
+          }, 250);
+        }
+      }, { rootMargin: '300px' });
+      wordsObserver = ob;
+      ob.observe(more);
+    }catch(e){ wordsObserver = null; }
+  }
 }
 
 /* 展开 / 收起「这个字母组合为什么读这个音」 */
@@ -1351,8 +1427,14 @@ function initWords(){
   NUM_TEXT = {};
   for (let n = 0; n <= 100; n++) NUM_TEXT[n] = frenchNumber(n);
 
-  renderTabs();
-  selectCat('countries');
+  /* iOS 保护：入口最先绑定，后续任何异常都不会让「点不开」发生 */
+  $('#card-words').onclick = () => { ensureWordsRendered(); showView('words'); };
+  const navWords = document.querySelector('.nav-btn[data-view="words"]');
+  if (navWords) navWords.addEventListener('click', ensureWordsRendered);
+
+  renderTabs();   /* 只建 14 个页签，轻量 */
+  /* 不再在页面加载阶段渲染 195 张国家卡（≈19000 DOM）：
+     改为进入单词视图后由 ensureWordsRendered() 延迟 + 分批渲染 */
   loadPhone();
   phoneHistLoad();
   renderPhoneStats();
@@ -1395,15 +1477,13 @@ function initWords(){
   $('#ph-check').onclick = checkPhone;
   $('#ph-reveal').onclick = revealPhone;
 
-  /* 首页菜单卡 */
-  $('#card-words').onclick = () => showView('words');
-
-  /* 视图切换时停掉单词音频（包装 app.js 的 showView） */
+  /* 视图切换时停掉单词音频 + 首次进入时渲染（包装 app.js 的 showView） */
   const origShowView = window.showView;
   if (typeof origShowView === 'function'){
     window.showView = function(name){
       origShowView(name);
       stopWordAudio();
+      if (name === 'words') ensureWordsRendered();
     };
   }
 }
