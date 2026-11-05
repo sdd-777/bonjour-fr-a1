@@ -63,7 +63,9 @@ Object.assign(TB_LESSONS, {
       { fr: "salle de bains", pos: "n.f.", g: "f", zh: "浴室" },
       { fr: "sombre", pos: "adj.", zh: "昏暗的" },
       { fr: "toilettes", pos: "n.f.pl.", g: "f", zh: "卫生间，厕所" },
-      { fr: "troisième", pos: "adj.num.ord.", zh: "第三" }
+      { fr: "troisième", pos: "adj.num.ord.", zh: "第三" },
+      { fr: "où", pos: "adv.interr.", zh: "在哪儿，去哪里" },
+      { fr: "salle", pos: "n.f.", g: "f", zh: "房间，室；厅" },
     ],
     grammar: [
       { t: "重读人称代词 le pronom tonique (2)", d: "<b>moi / toi / lui / elle / nous / vous / eux / elles</b> 用在介词后面、表示强调，或单独成句。<br>例：Ma mère habite avec <b>nous</b>. 我妈妈和我们住。Vous travaillez <b>chez vous</b> ? 您在家里办公吗？<b>Eux</b>, ils adorent le football ; et <b>elles</b>, elles adorent la musique. 他们喜欢足球，而她们喜欢音乐。" },
@@ -211,7 +213,8 @@ Object.assign(TB_LESSONS, {
       { fr: "terrasse", pos: "n.f.", g: "f", zh: "露台，平台" },
       { fr: "ville", pos: "n.f.", g: "f", zh: "城市" },
       { fr: "agence de voyages", pos: "n.f.", g: "f", zh: "旅行社" },
-      { fr: "week-end", pos: "n.m.", g: "m", zh: "周末" }
+      { fr: "week-end", pos: "n.m.", g: "m", zh: "周末" },
+      { fr: "air", pos: "n.m.", g: "m", zh: "空气" },
     ],
     grammar: [
       { t: "c'est / ce sont 的用法", d: "<b>c'est</b>（中性指示代词 ce + est）后接名词或形容词，<b>ce sont</b> 后接复数名词。<br>① 回答「在哪里」：— Où se trouve l'hôtel ? — <b>C'est</b> à l'ouest de l'île.<br>② 说明性质：C'est un hôtel au bord de la plage. C'est parfait !<br>③ 指认复数：Ce sont les livres de Paul. Ce sont mes amis.<br>注意：C'est mon ami Jean et son frère Jacques.（列举时虽是多人仍常用 c'est）" },
@@ -283,7 +286,8 @@ Object.assign(TB_LESSONS, {
       { fr: "tourisme", pos: "n.m.", g: "m", zh: "旅游，旅游业" },
       { fr: "train", pos: "n.m.", g: "m", zh: "火车" },
       { fr: "vieux (vieille)", pos: "adj.", zh: "老的，旧的" },
-      { fr: "vitesse", pos: "n.f.", g: "f", zh: "速度" }
+      { fr: "vitesse", pos: "n.f.", g: "f", zh: "速度" },
+      { fr: "Marseille", pos: "n.", zh: "马赛（法国）" },
     ],
     grammar: [
       { t: "autour de 与 Office de tourisme", d: "<b>autour de</b> 在…周围、围绕：La Terre tourne <b>autour du</b> Soleil. 地球绕太阳转。Elle met un foulard <b>autour de</b> son cou. 她在脖子上围了条围巾。<br><b>Office de tourisme</b> 旅游局（提供城市地图、景点、交通信息），区别于 <b>agence de voyages</b> 旅行社（售卖旅行产品）。" },

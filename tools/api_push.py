@@ -5,6 +5,8 @@
     GH_TOKEN=ghp_xxx python3.11 tools/api_push.py                 # 推送全站代码/样式/数据（小文件，默认）
     GH_TOKEN=ghp_xxx python3.11 tools/api_push.py --with-audio    # 额外重推音频目录
     GH_TOKEN=ghp_xxx python3.11 tools/api_push.py --with-bundle   # 额外推送单文件 HTML / zip
+    AUDIO_LIST_FILE=/path/list.txt GH_TOKEN=... python3.11 tools/api_push.py
+                                                              # 额外只推文件里列出的音频（每行一个相对路径）
     GH_TOKEN=ghp_xxx REPO=owner/repo python3.11 tools/api_push.py # 指定仓库
     MSG="说明" GH_TOKEN=... python3.11 tools/api_push.py           # 自定义提交信息
 """
@@ -73,6 +75,14 @@ def collect():
                 if audio_prefix and not any(f.startswith(pre.strip()) for pre in audio_prefix):
                     continue
                 files.append(d + "/" + f)
+    # AUDIO_LIST_FILE：精确列出本次要推的音频（每行一个相对路径），增量推送时最省时
+    audio_list_file = os.environ.get("AUDIO_LIST_FILE", "").strip()
+    if audio_list_file and os.path.isfile(audio_list_file):
+        with open(audio_list_file, encoding="utf-8") as f:
+            for line in f:
+                rel = line.strip()
+                if rel and rel not in files and os.path.isfile(os.path.join(ROOT, rel)):
+                    files.append(rel)
     if "--with-bundle" in sys.argv:
         for rel in ["french-a1-bonjour.html", "french-a1-portable.zip"]:
             if os.path.exists(os.path.join(ROOT, rel)):

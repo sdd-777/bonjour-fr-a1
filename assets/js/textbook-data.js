@@ -148,7 +148,8 @@ const TB_LESSONS = {
       { fr: "Suisse",          pos: "n.f.",      g: "f", zh: "瑞士" },
       { fr: "sympa",           pos: "adj.inv.",  zh: "热情的，好相处的人（sympathique 的口语形式）" },
       { fr: "téléphone",       pos: "n.m.",      g: "m", zh: "电话" },
-      { fr: "thé",             pos: "n.m.",      g: "m", zh: "茶" }
+      { fr: "thé",             pos: "n.m.",      g: "m", zh: "茶" },
+      { fr: "sur rendez-vous", pos: "loc.adv.", zh: "凭预约，须预约（医生接待等）" },
     ],
     grammar: [
       { t: "定冠词（1）：le / la / les", d: "法语名词前一般要加冠词：<b>le</b>（阳性单数）、<b>la</b>（阴性单数）、<b>les</b>（复数）。<br>" +
@@ -230,7 +231,23 @@ const TB_LESSONS = {
       { fr: "voisin(e)",       pos: "n.",        zh: "邻居，邻座" },
       { fr: "Montréal",        pos: "n.pr.",     zh: "蒙特利尔（加拿大城市）" },
       { fr: "arobase",         pos: "n.m.",      g: "m", zh: "「@」符号（法语读作 arobase）" },
-      { fr: "affaire",         pos: "n.f.",      g: "f", zh: "事情（Les affaires vont bien. 一切顺利）" }
+      { fr: "affaire",         pos: "n.f.",      g: "f", zh: "事情（Les affaires vont bien. 一切顺利）" },
+      { fr: "alors", pos: "adv.", zh: "那么，在这种情况下；当时" },
+      { fr: "avec", pos: "prép.", zh: "和……一起；带着，带有" },
+      { fr: "bien", pos: "adv.", zh: "好；很（身体好、程度）" },
+      { fr: "ça", pos: "pron.dém.", zh: "〈俗〉这个，那个" },
+      { fr: "Canada", pos: "n.m.", g: "m", zh: "加拿大" },
+      { fr: "fils", pos: "n.m.", g: "m", zh: "儿子（读作 [fis]）" },
+      { fr: "journée", pos: "n.f.", g: "f", zh: "一天，一昼夜；白天" },
+      { fr: "Notre-Dame", pos: "n.f.inv.", zh: "圣母院（蒙特利尔）" },
+      { fr: "Paris", pos: "n.m.", zh: "巴黎（法国）" },
+      { fr: "parler", pos: "v.i. / v.t.dir.", zh: "说话，讲话；讲（某种语言）" },
+      { fr: "rue", pos: "n.f.", g: "f", zh: "街，街道，马路" },
+      { fr: "son", pos: "adj.poss.", zh: "他的，她的，它的（后接单数阳性名词）" },
+      { fr: "toi", pos: "pron.pers.", zh: "你（主语或宾语的同位语，表强调）" },
+      { fr: "ton", pos: "adj.poss.", zh: "你的（后接单数阳性名词）" },
+      { fr: "votre", pos: "adj.poss.", zh: "你们的，您的（后接单数名词）" },
+      { fr: "vous", pos: "pron.pers.", zh: "您；你们（主语或宾语的同位语，表强调）" },
     ],
     grammar: [
       { t: "动词 aller（去／身体如何）", d: "je <b>vais</b> ／ tu <b>vas</b> ／ il/elle <b>va</b> ／ nous <b>allons</b> ／ vous <b>allez</b> ／ ils/elles <b>vont</b><br>" +
@@ -312,7 +329,8 @@ const TB_LESSONS = {
       { fr: "sœur",            pos: "n.f.",      g: "f", zh: "姐妹" },
       { fr: "souvent",         pos: "adv.",      zh: "经常" },
       { fr: "sport",           pos: "n.m.",      g: "m", zh: "运动，体育" },
-      { fr: "volley-ball",     pos: "n.m.",      g: "m", zh: "排球" }
+      { fr: "volley-ball",     pos: "n.m.",      g: "m", zh: "排球" },
+      { fr: "un peu", pos: "loc.adv.", zh: "一点儿，一下，少许，稍微" },
     ],
     grammar: [
       { t: "-er 动词的现在时变位", d: "法语最多的规则动词以 -er 结尾，变位规律：词干 + -e, -es, -e, -ons, -ez, -ent。<br>" +
@@ -411,7 +429,8 @@ const TB_LESSONS = {
       { fr: "vase",           pos: "n.m.",      g: "m", zh: "花瓶" },
       { fr: "verre",          pos: "n.m.",      g: "m", zh: "玻璃杯" },
       { fr: "voilà",          pos: "prép.",     zh: "那就是这，这就是" },
-      { fr: "portable",       pos: "n.m.",      g: "m", zh: "手机", extra: true }
+      { fr: "portable",       pos: "n.m.",      g: "m", zh: "手机", extra: true },
+      { fr: "au-dessous", pos: "loc.adv.", zh: "在下面" },
     ],
     grammar: [
       { t: "ça 的用法", d: "ça 在口语中用得很多，意为「这，这个，这样」，可以指代一件事、一个状态。" +
@@ -578,7 +597,12 @@ const TB_LESSONS = {
       { fr: "taille",         pos: "n.f.",        g: "f", zh: "尺码；（腰）身" },
       { fr: "très",           pos: "adv.",        zh: "很，非常" },
       { fr: "trouver",        pos: "v.t.",        zh: "觉得，认为；找到" },
-      { fr: "type",           pos: "n.m.",        g: "m", zh: "类型，款式（ce type de… 这种……）" }
+      { fr: "type",           pos: "n.m.",        g: "m", zh: "类型，款式（ce type de… 这种……）" },
+      { fr: "boutique", pos: "n.f.", g: "f", zh: "店铺，商店" },
+      { fr: "et", pos: "conj.", zh: "（表示数量的相加）加，又" },
+      { fr: "prix", pos: "n.m.", g: "m", zh: "价格，价钱" },
+      { fr: "quantité", pos: "n.f.", g: "f", zh: "量，数量" },
+      { fr: "vendeur(euse)", pos: "n.", zh: "营业员，售货员" },
     ],
     grammar: [
       { t: "疑问词 quel 的复数形式", d: "quel / quelle / quels / quelles，与后面名词性数一致。<br>" +
@@ -649,7 +673,7 @@ const TB_LESSONS = {
       { fr: "écrivain",        pos: "n.m.",      g: "m", zh: "作家" },
       { fr: "entre",           pos: "prép.",     zh: "在……之间" },
       { fr: "film",            pos: "n.m.",      g: "m", zh: "电影" },
-      { fr: "même",            pos: "adj./n.",   zh: "相同的；同样（le/la même 同一个）" },
+      { fr: "môme",            pos: "n.",        zh: "〈俗〉小孩，小家伙（La Môme 指 Édith Piaf）" },
       { fr: "musicien(ne)",    pos: "n.",        zh: "音乐家" },
       { fr: "orange",          pos: "n.f.",      g: "f", zh: "橙子" },
       { fr: "peintre",         pos: "n.",        zh: "画家" },

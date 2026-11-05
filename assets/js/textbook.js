@@ -145,10 +145,31 @@ function renderTbDetail(){
 function stopTbSeq(){
   tbSeqToken += 1;
   if (tbSeqTimer){ clearTimeout(tbSeqTimer); tbSeqTimer = null; }
-  if (tbSeqMedia){ try{ tbSeqMedia.pause(); }catch(e){} tbSeqMedia = null; }
+  if (tbSeqMedia){
+    try{
+      tbSeqMedia.pause();
+      tbSeqMedia.onended = null;
+      tbSeqMedia.onerror = null;
+    }catch(e){}
+    tbSeqMedia = null;
+  }
   const btn = $('.tb-seq');
-  if (btn) btn.classList.remove('playing');
+  if (btn){ btn.classList.remove('playing'); btn.textContent = '▶ 整课连播'; }
 }
+
+/* 解析朗读地址：单文件离线版用内联 base64，目录版用相对路径。
+   注意复用 <audio> 换 src 时不会经过打包脚本对 new Audio 的包装，
+   所以这里必须自己查映射表，否则离线版连播会全部 404。 */
+function tbResolveAudio(name){
+  const rel = tbAudioPath(name);
+  const M = (typeof window !== 'undefined') ? window.__AUDIO_DATA__ : null;
+  if (M){
+    const key = rel.replace(/^\.?\/?assets\/audio\//, '');
+    if (M[key]) return M[key];
+  }
+  return rel;
+}
+
 function playTbSequence(){
   const l = TB_LESSONS[tbCur];
   if (!l || l.empty) return;
@@ -156,21 +177,62 @@ function playTbSequence(){
   const token = tbSeqToken;
   const btn = $('.tb-seq');
   if (btn) btn.classList.add('playing');
-  const prefix = tbCur;
+
+  /* 课文 + 学会说；s 编号必须全局递增，与 renderTbDetail 里的 sIdx 一致 */
   const list = [];
-  l.text.forEach((s, i) => list.push(prefix + '-t' + (i + 1)));
-  (l.say || []).forEach(sec => sec.items.forEach((it, i) => list.push(prefix + '-s' + (i + 1))));
-  let k = 0;
+  l.text.forEach((s, i) => list.push(tbCur + '-t' + (i + 1)));
+  let sIdx = 0;
+  (l.say || []).forEach(sec => sec.items.forEach(() => { sIdx += 1; list.push(tbCur + '-s' + sIdx); }));
+
+  /* 关键：全程复用同一个 <audio>。第一次 play() 在用户点击的同步调用栈里执行，
+     iOS Safari 会把这个元素标记为「已解锁」，之后在 onended 回调里换 src 再播就被允许。
+     旧实现每句 new Audio() 创建新元素，异步播放全被自动播放策略拒绝，只能听到第一句。 */
+  const a = new Audio();
+  a.preload = 'auto';
+  tbSeqMedia = a;
+  let k = 0;                 // 当前待播索引
+  let advancing = false;     // 防止 onended / onerror 重复调度
+  let consumed = false;      // 每句只推进一次
+
+  const advance = (delay) => {
+    if (token !== tbSeqToken || advancing) return;
+    advancing = true;
+    if (tbSeqTimer) clearTimeout(tbSeqTimer);
+    tbSeqTimer = setTimeout(() => { advancing = false; step(); }, delay);
+  };
+  const next = (delay) => {
+    if (consumed) return;
+    consumed = true;
+    k += 1;
+    advance(delay);
+  };
   const step = () => {
     if (token !== tbSeqToken) return;
     if (k >= list.length){ stopTbSeq(); return; }
-    const name = list[k]; k += 1;
-    const a = new Audio(tbAudioPath(name));
-    tbSeqMedia = a;
-    a.onended = () => { if (token === tbSeqToken) tbSeqTimer = setTimeout(step, 350); };
-    a.onerror = () => { if (token === tbSeqToken) tbSeqTimer = setTimeout(step, 120); };
-    a.play().catch(() => { if (token === tbSeqToken) tbSeqTimer = setTimeout(step, 120); });
+    consumed = false;
+    const name = list[k];
+    /* 补零让按钮文案宽度恒定，连播中点击「停止」不会因布局抖动而点偏 */
+    if (btn) btn.textContent = '⏸ 连播 ' + String(k + 1).padStart(2, '0') + '/' + String(list.length).padStart(2, '0');
+    a.src = tbResolveAudio(name);
+    try{ a.currentTime = 0; a.load(); }catch(e){}
+    const attempt = (retry) => {
+      const p = a.play();
+      if (p && typeof p.catch === 'function'){
+        p.catch(() => {
+          if (token !== tbSeqToken || consumed) return;
+          if (retry < 1){
+            /* 偶发拒绝：同一元素重试一次，不跳句 */
+            setTimeout(() => { if (token === tbSeqToken && !consumed) attempt(retry + 1); }, 200);
+          } else {
+            next(120);   /* 两次都失败才跳过这句，避免整段卡死 */
+          }
+        });
+      }
+    };
+    attempt(0);
   };
+  a.onended = () => next(280);
+  a.onerror = () => next(120);
   step();
 }
 

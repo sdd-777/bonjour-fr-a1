@@ -1386,7 +1386,9 @@ main{
 .tb-lplay:hover{ background: #D9E8F8; }
 .tb-lplay:active{ transform: scale(.9); }
 .tb-lplay.playing{ background: var(--blue-deep, #4A90D9); color: #fff; animation: tbPulse 1s ease infinite; }
-@keyframes tbPulse{ 50%{ transform: scale(1.12); } }
+/* 连播中只做透明度呼吸：transform:scale 会让按钮持续变形，
+   移动端连播时想点「停止」容易点偏，且触屏上动画开销大 */
+@keyframes tbPulse{ 50%{ opacity: .72; } }
 .tb-line-txt{ flex: 1 1 auto; }
 .tb-fr{ margin: 0; font-weight: 700; color: var(--ink); line-height: 1.55; font-size: 1.02rem; }
 .tb-zh{ margin: .15rem 0 0; font-size: .88rem; color: var(--ink-soft); line-height: 1.55; }
@@ -1432,4 +1434,5 @@ main{
 .tb-empty-icon{ font-size: 2.4rem; margin-bottom: .4rem; }
 .tb-empty h3{ margin: 0 0 .5rem; }
 .tb-empty p{ color: var(--ink-soft); line-height: 1.8; max-width: 480px; margin: 0 auto; }
-.tb-seq.playing{ animation: tbPulse 1s ease infinite; }
+.tb-seq{ min-width: 112px; text-align: center; }
+.tb-seq.playing{ animation: tbPulse 1.2s ease infinite; }

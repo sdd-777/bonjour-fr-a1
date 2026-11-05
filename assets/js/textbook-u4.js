@@ -58,7 +58,9 @@ Object.assign(TB_LESSONS, {
       { fr: "simple", pos: "adj.", zh: "单程的；简单的" },
       { fr: "tarif", pos: "n.m.", g: "m", zh: "票价，价目" },
       { fr: "vendredi", pos: "n.m.", g: "m", zh: "星期五" },
-      { fr: "voie", pos: "n.f.", g: "f", zh: "站台，轨道" }
+      { fr: "voie", pos: "n.f.", g: "f", zh: "站台，轨道" },
+      { fr: "place", pos: "n.f.", g: "f", zh: "地方，位置；座位" },
+      { fr: "prochain(e)", pos: "adj.", zh: "下一个的，即将到来的" },
     ],
     grammar: [
       { t: "询问与表达时间 Donner l'heure", d: "问：<b>Quelle heure est-il ?</b> / <b>Vous avez l'heure</b>, s'il vous plaît ? / <b>Tu as l'heure</b> ?<br>答：<b>Il est</b> + 数字 + <b>heure(s)</b>。Il est huit heures. 八点。Il est midi / minuit. 中午／午夜。<br>常用表达：<b>et quart</b> 一刻、<b>et demie</b> 半、<b>moins le quart</b> 差一刻、<b>moins dix</b> 差十分。<br>例：Il est cinq heures moins dix. 差十分五点。Il est deux heures et demie. 两点半。<br>注意：une heure 前的 et 不省：Il est une heure et quart." },
@@ -137,7 +139,8 @@ Object.assign(TB_LESSONS, {
       { fr: "vacances", pos: "n.f.pl.", g: "f", zh: "假期" },
       { fr: "Vendôme", pos: "n.pr.", zh: "旺多姆（法国城市）" },
       { fr: "vers", pos: "prép.", zh: "大约（时间）；朝，向" },
-      { fr: "voir", pos: "v.t.", zh: "看见，明白" }
+      { fr: "voir", pos: "v.t.", zh: "看见，明白" },
+      { fr: "vie", pos: "n.f.", g: "f", zh: "人生；生活，生活方式" },
     ],
     grammar: [
       { t: "动词 faire 的现在时", d: "je <b>fais</b> / tu <b>fais</b> / il, elle <b>fait</b> / nous <b>faisons</b> / vous <b>faites</b> / ils, elles <b>font</b>。<br>faire 用法很广：<b>Qu'est-ce que tu fais ?</b> 你在做什么？<b>faire du sport / du tennis / les courses / le ménage / la cuisine</b>、faire un footing、faire des photos。<br>问职业：<b>Qu'est-ce que tu fais dans la vie ?</b> 你是做什么工作的？" },
@@ -202,7 +205,9 @@ Object.assign(TB_LESSONS, {
       { fr: "se reposer", pos: "v.pr.", zh: "休息" },
       { fr: "ski", pos: "n.m.", g: "m", zh: "滑雪" },
       { fr: "témoignage", pos: "n.m.", g: "m", zh: "证言，自述" },
-      { fr: "tennis", pos: "n.m.", g: "m", zh: "网球" }
+      { fr: "tennis", pos: "n.m.", g: "m", zh: "网球" },
+      { fr: "général(e)", pos: "adj.", zh: "一般的，普遍的（pl. généraux）" },
+      { fr: "faire le ménage", pos: "loc.", zh: "做清洁，打扫屋子" },
     ],
     grammar: [
       { t: "动词 lire 与 écrire 的现在时", d: "<b>lire</b>：je lis / tu lis / il, elle lit / nous <b>lisons</b> / vous <b>lisez</b> / ils, elles <b>lisent</b>。<br><b>écrire</b>：j'écris / tu écris / il, elle écrit / nous <b>écrivons</b> / vous <b>écrivez</b> / ils, elles <b>écrivent</b>。<br>例：Je <b>lis</b> le journal et après j'<b>écris</b> à des amis. 我看报纸，然后给朋友写信。écrire une lettre 写信、écrire une carte postale 写明信片、écrire à qn 给某人写信。" },
