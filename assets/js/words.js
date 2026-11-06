@@ -102,7 +102,16 @@ let NUM_TEXT = {};   /* 数字读法表 0-100 */
 
 function stopWordAudio(){
   wToken++;
-  if (wMedia){ try{ wMedia.pause(); }catch(e){} wMedia = null; }
+  /* 连播会复用同一个 <audio>，停止时必须摘掉事件回调，
+     否则 pause() 之后残留的 onended / onerror 还可能把序列往下推。 */
+  if (wMedia){
+    try{
+      wMedia.pause();
+      wMedia.onended = null;
+      wMedia.onerror = null;
+    }catch(e){}
+    wMedia = null;
+  }
   if (window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
   $$('.wc-play.playing').forEach(b => b.classList.remove('playing'));
   $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
@@ -1313,8 +1322,37 @@ function phoneSeq(){
   return seq;
 }
 
+let phoneSeqMedia = null;   /* 电话报读全程复用的 <audio> */
+let phoneSeqTimer = null;   /* 组与组之间的间隔定时器 */
+
+/* 复用元素靠 a.src 换音频，不会经过打包脚本对 new Audio 的包装，
+   所以离线单文件版要自己查内联音频映射表，否则报读会全部 404。 */
+function phoneResolveAudio(name){
+  const rel = WAUDIO_BASE + '/' + name + '.mp3';
+  const M = (typeof window !== 'undefined') ? window.__AUDIO_DATA__ : null;
+  if (M){
+    const key = rel.replace(/^\.?\/?assets\/audio\//, '');
+    if (M[key]) return M[key];
+  }
+  return rel;
+}
+
+function stopPhoneSeq(){
+  if (phoneSeqTimer){ clearTimeout(phoneSeqTimer); phoneSeqTimer = null; }
+  if (phoneSeqMedia){
+    try{
+      phoneSeqMedia.pause();
+      phoneSeqMedia.onended = null;
+      phoneSeqMedia.onerror = null;
+    }catch(e){}
+    phoneSeqMedia = null;
+  }
+  $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
+}
+
 function playPhoneNumber(slow){
   if (!phone.num){ newPhoneNumber(); return; }
+  stopPhoneSeq();
   stopWordAudio();
   const token = ++wToken;
   const seq = phoneSeq();
@@ -1323,42 +1361,91 @@ function playPhoneNumber(slow){
     res.textContent = '🔊 正在两位两位报读，注意听…';
     res.className = 'phone-result';
   }
-  playSeq(seq, token, slow, 0);
-}
 
-function playSeq(seq, token, slow, i){
-  if (token !== wToken){ $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing')); return; }
-  if (i >= seq.length){
-    $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
-    const res = $('#phone-result');
-    if (res.textContent.indexOf('正在') === 0) res.textContent = '';
-    return;
-  }
-  $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
-  const pb = $('#pair-' + seq[i].pair);
-  if (pb) pb.classList.add('playing');
-
-  const a = new Audio(WAUDIO_BASE + '/' + seq[i].n + '.mp3');
-  wMedia = a;
+  /* 关键：iOS Safari / 微信等 WebView 只允许在用户点击的同步调用栈里解锁 <audio>。
+     旧实现每组数字都 new Audio()，异步创建的播放全被自动播放策略拒绝，
+     所以只能听到开头几组（前六位）就停。这里全程复用同一个元素，
+     第一次 play() 就在本次点击栈内执行，之后只换 src 继续播。 */
+  const a = new Audio();
+  a.preload = 'auto';
   try{ a.preservesPitch = true; }catch(e){}
-  a.playbackRate = slow ? 0.6 : 1;
-  const next = () => {
-    if (token === wToken) setTimeout(() => playSeq(seq, token, slow, i + 1), slow ? 300 : 140);
+  phoneSeqMedia = a;
+  wMedia = a;
+  let i = 0;
+  let consumed = false;    /* 每组只推进一次，防 onended / onerror / catch 重复调度 */
+  let advancing = false;
+
+  const advance = (delay) => {
+    if (token !== wToken || advancing) return;
+    advancing = true;
+    if (phoneSeqTimer) clearTimeout(phoneSeqTimer);
+    phoneSeqTimer = setTimeout(() => { advancing = false; step(); }, delay);
   };
-  let fell = false;
-  const fallback = () => {
-    if (fell) return;
-    fell = true;
-    if (!window.speechSynthesis){ next(); return; }
-    const u = new SpeechSynthesisUtterance(seq[i].t);
-    u.lang = 'fr-FR'; u.rate = slow ? 0.6 : 0.9;
-    const v = frVoice(); if (v) u.voice = v;
-    u.onend = next; u.onerror = next;
-    try{ speechSynthesis.speak(u); }catch(e){ next(); }
+  const advanceTo = (delay) => {
+    if (consumed) return;
+    consumed = true;
+    i += 1;
+    advance(delay);
   };
-  a.onerror = fallback;
-  a.onended = next;
-  safePlay(a, fallback);
+  /* 缺音频或播放被拒时用法语合成音兜底，并加超时保护：
+     iOS 上 SpeechSynthesis 的 onend 偶尔不触发，不能让整段卡死。 */
+  const speakFallback = () => {
+    if (consumed || token !== wToken) return;
+    consumed = true;
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      i += 1;
+      if (token === wToken) advance(120);
+    };
+    if (window.speechSynthesis){
+      const u = new SpeechSynthesisUtterance(seq[i].t);
+      u.lang = 'fr-FR'; u.rate = slow ? 0.6 : 0.9;
+      const v = frVoice(); if (v) u.voice = v;
+      u.onend = go; u.onerror = go;
+      try{ speechSynthesis.speak(u); }catch(e){ go(); }
+    } else go();
+    setTimeout(go, 2600);
+  };
+  const finish = () => {
+    if (token !== wToken) return;
+    $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
+    if (res.textContent.indexOf('正在') !== -1) res.textContent = '';
+    phoneSeqMedia = null;
+    if (wMedia === a) wMedia = null;
+  };
+  const step = () => {
+    if (token !== wToken){ stopPhoneSeq(); return; }
+    if (i >= seq.length){ finish(); return; }
+    consumed = false;
+    $$('#phone-inputs .pair-box.playing').forEach(b => b.classList.remove('playing'));
+    const pb = $('#pair-' + seq[i].pair);
+    if (pb) pb.classList.add('playing');
+    a.playbackRate = slow ? 0.6 : 1;
+    a.src = phoneResolveAudio(seq[i].n);
+    try{ a.currentTime = 0; a.load(); }catch(e){}
+    const attempt = (retry) => {
+      let p;
+      try{ p = a.play(); }
+      catch(e){
+        if (retry < 1) setTimeout(() => { if (token === wToken && !consumed) attempt(retry + 1); }, 200);
+        else speakFallback();
+        return;
+      }
+      if (p && typeof p.catch === 'function'){
+        p.catch(() => {
+          if (token !== wToken || consumed) return;
+          if (retry < 1) setTimeout(() => { if (token === wToken && !consumed) attempt(retry + 1); }, 200);
+          else speakFallback();
+        });
+      }
+    };
+    attempt(0);
+  };
+  a.onended = () => advanceTo(slow ? 300 : 140);
+  a.onerror = () => { if (!consumed) speakFallback(); };
+  step();   /* 必须同步执行第一次 play()，才能吃到用户点击手势 */
 }
 
 function checkPhone(){

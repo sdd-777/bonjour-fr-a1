@@ -352,7 +352,15 @@ let speakToken = 0;
 function stopSpeak(){
   speakToken++;
   mediaToken++;
-  if (mediaAudio){ try{ mediaAudio.pause(); }catch(e){} mediaAudio = null; }
+  /* 复用元素停止时摘掉回调，避免 pause() 后残留的 onended 继续推进连播 */
+  if (mediaAudio){
+    try{
+      mediaAudio.pause();
+      mediaAudio.onended = null;
+      mediaAudio.onerror = null;
+    }catch(e){}
+    mediaAudio = null;
+  }
   if (window.speechSynthesis){
     try{ speechSynthesis.cancel(); }catch(e){}
   }
@@ -394,6 +402,17 @@ function speakText(text, rate, onBoundary, onEnd){
 const AUDIO_BASE = 'assets/audio';
 let mediaAudio = null;   /* 当前播放的 <audio> 元素 */
 let mediaToken = 0;      /* 音频播放令牌（防竞态） */
+
+/* 连播复用 <audio> 时只改 a.src，不会经过打包脚本对 new Audio 的包装，
+   离线单文件版必须自己查内联音频映射表。 */
+function mediaResolveAudio(rel){
+  const M = (typeof window !== 'undefined') ? window.__AUDIO_DATA__ : null;
+  if (M){
+    const key = String(rel).replace(/^\.?\/?assets\/audio\//, '');
+    if (M[key]) return M[key];
+  }
+  return rel;
+}
 
 function sentenceAudioUrl(s){ return AUDIO_BASE + '/sentences/' + s.id + '.mp3'; }
 /* 逐词音频：按词形 slug 命名（sw-{slug}.mp3），同一个词复用同一份预录法音。
@@ -501,45 +520,91 @@ function speakSentence(rate){
   safePlay(a, fallback);
 }
 
-/* 逐词朗读（优先预录音频，回退浏览器合成） */
-async function speakWordByWord(){
+/* 逐词朗读（优先预录音频，回退浏览器合成）
+   与电话报读同理：全程复用同一个 <audio>，第一次 play() 落在用户点击的同步栈内，
+   否则 iOS / 微信等 WebView 只允许播第一个词，后面异步新建的元素全被拒绝。 */
+function speakWordByWord(){
   const s = SENTENCES[state.read.idx];
   stopSpeak();
   const token = mediaToken;
-  for (let i = 0; i < s.words.length; i++){
-    if (token !== mediaToken) return;
-    highlightWord(i);
+  const a = new Audio();
+  a.preload = 'auto';
+  try{ a.preservesPitch = true; }catch(e){}
+  a.playbackRate = 0.8;
+  mediaAudio = a;
+  let i = 0;
+  let consumed = false;    /* 每词只推进一次，防 onended / onerror / catch 重复调度 */
+  let advancing = false;
+  let timer = null;
+
+  const advance = (delay) => {
+    if (token !== mediaToken || advancing) return;
+    advancing = true;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { advancing = false; step(); }, delay);
+  };
+  const advanceTo = (delay) => {
+    if (consumed) return;
+    consumed = true;
+    i += 1;
+    advance(delay);
+  };
+  /* 缺音频或播放被拒时用法语合成音兜底，并加超时保护防卡死 */
+  const ttsFallback = () => {
+    if (consumed || token !== mediaToken) return;
+    consumed = true;
     const clean = cleanWordForTTS(s.words[i].t);
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      i += 1;
+      if (token === mediaToken) advance(200);
+    };
+    if (window.speechSynthesis){
+      const u = new SpeechSynthesisUtterance(clean);
+      u.lang = 'fr-FR'; u.rate = 0.7;
+      const v = frVoice(); if (v) u.voice = v;
+      u.onend = go; u.onerror = go;
+      try{ speechSynthesis.speak(u); }catch(e){ go(); }
+    } else go();
+    setTimeout(go, 3000);
+  };
+  const finish = () => {
+    clearHighlight();
+    try{ a.onended = null; a.onerror = null; }catch(e){}
+    if (mediaAudio === a) mediaAudio = null;
+  };
+  const step = () => {
+    if (token !== mediaToken){ clearHighlight(); return; }
+    if (i >= s.words.length){ finish(); return; }
+    consumed = false;
+    highlightWord(i);
     const url = wordAudioUrl(s, i);
-    if (!url){ await sleep(120); continue; }   /* 纯标点 token 无音频，直接跳过 */
-    await new Promise(res => {
-      let done = false;
-      const finish = () => { if (!done){ done = true; res(); } };
-      const a = new Audio(url);
-      mediaAudio = a;
-      try{ a.preservesPitch = true; }catch(e){}
-      a.playbackRate = 0.8;
-      let fellBack = false;
-      const fallback = () => {
-        if (fellBack) return;
-        fellBack = true;
-        if (!window.speechSynthesis){ finish(); return; }
-        const u = new SpeechSynthesisUtterance(clean);
-        u.lang = 'fr-FR';
-        u.rate = 0.7;
-        const v = frVoice(); if (v) u.voice = v;
-        u.onend = finish; u.onerror = finish;
-        try{ speechSynthesis.speak(u); }catch(e){ finish(); }
-      };
-      a.onerror = fallback;
-      a.onended = finish;
-      safePlay(a, fallback);
-      setTimeout(finish, 4000);   /* 超时保护，防止卡死 */
-    });
-    if (token !== mediaToken) return;
-    await sleep(200);
-  }
-  clearHighlight();
+    if (!url){ i += 1; advance(120); return; }   /* 纯标点 token 无音频，直接跳过 */
+    a.src = mediaResolveAudio(url);
+    try{ a.currentTime = 0; a.load(); }catch(e){}
+    const attempt = (retry) => {
+      let p;
+      try{ p = a.play(); }
+      catch(e){
+        if (retry < 1) setTimeout(() => { if (token === mediaToken && !consumed) attempt(retry + 1); }, 200);
+        else ttsFallback();
+        return;
+      }
+      if (p && typeof p.catch === 'function'){
+        p.catch(() => {
+          if (token !== mediaToken || consumed) return;
+          if (retry < 1) setTimeout(() => { if (token === mediaToken && !consumed) attempt(retry + 1); }, 200);
+          else ttsFallback();
+        });
+      }
+    };
+    attempt(0);
+  };
+  a.onended = () => advanceTo(200);
+  a.onerror = () => { if (!consumed) ttsFallback(); };
+  step();   /* 同步执行第一次 play()，吃到用户点击手势 */
 }
 
 function nextRead(step){
