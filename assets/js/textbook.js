@@ -262,6 +262,8 @@ const tbRec = {
   blob: null, url: null, preview: null,
   mime: '', ext: 'webm', mode: 'audio',   // video | audio
   codec: '', wxReady: false,              // 真实协商编码 / 是否微信可播的 MP4
+  remuxed: false,                         // 是否已把分片 MP4 整理成完整索引的标准 MP4
+  remuxFailed: false,                     // 分片 MP4 整理失败（不能当成标准 MP4 提示）
   seconds: 0, elapsed: 0,
   session: 0, err: '', status: '', statusKind: '',
   canvas: null, ctx: null, canvasStream: null, raf: 0, lastFrame: 0,
@@ -524,6 +526,7 @@ function tbRecRelease(){
   tbRec.canvas = null; tbRec.ctx = null;
   if (tbRec.url){ try{ URL.revokeObjectURL(tbRec.url); }catch(e){} tbRec.url = null; }
   tbRec.blob = null; tbRec.chunks = [];
+  tbRec.remuxed = false; tbRec.remuxFailed = false;
 }
 function tbRecEnsureUrl(){
   if (!tbRec.url && tbRec.blob) tbRec.url = URL.createObjectURL(tbRec.blob);
@@ -548,10 +551,43 @@ function tbRecFilename(){
 }
 /* 分享/下载给系统识别的类型必须是纯 MIME，不能带 codecs 参数（逗号会让
    系统分享面板把文件当成未知类型，data URL 也会因此被截断）。 */
-function tbRecPlainType(){
-  const t = (tbRec.blob && tbRec.blob.type) ||
+function tbRecPlainTypeOf(blob){
+  const t = (blob && blob.type) ||
             (tbRec.mode === 'video' ? 'video/' + tbRec.ext : 'audio/' + tbRec.ext);
-  return t.split(';')[0] || 'application/octet-stream';
+  return String(t).split(';')[0] || 'application/octet-stream';
+}
+function tbRecPlainType(){ return tbRecPlainTypeOf(tbRec.blob); }
+
+/* 录制完成后把文件整理成「系统相册能完整读取」的形态。
+   浏览器 MediaRecorder 产出的是分片 MP4(fMP4) 或 WebM：网页里用 blob 试听
+   完全正常，但交给安卓相册 / 系统转码器时常只读到第一个分片（约 0.5 秒），
+   于是存进相册只剩一个静止的开头画面。
+   这里做两件事：① 把整段读进内存，交给系统时不再是流式 blob；
+   ② 分片 MP4 重封装成带完整 moov 索引的标准 MP4。任何一步失败都原样保留。 */
+async function tbRecNormalize(blob){
+  try{
+    let buf;
+    if (typeof blob.arrayBuffer === 'function') buf = await blob.arrayBuffer();
+    else buf = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => rej(new Error('read'));
+      r.readAsArrayBuffer(blob);
+    });
+    let out = buf, fixed = false;
+    tbRec.remuxFailed = false;
+    if (/mp4/i.test(blob.type || '') && typeof Mp4Remux !== 'undefined' &&
+        Mp4Remux.isFragmented(buf)){
+      const r = Mp4Remux.remux(buf);
+      if (r && r.length > 1024){ out = r; fixed = true; }
+      else tbRec.remuxFailed = true;
+    }
+    tbRec.remuxed = fixed;
+    return new Blob([out], { type: tbRecPlainTypeOf(blob) });
+  }catch(e){
+    tbRec.remuxed = false;
+    return blob;                    /* 绝不因为整理失败把原文件弄坏 */
+  }
 }
 function tbRecShareSupported(){
   return typeof navigator !== 'undefined' &&
@@ -631,7 +667,7 @@ function tbRecRender(){
               ? '已暂停，点「继续录音」接着读；课文一直显示在上方。'
               : '课文就在上方，读到哪句高亮到哪句；点某句可手动跳转。最长 5 分钟，录音时不要同时播放示范音频。') + '</p>';
   } else if (S === 'processing'){
-    html += '<p class="tb-rec-hint">正在生成带课文画面的文件…</p>';
+    html += '<p class="tb-rec-hint">正在整理录像：把分段画面封装成相册能完整识别的格式，稍等一下…</p>';
   } else if (S === 'done'){
     const kb = tbRec.blob ? Math.max(1, Math.round(tbRec.blob.size / 1024)) : 0;
     const isVideo = tbRec.mode === 'video';
@@ -640,34 +676,43 @@ function tbRecRender(){
             (tbRec.blob
               ? (canShare
                   ? '<button class="btn btn-primary tb-rec-btn tb-rec-share" data-act="share" type="button">↗ 转发到微信 / QQ</button>'
-                  : '<button class="btn btn-primary tb-rec-btn tb-rec-share" data-act="save" type="button">💾 保存到本机</button>') +
+                  : '') +
+                '<button class="btn btn-mic tb-rec-btn" data-act="save" type="button">💾 保存到相册 / 本机</button>' +
                 '<button class="btn btn-slow tb-rec-btn" data-act="preview" type="button">▶ 试听</button>'
               : '') +
             '<button class="btn btn-ghost tb-rec-btn" data-act="reset" type="button">🔁 重录</button></div>';
     html += '<p class="tb-rec-info">' + (isVideo ? '🎬 带课文画面的视频' : '🎵 课文朗读录音') +
             ' · ' + tbRecClock(tbRec.seconds) + ' · ' + kb + ' KB · .' + esc(tbRec.ext) +
-            (isVideo ? (tbRec.wxReady ? ' · ✅ 微信可直接播放' : ' · ⚠️ 微信可能打不开') : '') + '</p>';
+            (isVideo ? (tbRec.wxReady ? ' · ✅ 微信可直接播放' : ' · ⚠️ 微信可能打不开') : '') +
+            (tbRec.remuxed ? ' · ✅ 已整理为完整 MP4' : '') + '</p>';
     html += isVideo
       ? '<video class="tb-rec-video" controls playsinline preload="metadata"></video>'
       : '<audio class="tb-rec-audio" controls preload="metadata"></audio>';
     if (tbRec.err) html += '<p class="tb-rec-status warn">' + esc(tbRec.err) + '</p>';
+    const saveWay = canShare
+      ? '<b>存相册请点上面的「💾 保存到相册 / 本机」</b>，或直接「↗ 转发到微信 / QQ」发给好友；不满意点「🔁 重录」。'
+      : '<b>请点上面的「💾 保存到相册 / 本机」</b>保存，再在相册 / 文件里用微信发送；不满意点「🔁 重录」。';
+    const playerWarn = '<br>⚠️ 不要从上方播放器右上角用系统「分享 / 存储」另存：' +
+                       '安卓会按流读取视频，容易只存下开头 1 秒。';
     let hint;
-    if (!canShare){
-      hint = '当前浏览器不支持直接转发文件，已改为「保存到本机」：保存后在相册 / 文件里长按视频，' +
-             '用微信「+ → 相册 / 文件」发送即可。不满意就点「🔁 重录」。';
-    } else if (tbRec.wxReady){
-      hint = '已生成 <b>MP4（H.264 / AAC）</b>，微信、QQ 都能当视频点开看。点「转发到微信 / QQ」→ ' +
-             '在系统分享面板里选微信或 QQ → 选好友发送；不满意就点「🔁 重录」重新录。';
-    } else {
-      hint = '⚠️ 当前浏览器录出的是 <b>.' + esc(tbRec.ext) + '</b>，微信里可能只能当普通文件、无法直接点开播放。' +
-             '建议用 <b>iPhone Safari</b> 或 <b>新版安卓 Chrome</b> 打开本页重录；也可先「保存到本机」，再用视频 App 转成 MP4。';
-    }
+    if (tbRec.remuxFailed)
+      hint = '⚠️ 视频整理未成功，文件仍是分段格式。请先点「💾 保存到相册 / 本机」拿到完整文件；' +
+             '若相册里只显示开头一瞬，请点「生成带课文的网页版」另行保存，' +
+             '或换 <b>iPhone Safari</b> / <b>新版安卓 Chrome</b> 重录。' + playerWarn;
+    else if (tbRec.remuxed)
+      hint = '✅ 已把分段录像整理成<b>带完整时长索引的标准 MP4</b>，相册、微信都能读到整段。' + saveWay + playerWarn;
+    else if (isVideo && tbRec.wxReady)
+      hint = '已生成 <b>MP4（H.264 / AAC）</b>，微信、QQ 都能当视频点开看。' + saveWay + playerWarn;
+    else
+      hint = '⚠️ 当前浏览器录出的是 <b>.' + esc(tbRec.ext) + '</b>（不是标准 MP4），安卓相册可能只认到开头。' +
+             '请先点「💾 保存到相册 / 本机」拿到完整文件；若相册里仍只剩一瞬，' +
+             '建议用 <b>iPhone Safari</b> 或 <b>新版安卓 Chrome</b> 打开本页重录，' +
+             '或点下方「生成带课文的网页版」另行保存。' + playerWarn;
     if (tbRecInAppBrowser())
       hint += '<br>当前是微信 / QQ 内置浏览器，不支持系统转发：请点右上角「···」→「在浏览器中打开」后再录一次。';
     html += '<p class="tb-rec-hint">' + hint + '</p>';
-    if (canShare && tbRec.blob)
-      html += '<p class="tb-rec-alt"><button class="tb-rec-link" data-act="save" type="button">备用：保存到本机</button>' +
-              ' · <button class="tb-rec-link" data-act="savepage" type="button">生成带课文的网页版</button></p>';
+    if (tbRec.blob)
+      html += '<p class="tb-rec-alt"><button class="tb-rec-link" data-act="savepage" type="button">生成带课文的网页版</button></p>';
   }
   html += '<p class="tb-rec-status' + (tbRec.statusKind ? ' ' + tbRec.statusKind : '') + '">' + esc(tbRec.status) + '</p>';
   box.innerHTML = html;
@@ -781,7 +826,7 @@ async function tbRecStart(){
 
   rec.ondataavailable = e => { if (e.data && e.data.size) tbRec.chunks.push(e.data); };
   rec.onerror = () => { tbRec.err = '录音中断，已停止。'; tbRecStop(); };
-  rec.onstop = () => {
+  rec.onstop = async () => {
     if (session !== tbRec.session) return;
     const type = (tbRec.chunks[0] && tbRec.chunks[0].type) ||
                  tbRec.mime || (tbRec.mode === 'video' ? 'video/webm' : 'audio/webm');
@@ -797,9 +842,13 @@ async function tbRecStart(){
     try{ real = rec.mimeType || ''; }catch(e){}
     tbRec.codec = real || type;
     tbRec.wxReady = tbRec.mode === 'video' && tbRecWxReady(tbRec.codec, tbRecIsIOS());
-    const blob = new Blob(tbRec.chunks, { type: type });
-    tbRec.blob = blob.size ? blob : null;
+    let blob = new Blob(tbRec.chunks, { type: type });
     tbRec.chunks = [];
+    tbRec.state = 'processing';
+    tbRecRender();
+    blob = await tbRecNormalize(blob);
+    if (session !== tbRec.session) return;    /* 整理期间用户点了重录 / 切课 */
+    tbRec.blob = blob.size ? blob : null;
     tbRec.state = 'done';
     if (!tbRec.blob) tbRec.err = '没有录到声音，请检查麦克风后再试。';
     tbRecRender();
@@ -1047,7 +1096,7 @@ function tbRecDownload(name){
   a.href = url; a.download = name; a.style.display = 'none';
   document.body.appendChild(a); a.click();
   setTimeout(() => { try{ document.body.removeChild(a); }catch(e){} }, 1500);
-  tbRecStatus('已开始下载：' + name + '（在「下载」目录里，可用微信发送）', 'ok');
+  tbRecStatus('已下载完整文件：' + name + '（到「下载」目录查看；别用播放器右上角的「分享 / 存储」另存，那样容易只剩开头）', 'ok');
 }
 
 async function tbRecSave(what){

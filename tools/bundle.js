@@ -14,7 +14,7 @@ const SCRIPTS = [
   'assets/js/verbs-data.js', 'assets/js/videos-data.js', 'assets/js/videos.js',
   'assets/js/games-data.js', 'assets/js/games.js', 'assets/js/words.js',
   'assets/js/textbook-data.js', 'assets/js/textbook-u3.js', 'assets/js/textbook-u4.js',
-  'assets/js/textbook.js'
+  'assets/js/mp4-remux.js', 'assets/js/textbook.js'
 ];
 const AUDIO_DIRS = ['words', 'verbs', 'ipa', 'textbook', 'sentences'];
 
