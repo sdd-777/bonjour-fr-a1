@@ -110,6 +110,7 @@ function showView(name){
   if (typeof stopVideoPlayers === 'function') stopVideoPlayers();
   if (typeof stopGames === 'function') stopGames();
   if (typeof stopTbSeq === 'function') stopTbSeq();
+  if (typeof tbRecStop === 'function') tbRecStop();
   if (name === 'games' && typeof ensureGames === 'function') ensureGames();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

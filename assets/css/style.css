@@ -1436,3 +1436,58 @@ main{
 .tb-empty p{ color: var(--ink-soft); line-height: 1.8; max-width: 480px; margin: 0 auto; }
 .tb-seq{ min-width: 112px; text-align: center; }
 .tb-seq.playing{ animation: tbPulse 1.2s ease infinite; }
+
+/* ===== 🎤 课文朗读录音 ===== */
+.tb-rec{
+  border: 1px dashed var(--line-strong, #D9C7AE);
+  border-radius: 12px; padding: .7rem .85rem; margin: .2rem 0 .9rem;
+  background: #FFFCF6;
+}
+.tb-rec-head{
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  font-size: .95rem; font-weight: 800; color: var(--rose-deep, #C25B7C);
+}
+.tb-rec-sub{ font-size: .76rem; font-weight: 600; color: var(--ink-soft); }
+.tb-rec-row{ display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; margin-top: .6rem; }
+.tb-rec-btn{ font-size: .85rem; padding: .46rem .78rem; }
+.tb-rec-timer{
+  font-variant-numeric: tabular-nums; font-weight: 800;
+  color: #C0392B; font-size: .95rem; min-width: 74px;
+}
+.tb-rec-hint, .tb-rec-info, .tb-rec-status{
+  font-size: .8rem; color: var(--ink-soft); line-height: 1.65; margin: .5rem 0 0;
+}
+.tb-rec-info{ color: var(--blue-deep, #4A90D9); font-weight: 700; }
+.tb-rec-status:empty{ display: none; }
+.tb-rec-status.ok{ color: #2E7D32; font-weight: 700; }
+.tb-rec-status.warn{ color: #B5791E; font-weight: 700; }
+.tb-rec-audio{ width: 100%; margin-top: .6rem; height: 40px; }
+.tb-rec-video{ width: 100%; max-height: 480px; margin-top: .6rem; border-radius: 10px; background: #000; display: block; }
+.tb-rec-embed{ margin-top: .5rem; }
+.tb-tele{
+  margin-top: .65rem; border-radius: 10px; overflow: hidden;
+  background: #14243A; color: #F5F0E6; border: 1px solid rgba(255,201,107,.28);
+}
+.tb-tele-head{
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .45rem .7rem; font-size: .8rem; font-weight: 800;
+  color: #FFC96B; background: rgba(255,201,107,.08);
+}
+.tb-tele-head span{ font-weight: 500; opacity: .72; font-size: .72rem; }
+.tb-tele-body{ max-height: 220px; overflow-y: auto; padding: .4rem .5rem; -webkit-overflow-scrolling: touch; }
+.tb-tele-line{
+  display: flex; gap: .55rem; padding: .42rem .5rem; margin-bottom: 2px;
+  border-left: 3px solid transparent; border-radius: 8px; cursor: pointer;
+}
+.tb-tele-line.active{ background: rgba(255,201,107,.14); border-left-color: #FFC96B; }
+.tb-tele-n{ font-size: .72rem; opacity: .5; min-width: 20px; padding-top: .18rem; font-variant-numeric: tabular-nums; }
+.tb-tele-txt{ min-width: 0; }
+.tb-tele-fr{ margin: 0 0 2px; font-size: .9rem; font-weight: 700; line-height: 1.4; }
+.tb-tele-zh{ margin: 0; font-size: .76rem; opacity: .66; line-height: 1.45; }
+@media (max-width: 480px){
+  .tb-tele-body{ max-height: 190px; }
+  .tb-rec-video{ max-height: 420px; }
+  /* 完成态 4 个按钮排成整齐的 2×2，避免最后一个孤零零换行 */
+  .tb-rec-actions{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .tb-rec-actions .tb-rec-btn{ width: 100%; }
+}
