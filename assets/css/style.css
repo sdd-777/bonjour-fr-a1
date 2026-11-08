@@ -81,10 +81,10 @@ b{ font-weight: 800; }
 
 /* ===== 顶部导航 ===== */
 .site-header{
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(250, 243, 230, .88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* 不吸顶：导航栏只在页面最上面出现一次，往下滚动时随页面一起滚走。
+     iOS Safari 上 sticky + backdrop-filter 滚动时会压住下方内容、出现遮挡/穿透。 */
+  position: relative; z-index: 1;
+  background: rgba(250, 243, 230, .96);
   border-bottom: 2px solid var(--line);
 }
 .header-inner{

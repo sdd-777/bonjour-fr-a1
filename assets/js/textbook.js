@@ -603,11 +603,13 @@ function tbRecPageFilename(){
 function tbRecStatus(msg, kind){
   tbRec.status = msg || '';
   tbRec.statusKind = kind || '';
-  const el = document.querySelector('.tb-rec-status');
+  const el = (tbRec.box && tbRec.box.querySelector('.tb-rec-status')) ||
+             document.querySelector('.tb-rec-status');
   if (el){ el.textContent = tbRec.status; el.className = 'tb-rec-status' + (kind ? ' ' + kind : ''); }
 }
 function tbRecRenderTime(){
-  const el = document.querySelector('.tb-rec-timer');
+  const el = (tbRec.box && tbRec.box.querySelector('.tb-rec-timer')) ||
+             document.querySelector('.tb-rec-timer');
   if (el) el.textContent = (tbRec.state === 'paused' ? '⏸ ' : '🔴 ') + tbRecClock(tbRec.seconds);
 }
 
@@ -672,12 +674,14 @@ function tbRecRender(){
     const kb = tbRec.blob ? Math.max(1, Math.round(tbRec.blob.size / 1024)) : 0;
     const isVideo = tbRec.mode === 'video';
     const canShare = tbRecShareSupported();
+    const ios = tbRecIsIOS();
+    const saveName = ios ? '💾 保存到相册' : '💾 保存到本机';
     html += '<div class="tb-rec-row tb-rec-actions">' +
             (tbRec.blob
               ? (canShare
                   ? '<button class="btn btn-primary tb-rec-btn tb-rec-share" data-act="share" type="button">↗ 转发到微信 / QQ</button>'
                   : '') +
-                '<button class="btn btn-mic tb-rec-btn" data-act="save" type="button">💾 保存到相册 / 本机</button>' +
+                '<button class="btn btn-mic tb-rec-btn" data-act="save" type="button">' + saveName + '</button>' +
                 '<button class="btn btn-slow tb-rec-btn" data-act="preview" type="button">▶ 试听</button>'
               : '') +
             '<button class="btn btn-ghost tb-rec-btn" data-act="reset" type="button">🔁 重录</button></div>';
@@ -689,14 +693,20 @@ function tbRecRender(){
       ? '<video class="tb-rec-video" controls playsinline preload="metadata"></video>'
       : '<audio class="tb-rec-audio" controls preload="metadata"></audio>';
     if (tbRec.err) html += '<p class="tb-rec-status warn">' + esc(tbRec.err) + '</p>';
-    const saveWay = canShare
-      ? '<b>存相册请点上面的「💾 保存到相册 / 本机」</b>，或直接「↗ 转发到微信 / QQ」发给好友；不满意点「🔁 重录」。'
-      : '<b>请点上面的「💾 保存到相册 / 本机」</b>保存，再在相册 / 文件里用微信发送；不满意点「🔁 重录」。';
-    const playerWarn = '<br>⚠️ 不要从上方播放器右上角用系统「分享 / 存储」另存：' +
-                       '安卓会按流读取视频，容易只存下开头 1 秒。';
+    const saveWay = ios
+      ? '<b>存相册请点上面的「' + saveName + '」</b> → 在弹出的系统面板里选「存储到视频 / 保存视频」；' +
+        (canShare ? '或直接「↗ 转发到微信 / QQ」发给好友；' : '') + '不满意点「🔁 重录」。'
+      : (canShare
+          ? '<b>存到本机请点上面的「' + saveName + '」</b>，或直接「↗ 转发到微信 / QQ」发给好友；不满意点「🔁 重录」。'
+          : '<b>请点上面的「' + saveName + '」</b>保存，再在相册 / 文件里用微信发送；不满意点「🔁 重录」。');
+    /* 安卓从播放器按流读取 blob 会只存下开头；iOS 的「存储到视频」不走这条路径，
+       给 iOS 看这条警告反而会让人不敢存，所以只对安卓显示。 */
+    const playerWarn = ios ? '' :
+      '<br>⚠️ 不要从上方播放器右上角用系统「分享 / 存储」另存：' +
+      '安卓会按流读取视频，容易只存下开头 1 秒。';
     let hint;
     if (tbRec.remuxFailed)
-      hint = '⚠️ 视频整理未成功，文件仍是分段格式。请先点「💾 保存到相册 / 本机」拿到完整文件；' +
+      hint = '⚠️ 视频整理未成功，文件仍是分段格式。请先点「' + saveName + '」拿到完整文件；' +
              '若相册里只显示开头一瞬，请点「生成带课文的网页版」另行保存，' +
              '或换 <b>iPhone Safari</b> / <b>新版安卓 Chrome</b> 重录。' + playerWarn;
     else if (tbRec.remuxed)
@@ -704,8 +714,8 @@ function tbRecRender(){
     else if (isVideo && tbRec.wxReady)
       hint = '已生成 <b>MP4（H.264 / AAC）</b>，微信、QQ 都能当视频点开看。' + saveWay + playerWarn;
     else
-      hint = '⚠️ 当前浏览器录出的是 <b>.' + esc(tbRec.ext) + '</b>（不是标准 MP4），安卓相册可能只认到开头。' +
-             '请先点「💾 保存到相册 / 本机」拿到完整文件；若相册里仍只剩一瞬，' +
+      hint = '⚠️ 当前浏览器录出的是 <b>.' + esc(tbRec.ext) + '</b>（不是标准 MP4），系统相册可能只认到开头。' +
+             '请先点「' + saveName + '」拿到完整文件；若相册里仍只剩一瞬，' +
              '建议用 <b>iPhone Safari</b> 或 <b>新版安卓 Chrome</b> 打开本页重录，' +
              '或点下方「生成带课文的网页版」另行保存。' + playerWarn;
     if (tbRecInAppBrowser())
@@ -1078,8 +1088,39 @@ async function tbRecShare(){
       tbRec.wxReady ? 'ok' : 'warn');
   }catch(e){
     if (e && e.name === 'AbortError'){ tbRecStatus('已取消转发，可再次转发或点「🔁 重录」。', ''); return; }
-    tbRecStatus('转发未完成，可点下方「备用：保存到本机」再手动发送。', 'warn');
+    tbRecStatus('转发未完成，可点上面的「💾 保存到相册 / 本机」再手动发送。', 'warn');
   }
+}
+
+/* iOS Safari：blob: URL 的 <a download> 存不进相册。旧逻辑在这里只内嵌了一个
+   播放器、没有任何保存动作，所以点「保存到相册」看起来毫无反应。
+   改为调起系统分享面板（与「转发到微信」同一条已验证可用的通道），
+   面板里的「存储到视频 / 保存视频」即可把视频存进相册。
+   navigator.share 必须在点击手势的同步栈内，前面不能有任何 await。 */
+async function tbRecSaveAlbum(){
+  if (!tbRec.blob) return;
+  const name = tbRecFilename();
+  const type = tbRecPlainType();
+  let file = null, can = false;
+  try{ file = new File([tbRec.blob], name, { type: type }); }catch(e){}
+  try{ can = !!(file && tbRecShareSupported() && navigator.canShare({ files: [file] })); }catch(e){ can = false; }
+  if (!can){ tbRecFallbackIOS(name); return; }
+  tbRecStatus('正在打开系统面板：选「存储到视频 / 保存视频」即可存入相册…', '');
+  try{
+    await navigator.share({ files: [file], title: '我的课文朗读 · ' + tbRec.title });
+    tbRecStatus('已打开系统面板：点「存储到视频 / 保存视频」即可存进相册；' +
+                '若没有该选项，选「存储到文件」后在「文件」App 里再存相册。', 'ok');
+  }catch(e){
+    if (e && e.name === 'AbortError'){ tbRecStatus('已取消，可再点一次「💾 保存到相册」。', ''); return; }
+    tbRecFallbackIOS(name);
+  }
+}
+function tbRecFallbackIOS(name){
+  const url = tbRecEnsureUrl();
+  if (!url) return;
+  tbRecInline(url, name);
+  tbRecStatus('当前 Safari 无法直接调起存相册：请长按下方视频 →「存储到视频」，' +
+              '或先「↗ 转发到微信 / QQ」再从微信里保存到相册。', 'warn');
 }
 
 /* 备用：保存到本机（不支持系统分享 / 微信内置浏览器 / 桌面浏览器时使用） */
@@ -1087,11 +1128,7 @@ function tbRecDownload(name){
   const url = tbRecEnsureUrl();
   if (!url){ tbRecStatus('文件已失效，请重新录一次。', 'warn'); return; }
   name = name || tbRecFilename();
-  if (tbRecIsIOS()){
-    tbRecInline(url, name);
-    tbRecStatus('已生成文件：点下方播放器右上角分享 →「存储到文件」，再用微信发送。', 'ok');
-    return;
-  }
+  if (tbRecIsIOS()){ tbRecSaveAlbum(); return; }
   const a = document.createElement('a');
   a.href = url; a.download = name; a.style.display = 'none';
   document.body.appendChild(a); a.click();
