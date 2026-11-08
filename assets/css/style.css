@@ -1464,6 +1464,12 @@ main{
 .tb-rec-audio{ width: 100%; margin-top: .6rem; height: 40px; }
 .tb-rec-video{ width: 100%; max-height: 480px; margin-top: .6rem; border-radius: 10px; background: #000; display: block; }
 .tb-rec-embed{ margin-top: .5rem; }
+.tb-rec-share{ font-weight: 800; letter-spacing: .01em; }
+.tb-rec-alt{ font-size: .76rem; color: var(--ink-soft); line-height: 1.7; margin: .55rem 0 0; }
+.tb-rec-link{
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  font: inherit; color: var(--blue-deep, #4A90D9); text-decoration: underline;
+}
 .tb-tele{
   margin-top: .65rem; border-radius: 10px; overflow: hidden;
   background: #14243A; color: #F5F0E6; border: 1px solid rgba(255,201,107,.28);
@@ -1490,4 +1496,5 @@ main{
   /* 完成态 4 个按钮排成整齐的 2×2，避免最后一个孤零零换行 */
   .tb-rec-actions{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
   .tb-rec-actions .tb-rec-btn{ width: 100%; }
+  .tb-rec-actions .tb-rec-share{ grid-column: 1 / -1; }
 }
