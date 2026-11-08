@@ -264,6 +264,11 @@ const tbRec = {
   codec: '', wxReady: false,              // 真实协商编码 / 是否微信可播的 MP4
   remuxed: false,                         // 是否已把分片 MP4 整理成完整索引的标准 MP4
   remuxFailed: false,                     // 分片 MP4 整理失败（不能当成标准 MP4 提示）
+  truncated: false,                       // 成品时长明显短于实际录制时长
+  videoStalled: false,                    // 视频轨提前停止出帧（iOS 26/27 已知缺陷）
+  wentBackground: false,                  // 录制期间页面曾切到后台
+  wallStart: 0, wallPaused: 0, pauseAt: 0, wallSeconds: 0,
+  fileDuration: 0, mediaDuration: 0, trackInfo: null,
   seconds: 0, elapsed: 0,
   session: 0, err: '', status: '', statusKind: '',
   canvas: null, ctx: null, canvasStream: null, raf: 0, lastFrame: 0,
@@ -527,6 +532,9 @@ function tbRecRelease(){
   if (tbRec.url){ try{ URL.revokeObjectURL(tbRec.url); }catch(e){} tbRec.url = null; }
   tbRec.blob = null; tbRec.chunks = [];
   tbRec.remuxed = false; tbRec.remuxFailed = false;
+  tbRec.truncated = false; tbRec.videoStalled = false;
+  tbRec.wentBackground = false;
+  tbRec.fileDuration = 0; tbRec.mediaDuration = 0; tbRec.trackInfo = null;
 }
 function tbRecEnsureUrl(){
   if (!tbRec.url && tbRec.blob) tbRec.url = URL.createObjectURL(tbRec.blob);
@@ -574,19 +582,66 @@ async function tbRecNormalize(blob){
       r.onerror = () => rej(new Error('read'));
       r.readAsArrayBuffer(blob);
     });
-    let out = buf, fixed = false;
+    let out = buf, fixed = false, info = null;
     tbRec.remuxFailed = false;
+    tbRec.trackInfo = null;
+    tbRec.mediaDuration = 0;
     if (/mp4/i.test(blob.type || '') && typeof Mp4Remux !== 'undefined' &&
         Mp4Remux.isFragmented(buf)){
-      const r = Mp4Remux.remux(buf);
+      info = {};
+      const r = Mp4Remux.remux(buf, info);
       if (r && r.length > 1024){ out = r; fixed = true; }
-      else tbRec.remuxFailed = true;
+      else { tbRec.remuxFailed = true; info = null; }
     }
     tbRec.remuxed = fixed;
+    if (info){
+      tbRec.mediaDuration = info.movieDuration || 0;
+      tbRec.trackInfo = info.tracks || null;
+    }
     return new Blob([out], { type: tbRecPlainTypeOf(blob) });
   }catch(e){
     tbRec.remuxed = false;
+    tbRec.trackInfo = null;
     return blob;                    /* 绝不因为整理失败把原文件弄坏 */
+  }
+}
+
+/* 用浏览器解码器实测成品时长，给非 MP4 / 整理失败的情况兜底 */
+function tbRecProbeDuration(blob){
+  return new Promise(res => {
+    let url;
+    try{ url = URL.createObjectURL(blob); }catch(e){ res(0); return; }
+    const el = document.createElement(tbRec.mode === 'video' ? 'video' : 'audio');
+    el.preload = 'metadata';
+    let done = false;
+    const fin = v => {
+      if (done) return; done = true;
+      try{ el.removeAttribute('src'); el.load(); }catch(e){}
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      res(v);
+    };
+    el.onloadedmetadata = () => fin(isFinite(el.duration) && el.duration > 0 ? el.duration : 0);
+    el.onerror = () => fin(0);
+    setTimeout(() => fin(0), 2500);
+    el.src = url;
+  });
+}
+
+/* 核对「实际读了多久」和「成品有多长」。iOS 26/27 Safari 的 MP4 录制器
+   会把长录像截成十几秒（WebKit bug 299164 / 315091），旧逻辑会静默交付
+   残缺文件，用户直到存进相册才发现。这里明确标记，交给完成态提示。 */
+async function tbRecCheckIntegrity(blob){
+  tbRec.truncated = false;
+  tbRec.videoStalled = false;
+  const wall = tbRec.wallSeconds || tbRec.seconds;
+  if (wall < 20 || !blob) return;
+  if (!tbRec.fileDuration) tbRec.fileDuration = await tbRecProbeDuration(blob);
+  const measured = tbRec.fileDuration || tbRec.mediaDuration || 0;
+  if (measured > 0 && measured < wall * 0.7) tbRec.truncated = true;
+  const vids = (tbRec.trackInfo || []).filter(t => t.kind === 'vide' && t.rawDuration > 0);
+  if (vids.length && tbRec.trackInfo.length > 1){
+    const raw = Math.min.apply(null, vids.map(t => t.rawDuration));
+    if (raw < wall * 0.7) tbRec.videoStalled = true;
   }
 }
 function tbRecShareSupported(){
@@ -646,7 +701,11 @@ function tbRecRender(){
     if (tbRec.err) html += '<p class="tb-rec-status warn">' + esc(tbRec.err) + '</p>';
     html += '<p class="tb-rec-hint">建议先点右上角「整课连播」听示范。录音时课文一直显示在上方，' +
             '可 ⏸ 暂停 / ▶ 继续；录完<b>先试听</b>，满意就点「↗ 转发到微信 / QQ」直接发给好友，' +
-            '微信里能像视频一样点开看；不满意点「🔁 重录」。</p>';
+            '微信里能像视频一样点开看；不满意点「🔁 重录」。' +
+            (tbRecIsIOS()
+              ? '<br><b>苹果手机：录制全程请保持页面在前台、屏幕常亮，不要锁屏或切到别的应用</b>，' +
+                '否则 Safari 可能把长录像截断。'
+              : '') + '</p>';
     const fmt = tbRecPickMedia();
     if (fmt.ext !== 'mp4')
       html += '<p class="tb-rec-hint">⚠️ 当前浏览器录不出 MP4，成品会是 .' + esc(fmt.ext) +
@@ -673,6 +732,10 @@ function tbRecRender(){
   } else if (S === 'done'){
     const kb = tbRec.blob ? Math.max(1, Math.round(tbRec.blob.size / 1024)) : 0;
     const isVideo = tbRec.mode === 'video';
+    const stallAt = (() => {
+      const v = (tbRec.trackInfo || []).filter(t => t.kind === 'vide' && t.rawDuration > 0);
+      return v.length ? Math.round(Math.min.apply(null, v.map(t => t.rawDuration))) : 0;
+    })();
     const canShare = tbRecShareSupported();
     const ios = tbRecIsIOS();
     const saveName = ios ? '💾 保存到相册' : '💾 保存到本机';
@@ -693,6 +756,20 @@ function tbRecRender(){
       ? '<video class="tb-rec-video" controls playsinline preload="metadata"></video>'
       : '<audio class="tb-rec-audio" controls preload="metadata"></audio>';
     if (tbRec.err) html += '<p class="tb-rec-status warn">' + esc(tbRec.err) + '</p>';
+    if (tbRec.truncated)
+      html += '<p class="tb-rec-status warn">⚠️ 成品只有约 ' +
+              Math.round(tbRec.fileDuration || tbRec.mediaDuration) + ' 秒，而你录了约 ' +
+              Math.round(tbRec.wallSeconds || tbRec.seconds) + ' 秒：本机浏览器把长录像截断了。' +
+              '请点「🔁 重录」再试一次（已切换兼容参数），录制全程保持页面在前台、屏幕常亮、' +
+              '不要锁屏或切到别的应用；也可点「生成带课文的网页版」在浏览器里完整播放。</p>';
+    else if (tbRec.videoStalled)
+      html += '<p class="tb-rec-status warn">⚠️ 本机浏览器只录到前约 ' + stallAt +
+              ' 秒的画面（iOS 26/27 Safari 的已知问题）。文件已补成完整时长：' +
+              '<b>声音是完整的</b>，后半段画面会停在最后一句课文。' +
+              '想让画面也逐句高亮到结尾，请点「🔁 重录」再试一次，录制时保持屏幕常亮。</p>';
+    else if (tbRec.wentBackground)
+      html += '<p class="tb-rec-status warn">⚠️ 录制期间页面曾切到后台 / 锁屏，可能丢失片段，' +
+              '请先点「▶ 试听」确认完整；不满意点「🔁 重录」。</p>';
     const saveWay = ios
       ? '<b>存相册请点上面的「' + saveName + '」</b> → 在弹出的系统面板里选「存储到视频 / 保存视频」；' +
         (canShare ? '或直接「↗ 转发到微信 / QQ」发给好友；' : '') + '不满意点「🔁 重录」。'
@@ -858,14 +935,20 @@ async function tbRecStart(){
     tbRecRender();
     blob = await tbRecNormalize(blob);
     if (session !== tbRec.session) return;    /* 整理期间用户点了重录 / 切课 */
+    await tbRecCheckIntegrity(blob);
+    if (session !== tbRec.session) return;
     tbRec.blob = blob.size ? blob : null;
     tbRec.state = 'done';
     if (!tbRec.blob) tbRec.err = '没有录到声音，请检查麦克风后再试。';
     tbRecRender();
   };
 
+  /* WebKit bug 299164 / 315091：iOS 26/27 Safari 录 video/mp4 时，
+     timeslice 缺失或过短会让视频轨在 16~18 秒后停止出帧、音轨仍完整，
+     成品被系统相册裁成十几秒。社区在 iPhone/iPad/Mac 上实测
+     start(1000) 可消除（300 秒连续、8962 帧）。 */
   try{
-    rec.start(500);
+    rec.start(1000);
   }catch(e){
     try{ stream.getTracks().forEach(t => t.stop()); }catch(e2){}
     tbRec.err = '录音启动失败：' + ((e && e.name) || '未知错误');
@@ -877,6 +960,9 @@ async function tbRecStart(){
   /* 开始录音时停掉示范音频，避免把示范一起录进去 */
   if (typeof stopTbSeq === 'function') stopTbSeq();
   if (typeof stopWordAudio === 'function') stopWordAudio();
+  /* 墙钟计时不受 requestAnimationFrame 节流影响，用于完成后核对成品时长 */
+  tbRec.wallStart = Date.now(); tbRec.wallPaused = 0; tbRec.pauseAt = 0;
+  tbRec.wallSeconds = 0; tbRec.wentBackground = false;
   tbRec.raf = requestAnimationFrame(tbRecFrame);
   tbRecRender();
 }
@@ -888,10 +974,12 @@ function tbRecTogglePause(){
     try{ rec.pause(); }
     catch(e){ tbRecStatus('当前浏览器不支持暂停录音，可直接点「停止并生成」。', 'warn'); return; }
     tbRec.state = 'paused';
+    tbRec.pauseAt = Date.now();
   } else {
     try{ rec.resume(); }
     catch(e){ tbRecStatus('继续录音失败，请重新录一次。', 'warn'); return; }
     tbRec.state = 'recording';
+    if (tbRec.pauseAt){ tbRec.wallPaused += Date.now() - tbRec.pauseAt; tbRec.pauseAt = 0; }
   }
   const pa = tbRec.state === 'paused';
   const b = tbRec.box && tbRec.box.querySelector('[data-act="pause"],[data-act="resume"]');
@@ -906,6 +994,11 @@ function tbRecTogglePause(){
 
 function tbRecStop(opts){
   const discard = !!(opts && opts.discard);
+  if (!discard && (tbRec.state === 'recording' || tbRec.state === 'paused')){
+    if (tbRec.pauseAt){ tbRec.wallPaused += Date.now() - tbRec.pauseAt; tbRec.pauseAt = 0; }
+    tbRec.wallSeconds = tbRec.wallStart
+      ? Math.max(0, (Date.now() - tbRec.wallStart - tbRec.wallPaused) / 1000) : 0;
+  }
   if (tbRec.raf){ cancelAnimationFrame(tbRec.raf); tbRec.raf = 0; }
   if (discard) tbRec.session += 1;
 
@@ -1143,13 +1236,17 @@ async function tbRecSave(what){
   tbRecDownload();
 }
 
-/* 切到后台 / 离开页面时释放麦克风，避免一直占用 */
+/* iOS Safari 在锁屏 / 下拉通知 / 切 App 时会把页面置为 hidden。
+   旧逻辑在这里直接 stop()，会把还在继续的朗读一刀切成十几秒的「完成品」，
+   用户完全不知情——正是「读两分多钟只剩 18 秒」的成因之一。
+   现在只做标记，绝不主动中断；完成态会提示先试听确认。 */
 if (typeof document !== 'undefined'){
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && (tbRec.state === 'recording' || tbRec.state === 'paused')) tbRecStop();
+    if (document.hidden && (tbRec.state === 'recording' || tbRec.state === 'paused'))
+      tbRec.wentBackground = true;
   });
   window.addEventListener('pagehide', () => {
-    if (tbRec.state === 'recording' || tbRec.state === 'paused') tbRecStop({ discard: true });
+    if (tbRec.state === 'recording' || tbRec.state === 'paused') tbRec.wentBackground = true;
   });
 }
 if (typeof window !== 'undefined') window.tbRecStop = tbRecStop;
