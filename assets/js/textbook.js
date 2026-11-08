@@ -609,6 +609,10 @@ function tbRecRender(){
     html += '<p class="tb-rec-hint">建议先点右上角「整课连播」听示范。录音时课文一直显示在上方，' +
             '可 ⏸ 暂停 / ▶ 继续；录完<b>先试听</b>，满意就点「↗ 转发到微信 / QQ」直接发给好友，' +
             '微信里能像视频一样点开看；不满意点「🔁 重录」。</p>';
+    const fmt = tbRecPickMedia();
+    if (fmt.ext !== 'mp4')
+      html += '<p class="tb-rec-hint">⚠️ 当前浏览器录不出 MP4，成品会是 .' + esc(fmt.ext) +
+              '，微信里可能无法直接点开播放。建议用 <b>iPhone Safari</b> 或 <b>新版安卓 Chrome</b> 打开本页再录。</p>';
     if (tbRecInAppBrowser())
       html += '<p class="tb-rec-status warn">当前在微信 / QQ 内置浏览器里，通常无法录音和转发文件：' +
               '请点右上角「···」→「在浏览器中打开」后再使用本功能。</p>';
@@ -1018,7 +1022,11 @@ async function tbRecShare(){
     : '正在调起系统分享，请选择微信或 QQ…', '');
   try{
     await navigator.share({ files: [file], title: '我的课文朗读 · ' + tbRec.title });
-    tbRecStatus('已调起转发：选微信 / QQ 发送即可，对方能像视频一样点开看；不满意可点「🔁 重录」。', 'ok');
+    tbRecStatus('已调起转发：选微信 / QQ 发送即可' +
+      (tbRec.wxReady
+        ? '，对方能像视频一样点开看；不满意可点「🔁 重录」。'
+        : '。注意当前是 .' + tbRec.ext + ' 格式，微信里可能只能当文件；想让好友直接点开，请用 iPhone Safari 或新版安卓 Chrome 重录。'),
+      tbRec.wxReady ? 'ok' : 'warn');
   }catch(e){
     if (e && e.name === 'AbortError'){ tbRecStatus('已取消转发，可再次转发或点「🔁 重录」。', ''); return; }
     tbRecStatus('转发未完成，可点下方「备用：保存到本机」再手动发送。', 'warn');
