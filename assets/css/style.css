@@ -494,6 +494,7 @@ main{
 .mic-wave span:nth-child(5){ animation-delay: .48s; }
 @keyframes wave{ 0%, 100%{ height: 8px; } 50%{ height: 32px; } }
 .mic-status{ font-weight: 700; margin-bottom: .8rem; min-height: 1.5em; }
+.mic-tip{ font-size: .82rem; color: var(--ink-soft); line-height: 1.6; margin: .7rem 0 0; }
 
 /* ===== 打分面板 ===== */
 .score-panel{

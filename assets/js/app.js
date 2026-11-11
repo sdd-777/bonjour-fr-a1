@@ -616,52 +616,84 @@ function nextRead(step){
    跟读挑战（录音 + 语音识别打分）
    ========================================================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+/* 语音识别只在桌面 Chrome / Edge 用作「加分项」。
+   iOS Safari 上它会与 getUserMedia 抢麦克风（WebKit bug 321436：识别器一启动，
+   录音轨就被静音），国内移动网络也常连不上识别服务；移动端一律走
+   「纯录音 + 本地声学对比」，这样录音一定录得到声音、一定停得下来。 */
+const SHADOW_UA = navigator.userAgent || '';
+const SHADOW_MOBILE = /iP(hone|ad|od)|Android|Mobile|Silk|Kindle|HarmonyOS/i.test(SHADOW_UA);
+const SHADOW_DESKTOP_SAFARI = /Safari/i.test(SHADOW_UA) && !/Chrome|Chromium|Edg/i.test(SHADOW_UA);
+const SHADOW_SR = !!SR && !SHADOW_MOBILE && !SHADOW_DESKTOP_SAFARI;
 const shadow = { recog: null, recorder: null, chunks: [], stream: null, timer: null,
-                 finalTranscript: '', audioUrl: null, blob: null, active: false, session: 0 };
+                 finalTranscript: '', audioUrl: null, blob: null, active: false, session: 0,
+                 srDead: false, srRestarts: 0, startedAt: 0, wallSeconds: 0 };
 let shadowFinishing = false;
+let shadowPlayAudio = null;   /* 复用同一个 <audio>，避开移动端自动播放策略 */
 
 async function startShadow(){
   if (shadow.active) return;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    toast('当前浏览器不支持录音，请换 Chrome / Edge 试试');
+    toast('当前浏览器不支持录音，请换 Chrome / Edge / Safari 试试');
     return;
   }
+  /* 别把示范原音一起录进去 */
+  if (typeof stopSpeak === 'function') stopSpeak();
   $('#score-panel').hidden = true;
   $('#mic-panel').hidden = false;
   $('#mic-status').textContent = '正在请求麦克风权限…';
   $('#btn-mic').disabled = true;
+  $('#self-rate').hidden = true;
 
   try{
     shadow.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   }catch(e){
     $('#mic-panel').hidden = true;
     $('#btn-mic').disabled = false;
-    toast('需要麦克风权限才能跟读哦，请在地址栏允许麦克风');
+    toast('需要麦克风权限才能跟读哦，请在弹窗里点「允许」');
     return;
   }
 
   shadow.active = true;
   shadow.session++;
   shadow.finalTranscript = '';
+  if (shadow.audioUrl){ try{ URL.revokeObjectURL(shadow.audioUrl); }catch(e){} }
   shadow.audioUrl = null;
+  shadow.blob = null;
   shadow.chunks = [];
+  shadow.srDead = false;
+  shadow.srRestarts = 0;
+  shadow.startedAt = Date.now();
+  shadow.wallSeconds = 0;
 
-  /* 录音（用于回放自己的声音） */
+  /* 录音：优先 audio/mp4（iOS Safari 唯一稳定支持的格式），否则 webm/opus */
   try{
-    shadow.recorder = new MediaRecorder(shadow.stream);
+    let mime = '';
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported){
+      const cands = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+      for (let i = 0; i < cands.length; i++)
+        if (MediaRecorder.isTypeSupported(cands[i])){ mime = cands[i]; break; }
+    }
+    const opts = mime ? { mimeType: mime } : undefined;
+    shadow.recorder = new MediaRecorder(shadow.stream, opts);
     shadow.recorder.ondataavailable = e => { if (e.data && e.data.size) shadow.chunks.push(e.data); };
+    shadow.recorder.onerror = () => {
+      if (shadow.active) $('#mic-status').textContent = '录音出了点问题，可点「读完了」结束';
+    };
     shadow.recorder.onstop = () => {
       try{
-        const blob = new Blob(shadow.chunks, { type: shadow.chunks[0] ? shadow.chunks[0].type : 'audio/webm' });
+        const parts = shadow.chunks.filter(c => c && c.size);
+        if (!parts.length) return;
+        const type = (parts[0].type || shadow.recorder.mimeType || mime || 'audio/webm').split(';')[0];
+        const blob = new Blob(parts, { type: type });
         shadow.blob = blob;
         shadow.audioUrl = URL.createObjectURL(blob);
       }catch(e){}
     };
-    shadow.recorder.start();
+    shadow.recorder.start(500);   /* 分片产出，避免 iOS 一次性给不完整的 blob */
   }catch(e){ shadow.recorder = null; }
 
-  /* 语音识别（自动打分） */
-  if (SR){
+  /* 语音识别只是可选加分项：它报错、自己结束，都绝不结束录音 */
+  if (SHADOW_SR){
     try{
       shadow.recog = new SR();
       shadow.recog.lang = 'fr-FR';
@@ -674,41 +706,68 @@ async function startShadow(){
           if (r.isFinal) shadow.finalTranscript += r[0].transcript + ' ';
           else interim += r[0].transcript;
         }
-        $('#mic-status').textContent = '我在听：' + ((interim || shadow.finalTranscript).trim() || '…');
+        if (shadow.active)
+          $('#mic-status').textContent = '🔴 录音中 · 我听到：' + ((interim || shadow.finalTranscript).trim() || '…');
       };
       shadow.recog.onerror = e => {
-        $('#mic-status').textContent = '识别有点问题（' + (e.error || 'unknown') + '），可以点「读完了」结束';
+        shadow.srDead = true;      /* 识别挂了就彻底放弃它，录音照常继续 */
+        if (shadow.active)
+          $('#mic-status').textContent = '🔴 录音中…（自动识别不可用，会用声音对比打分）读完点「读完了」';
       };
-      shadow.recog.onend = () => finishShadow();
+      shadow.recog.onend = () => {
+        /* 关键：识别结束 ≠ 朗读结束。录音仍在继续就尝试续一次，绝不 stop 录音 */
+        if (!shadow.active || shadow.srDead) return;
+        if (shadow.srRestarts < 1){
+          shadow.srRestarts++;
+          try{ shadow.recog.start(); return; }catch(e){}
+        }
+        shadow.srDead = true;
+        if (shadow.active)
+          $('#mic-status').textContent = '🔴 录音中…读完点「读完了」（会用声音对比打分）';
+      };
       shadow.recog.start();
-      $('#mic-status').textContent = '🔴 我在听，请大声朗读…（说完会自动停止，也可点「读完了」）';
+      $('#mic-status').textContent = '🔴 我在听，请大声朗读…读完点「读完了」';
     }catch(e){
       shadow.recog = null;
-      $('#mic-status').textContent = '🔴 录音中…读完后点「读完了」';
+      $('#mic-status').textContent = '🔴 录音中…读完点「读完了」（会用声音对比打分）';
     }
   } else {
-    $('#mic-status').textContent = '🔴 录音中…读完后点「读完了」（会用你的声音和原音对比打分）';
+    $('#mic-status').textContent = '🔴 录音中…读完点「读完了」（会用你的声音和原音对比打分）';
   }
 
-  shadow.timer = setTimeout(() => stopShadow(), 10000); /* 最长 10 秒 */
+  clearTimeout(shadow.timer);
+  shadow.timer = setTimeout(() => stopShadow(), 15000); /* 最长 15 秒，留足朗读时间 */
 }
 
 function stopShadow(){
+  if (!shadow.active) return;
   clearTimeout(shadow.timer);
-  if (shadow.recog){ try{ shadow.recog.stop(); }catch(e){} }
-  if (shadow.recorder && shadow.recorder.state !== 'inactive'){ try{ shadow.recorder.stop(); }catch(e){} }
-  if (!shadow.recog) finishShadow();
+  /* 先摘掉识别回调，避免 stop()/abort() 反过来触发意外收尾 */
+  if (shadow.recog){
+    try{ shadow.recog.onend = null; shadow.recog.onerror = null; shadow.recog.stop(); }catch(e){}
+    shadow.recog = null;
+  }
+  if (shadow.recorder && shadow.recorder.state !== 'inactive'){
+    try{ shadow.recorder.stop(); }catch(e){}
+  }
+  /* 无论识别器是什么状态，都由我们主动收尾，彻底不依赖 recog.onend */
+  finishShadow();
 }
 
-/* 用户切走页面时静默中止，不出分 */
+/* 用户切走页面 / 切换模块时静默中止，不出分 */
 function abortShadow(){
   if (!shadow.active) return;
   clearTimeout(shadow.timer);
   shadow.session++; /* 使挂起的打分回调失效 */
-  shadowFinishing = true; /* 屏蔽 recog.onend 触发的打分 */
-  if (shadow.recog){ try{ shadow.recog.abort(); }catch(e){} shadow.recog = null; }
-  if (shadow.recorder && shadow.recorder.state !== 'inactive'){ try{ shadow.recorder.stop(); }catch(e){} }
-  if (shadow.stream){ shadow.stream.getTracks().forEach(t => t.stop()); }
+  shadowFinishing = true;
+  if (shadow.recog){
+    try{ shadow.recog.onend = null; shadow.recog.onerror = null; shadow.recog.abort(); }catch(e){}
+    shadow.recog = null;
+  }
+  if (shadow.recorder && shadow.recorder.state !== 'inactive'){
+    try{ shadow.recorder.onstop = null; shadow.recorder.stop(); }catch(e){}
+  }
+  if (shadow.stream){ try{ shadow.stream.getTracks().forEach(t => t.stop()); }catch(e){} }
   shadow.active = false;
   shadowFinishing = false;
   $('#mic-panel').hidden = true;
@@ -722,32 +781,66 @@ function finishShadow(){
   $('#btn-mic').disabled = false;
   $('#mic-status').textContent = '🤔 让我看看说得怎么样…';
   clearTimeout(shadow.timer);
+  shadow.wallSeconds = shadow.startedAt ? (Date.now() - shadow.startedAt) / 1000 : 0;
+  if (shadow.recog){
+    try{ shadow.recog.onend = null; shadow.recog.onerror = null; shadow.recog.abort(); }catch(e){}
+    shadow.recog = null;
+  }
   if (shadow.recorder && shadow.recorder.state !== 'inactive'){ try{ shadow.recorder.stop(); }catch(e){} }
-  if (shadow.stream){ shadow.stream.getTracks().forEach(t => t.stop()); }
+  if (shadow.stream){ try{ shadow.stream.getTracks().forEach(t => t.stop()); }catch(e){} }
 
   const s = SENTENCES[state.read.idx];
   const heard = shadow.finalTranscript.trim();
-  const hasRec = !!SR;
   const mySession = shadow.session;
 
-  /* 等录音 onstop 就绪后再渲染，保证「播放我的录音」可用 */
-  setTimeout(async () => {
+  /* 等 MediaRecorder.onstop 把 blob 交出来（iOS 上可能晚于 220ms），最多等 1.2 秒 */
+  const waitBlob = (n) => {
     if (shadow.session !== mySession){ shadowFinishing = false; return; }
+    if (!shadow.blob && n > 0){ setTimeout(() => waitBlob(n - 1), 120); return; }
+    renderShadowResult(s, heard, mySession);
+  };
+  setTimeout(() => waitBlob(10), 220);
+}
+
+async function renderShadowResult(s, heard, mySession){
+  try{
     $('#mic-panel').hidden = true;
+    if (shadow.session !== mySession) return;
+
+    /* 没录到有效声音：明确告知，绝不显示「录音完成！」误导用户 */
+    const noSound = !shadow.blob || shadow.blob.size < 800 || shadow.wallSeconds < 0.8;
+    if (noSound && !heard){
+      renderShadowNoSound();
+      return;
+    }
 
     if (!heard){
       /* 没有识别文本：改用声学对比评分（不依赖联网的语音识别服务） */
       const res = await analyzeShadow(s, shadow.blob);
+      if (shadow.session !== mySession) return;
       if (res) renderAcousticScore(s, res);
-      else showSelfRate();
-      shadowFinishing = false;
+      else showSelfRate(true);
       return;
     }
-
-    const result = scoreShadow(s, heard);
-    renderScore(s, result, heard);
+    renderScore(s, scoreShadow(s, heard), heard);
+  } finally {
     shadowFinishing = false;
-  }, 220);
+  }
+}
+
+/* 录音为空 / 太短：给出可操作的原因，而不是「录音完成！」 */
+function renderShadowNoSound(){
+  $('#score-panel').hidden = false;
+  setRing(0, 'var(--lav)');
+  $('#score-num').textContent = '—';
+  $('#score-stars').textContent = '☆☆☆';
+  $('#score-msg').textContent = '没录到声音，请再试一次';
+  $('#score-heard').textContent = '本次只有 ' + (shadow.wallSeconds || 0).toFixed(1) + ' 秒录音' +
+    (shadow.wallSeconds >= 0.8 ? '，且几乎听不到声音' : '，太短了');
+  $('#diff-row').innerHTML = '';
+  $('#btn-play-rec').disabled = !shadow.audioUrl;
+  $('#self-rate').hidden = true;
+  toast('没录到声音：请允许麦克风、别静音，开口读完整句后再点「读完了」');
 }
 
 /* ---------- 评分算法 ---------- */
@@ -843,44 +936,126 @@ function pearson(a, b){
 }
 function clamp100(v){ return Math.max(0, Math.min(100, v)); }
 
-async function analyzeShadow(s, blob){
-  try{
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC || !blob) return null;
-    const ctx = new AC();
-    let myBuf = null, refBuf = null;
-    try{ myBuf = await ctx.decodeAudioData(await blob.arrayBuffer()); }catch(e){ myBuf = null; }
+/* decodeAudioData 在老 WebKit 上只有回调式、且 iOS 常解不了 MediaRecorder
+   产出的 audio/mp4。统一包一层：Promise / 回调两种都兼容，失败返回 null。 */
+function shadowDecode(ctx, ab){
+  return new Promise(resolve => {
+    let done = false;
+    const ok = b => { if (!done){ done = true; resolve(b); } };
+    const bad = () => ok(null);
     try{
-      const r = await fetch(sentenceAudioUrl(s));
-      if (r.ok) refBuf = await ctx.decodeAudioData(await r.arrayBuffer());
-    }catch(e){ refBuf = null; }
-    try{ ctx.close(); }catch(e){}
-    if (!myBuf || !refBuf) return null;
-    const my = shadowEnvelope(myBuf), ref = shadowEnvelope(refBuf);
-    if (!my || !ref) return null;
+      const p = ctx.decodeAudioData(ab, ok, bad);
+      if (p && typeof p.then === 'function') p.then(ok, bad);
+    }catch(e){ bad(); }
+    setTimeout(() => ok(null), 2500);   /* 卡住不死等 */
+  });
+}
 
-    const myVoiced = Math.max(0.05, my.dur * my.voiced);
-    const refVoiced = Math.max(0.2, ref.dur * ref.voiced);
-    const ratio = myVoiced / refVoiced;
-
-    const rhythmRaw = pearson(resampleTo(my.env, 48), resampleTo(ref.env, 48));
-    const rhythm  = clamp100(Math.round((rhythmRaw * 0.5 + 0.5) * 100));
-    const speed   = clamp100(Math.round(100 - Math.abs(Math.log(ratio)) * 58));
-    const clarity = clamp100(Math.round(Math.min(1, my.voiced / Math.max(0.25, ref.voiced)) * 100));
-    const score   = Math.round(rhythm * 0.45 + speed * 0.35 + clarity * 0.2);
-
-    let tip;
-    if (my.voiced < 0.06) tip = '几乎没有听到声音，靠近麦克风、大声一点再试～';
-    else if (ratio > 1.5) tip = '说得比原音慢不少，试着连贯一点，别一个个词断开～';
-    else if (ratio < 0.68) tip = '说得有点快，放慢到原音的速度，把每个音节读清楚～';
-    else if (rhythm < 45) tip = '节奏和原音差得比较多，先听两遍原音，再一句一句跟着读～';
-    else if (score >= 85) tip = 'Bravo ! 节奏和语调都很接近原音！';
-    else if (score >= 65) tip = 'Très bien ! 已经很像了，个别音节再清楚一点～';
-    else tip = '继续努力！点 🐢 慢速朗读，再一个词一个词跟着读～';
-
-    return { score: score, rhythm: rhythm, speed: speed, clarity: clarity,
-             myDur: my.dur, refDur: ref.dur, ratio: ratio, tip: tip };
+/* 原音：线上走 fetch；离线单文件（file://）fetch 会失败，改读内联 base64 */
+function shadowInlineAudio(s){
+  try{
+    const M = window.__AUDIO_DATA__;
+    const key = 'sentences/' + s.id + '.mp3';
+    const u = M && M[key];
+    if (!u) return null;
+    const bin = atob(String(u).split(',')[1] || '');
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr.buffer;
   }catch(e){ return null; }
+}
+
+async function shadowRefArrayBuffer(s){
+  /* 离线单文件（file://）下 fetch 不支持该协议，直接读内联音频，
+     免得控制台报 "URL scheme file is not supported" */
+  if (location.protocol === 'file:') return shadowInlineAudio(s);
+  try{
+    const r = await fetch(sentenceAudioUrl(s));
+    if (r.ok) return await r.arrayBuffer();
+  }catch(e){}
+  return shadowInlineAudio(s);
+}
+
+/* iOS 14 以前的 Blob 没有 arrayBuffer()，用 FileReader 兜底 */
+function shadowBlobArrayBuffer(blob){
+  if (typeof blob.arrayBuffer === 'function'){
+    return blob.arrayBuffer().catch(() => null);
+  }
+  return new Promise(resolve => {
+    try{
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => resolve(null);
+      fr.readAsArrayBuffer(blob);
+    }catch(e){ resolve(null); }
+  });
+}
+
+async function analyzeShadow(s, blob){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC || !blob) return shadowFallbackScore();
+
+  let ctx = null, myBuf = null, refBuf = null;
+  try{
+    ctx = new AC();
+    try{ if (ctx.resume) await ctx.resume(); }catch(e){}
+    const myAb = await shadowBlobArrayBuffer(blob);
+    if (myAb) myBuf = await shadowDecode(ctx, myAb);
+    const refAb = await shadowRefArrayBuffer(s);
+    if (refAb) refBuf = await shadowDecode(ctx, refAb);
+  }catch(e){}
+  try{ if (ctx && ctx.close) ctx.close(); }catch(e){}
+
+  const my = myBuf ? shadowEnvelope(myBuf) : null;
+  const ref = refBuf ? shadowEnvelope(refBuf) : null;
+
+  /* 波形解不出来（iOS 的 audio/mp4 常见）：仍按「录到了多久、有没有声音」给分，
+     绝不退回「? 分」。 */
+  if (!my) return shadowFallbackScore();
+
+  const myDur = my.dur || shadow.wallSeconds || 0;
+  const refDur = ref ? ref.dur : 0;
+  const myVoiced = Math.max(0.05, myDur * my.voiced);
+  const refVoiced = ref ? Math.max(0.2, refDur * ref.voiced) : Math.max(0.8, myVoiced);
+  const ratio = myVoiced / refVoiced;
+
+  const rhythm = ref
+    ? clamp100(Math.round((pearson(resampleTo(my.env, 48), resampleTo(ref.env, 48)) * 0.5 + 0.5) * 100))
+    : 65;
+  const speed  = ref ? clamp100(Math.round(100 - Math.abs(Math.log(ratio)) * 58))
+                     : clamp100(Math.round(100 - Math.abs(Math.log(myDur / 3)) * 32));
+  const clarity = clamp100(Math.round(Math.min(1, my.voiced / Math.max(0.25, ref ? ref.voiced : 0.45)) * 100));
+  const score = Math.round(rhythm * 0.45 + speed * 0.35 + clarity * 0.2);
+
+  let tip;
+  if (my.voiced < 0.06) tip = '几乎没有听到声音，靠近麦克风、大声一点再试～';
+  else if (!ref) tip = '录得很清楚！本设备无法读取原音波形，先点「▶ 播放我的录音」和「🎧 再听原音」自己对比一下～';
+  else if (ratio > 1.5) tip = '说得比原音慢不少，试着连贯一点，别一个个词断开～';
+  else if (ratio < 0.68) tip = '说得有点快，放慢到原音的速度，把每个音节读清楚～';
+  else if (rhythm < 45) tip = '节奏和原音差得比较多，先听两遍原音，再一句一句跟着读～';
+  else if (score >= 85) tip = 'Bravo ! 节奏和语调都很接近原音！';
+  else if (score >= 65) tip = 'Très bien ! 已经很像了，个别音节再清楚一点～';
+  else tip = '继续努力！点 🐢 慢速朗读，再一个词一个词跟着读～';
+
+  return { score: score, rhythm: rhythm, speed: speed, clarity: clarity,
+           myDur: myDur, refDur: refDur || myDur, ratio: ratio, tip: tip,
+           partial: !ref };
+}
+
+/* 连录音波形都解不出时（iOS Safari 的 audio/mp4 + 旧 decodeAudioData）：
+   依据录音时长和音量给出基础分，并如实说明「无法自动对比」 */
+function shadowFallbackScore(){
+  const dur = shadow.wallSeconds || 0;
+  const size = shadow.blob ? shadow.blob.size : 0;
+  const enough = dur >= 1.2 && size >= 3000;
+  const score = enough ? 70 : 45;
+  return {
+    score: score, rhythm: score, speed: score, clarity: score,
+    myDur: dur, refDur: dur, ratio: 1, partial: true,
+    tip: enough
+      ? '已录下你的朗读！这台设备不能自动分析声音波形，请点「▶ 播放我的录音」再「🎧 再听原音」自己对比～'
+      : '录音有点短或声音太小，靠近麦克风把整句读完再试一次～'
+  };
 }
 
 function renderAcousticScore(s, res){
@@ -891,8 +1066,10 @@ function renderAcousticScore(s, res){
   $('#score-num').textContent = String(pct);
   $('#score-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   $('#score-msg').textContent = res.tip;
-  $('#score-heard').textContent = '声音对比：你的 ' + res.myDur.toFixed(1) + ' 秒 / 原音 ' + res.refDur.toFixed(1) + ' 秒';
-  $('#diff-row').innerHTML =
+  $('#score-heard').textContent = res.partial
+    ? '已录下 ' + (res.myDur || 0).toFixed(1) + ' 秒 · 点「▶ 播放我的录音」和「🎧 再听原音」自己对比'
+    : '声音对比：你的 ' + res.myDur.toFixed(1) + ' 秒 / 原音 ' + res.refDur.toFixed(1) + ' 秒';
+  $('#diff-row').innerHTML = res.partial ? '' :
     '<span class="diff-chip ' + (res.rhythm >= 70 ? 'hit' : 'miss') + '">节奏 ' + res.rhythm + '%</span>' +
     '<span class="diff-chip ' + (res.speed >= 70 ? 'hit' : 'miss') + '">语速 ' + res.speed + '%</span>' +
     '<span class="diff-chip ' + (res.clarity >= 70 ? 'hit' : 'miss') + '">清晰度 ' + res.clarity + '%</span>';
@@ -952,10 +1129,11 @@ function showSelfRate(){
   $('#score-panel').hidden = false;
   setRing(0, 'var(--lav)');
   $('#ring-fg').style.strokeDashoffset = '326.73';
-  $('#score-num').textContent = '?';
+  $('#score-num').textContent = '—';
   $('#score-stars').textContent = '☆☆☆';
-  $('#score-msg').textContent = '录音完成！';
-  $('#score-heard').textContent = '播放下面的录音，和原音对比一下';
+  $('#score-msg').textContent = '录好了，来自己打个分';
+  $('#score-heard').textContent = '已录 ' + (shadow.wallSeconds || 0).toFixed(1) +
+    ' 秒 · 先「▶ 播放我的录音」，再「🎧 再听原音」对比一下';
   $('#diff-row').innerHTML = '';
   $('#btn-play-rec').disabled = !shadow.audioUrl;
   $('#self-rate').hidden = false;
@@ -1102,7 +1280,12 @@ function init(){
   $('#btn-normal').onclick = () => speakSentence(0.9);
   $('#btn-slow').onclick = () => speakSentence(0.45);
   $('#btn-words').onclick = speakWordByWord;
-  $('#btn-stop-speak').onclick = stopSpeak;
+  /* 「停止」也兼作跟读的兜底结束键：录音中点它同样能收尾，
+     避免用户以为按了却没反应（面板里的「读完了」是主入口） */
+  $('#btn-stop-speak').onclick = () => {
+    if (shadow.active) stopShadow();
+    else stopSpeak();
+  };
   $('#btn-mic').onclick = startShadow;
   $('#btn-mic-stop').onclick = stopShadow;
   $('#btn-rprev').onclick = () => nextRead(-1);
@@ -1118,10 +1301,14 @@ function init(){
   $('#btn-retry').onclick = () => { $('#score-panel').hidden = true; startShadow(); };
   $('#btn-listen-again').onclick = () => speakSentence(0.9);
   $('#btn-play-rec').onclick = () => {
-    if (shadow.audioUrl){
-      const a = new Audio(shadow.audioUrl);
-      a.play().catch(() => toast('录音播放失败，请重试'));
-    }
+    if (!shadow.audioUrl){ toast('还没有录到声音，点「🔁 再试一次」重录吧'); return; }
+    try{
+      if (!shadowPlayAudio) shadowPlayAudio = new Audio();
+      shadowPlayAudio.src = shadow.audioUrl;
+      shadowPlayAudio.currentTime = 0;
+      const p = shadowPlayAudio.play();
+      if (p && p.catch) p.catch(() => toast('播放失败，再点一次「▶ 播放我的录音」'));
+    }catch(e){ toast('播放失败，再点一次「▶ 播放我的录音」'); }
   };
   $$('#self-rate .self-rate-btns .btn').forEach(b => {
     b.onclick = () => selfRate(parseInt(b.dataset.s, 10));

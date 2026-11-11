@@ -150,7 +150,7 @@
       <button class="menu-card" id="card-read">
         <div class="menu-icon icon-read">🎧</div>
         <h3>朗读小剧场</h3>
-        <p>听原速 / 慢速 / 逐词朗读，用麦克风跟读还能自动打分</p>
+        <p>听原速 / 慢速 / 逐词朗读，用麦克风跟读并对比原音打分</p>
         <span class="menu-tag">跟读打分</span>
       </button>
       <button class="menu-card" id="card-words">
@@ -241,7 +241,7 @@
   <section id="view-read" class="view" hidden>
     <div class="view-head">
       <h2>🎧 朗读小剧场</h2>
-      <p>先听原音，再慢速跟读；点 🎤 可以录音并自动打分</p>
+      <p>先听原音，再慢速跟读；点 🎤 录下自己的朗读，读完点「⏹ 读完了」即可看分数</p>
     </div>
     <div class="picker" id="picker-read" aria-label="选择句子"></div>
 
@@ -262,8 +262,9 @@
 
       <div class="mic-panel" id="mic-panel" hidden>
         <div class="mic-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-        <p class="mic-status" id="mic-status">我在听…</p>
+        <p class="mic-status" id="mic-status">🔴 录音中…请把整句读完，再点下面按钮</p>
         <button class="btn btn-ghost" id="btn-mic-stop">⏹ 读完了</button>
+        <p class="mic-tip">朗读时请保持页面在前台，别切到别的应用；最长录 15 秒。</p>
       </div>
 
       <div class="score-panel" id="score-panel" hidden>
@@ -288,7 +289,7 @@
           <button class="btn btn-ghost" id="btn-listen-again">🎧 再听原音</button>
         </div>
         <div class="self-rate" id="self-rate" hidden>
-          <p>你的浏览器暂不支持自动评分，给自己打个分吧：</p>
+          <p>这台设备无法自动分析发音波形，听完后给自己打个分吧：</p>
           <div class="self-rate-btns">
             <button class="btn btn-ghost" data-s="1">😕 一般</button>
             <button class="btn btn-ghost" data-s="2">🙂 不错</button>
@@ -446,7 +447,7 @@
 </main>
 
 <footer class="site-footer">
-  <p>🥐 建议使用 Chrome / Edge 打开，可获得完整的法语语音与跟读评分体验</p>
+  <p>🥐 跟读打分在手机 Safari / Chrome、微信里都能用；首次录音请在弹窗点「允许麦克风」</p>
   <p>练习记录保存在本机浏览器中 · Fait avec ❤️ pour les débutants</p>
 </footer>
 
