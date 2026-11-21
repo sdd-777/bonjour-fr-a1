@@ -1546,6 +1546,13 @@ main{
 .dict-ocr-status.loading{ background:var(--blue-soft); color:var(--ink); }
 .dict-ocr-status.ok{ background:var(--sage-soft); color:var(--ink); }
 .dict-ocr-status.warn{ background:#FBE7D3; color:var(--ink); }
+.dict-topbar{ display:flex; justify-content:flex-end; margin:.1rem 0 .5rem; }
+.dict-wrong-quick{ display:inline-flex; align-items:center; gap:.35rem; border:1.5px solid var(--rose); background:var(--rose-soft); color:var(--rose-deep); border-radius:999px; padding:.4rem .9rem; font-size:.86rem; font-weight:700; cursor:pointer; }
+.dict-wrong-quick:active{ transform:translateY(1px); }
+.dict-live-stat{ display:flex; justify-content:center; flex-wrap:wrap; gap:.5rem 1rem; margin:.1rem 0 .7rem; font-size:.88rem; color:var(--ink-soft); }
+.dict-live-stat b{ color:var(--amber-deep); }
+.dict-live-stat .ls-ok{ color:#3f6b49; font-weight:700; }
+.dict-live-stat .ls-bad{ color:var(--rose-deep); font-weight:700; }
 .dict-online-note{ margin:.5rem 0; padding:.55rem .8rem; border-radius:12px; font-size:.85rem; background:var(--blue-soft); color:var(--ink); }
 .dict-online-note.loading{ animation:dictPulse 1.2s ease-in-out infinite; }
 @keyframes dictPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.6; } }

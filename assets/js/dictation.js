@@ -202,27 +202,80 @@
     return e;
   }
 
-  /* ---------- 发音（TTS，任意法语词都能读） ---------- */
+  /* ---------- 发音：优先预录标准法语 MP3（任何设备都发标准法音），缺失才回退 TTS ---------- */
   let speakToken = 0;
+  let dictAudio = null;  // 复用的 <audio>，避免移动端多元素自动播放被拒
   function stopDictSpeak() {
     speakToken++;
     try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    if (dictAudio) {
+      try { dictAudio.pause(); dictAudio.onended = null; dictAudio.onerror = null; } catch (e) {}
+      dictAudio = null;
+    }
     $$('#view-dictation .dict-speak.playing').forEach(b => b.classList.remove('playing'));
   }
-  function speak(fr, btn, slow) {
-    stopDictSpeak();
-    const token = speakToken;
-    if (btn) btn.classList.add('playing');
-    const done = () => { if (token === speakToken && btn) btn.classList.remove('playing'); };
+  // 词形 → 预录法音 slug（与 app.js 的 wordSlug 一致）
+  function dictSlug(w) {
+    return String(w == null ? '' : w)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9'-]/g, '').replace(/^[-']+|[-']+$/g, '');
+  }
+  // 解析音频地址（离线单文件版走内联映射表）
+  function dictResolveAudio(rel) {
+    const M = (typeof window !== 'undefined') ? window.__AUDIO_DATA__ : null;
+    if (M) {
+      const key = String(rel).replace(/^\.?\/?assets\/audio\//, '');
+      if (M[key]) return M[key];
+    }
+    return rel;
+  }
+  function ttsSpeak(fr, btn, slow, token, done) {
     if (!window.speechSynthesis) { toast('此浏览器不支持语音朗读'); done(); return; }
     const u = new SpeechSynthesisUtterance(fr);
     u.lang = 'fr-FR';
-    u.rate = slow ? 0.6 : 0.9;
+    u.rate = slow ? 0.75 : 0.95;
     const v = (typeof frVoice === 'function') ? frVoice() : null;
     if (v) u.voice = v;
     u.onend = done; u.onerror = done;
     try { speechSynthesis.speak(u); } catch (e) { done(); }
-    setTimeout(done, 4000);
+    setTimeout(done, 4500);
+  }
+  // 主播放入口：优先预录法语 MP3；无对应文件/加载失败则回退 TTS。
+  // slow 用 playbackRate 实现慢速（预录 0.6、TTS 0.75）
+  function speak(fr, btn, slow, audioName) {
+    stopDictSpeak();
+    const token = speakToken;
+    if (btn) btn.classList.add('playing');
+    const done = () => { if (token === speakToken && btn) btn.classList.remove('playing'); };
+    const word = cleanWordForSpeak(fr);
+    // 指定音频名（如鼓励语 dict-bravo）优先；否则按词形 slug 找预录
+    let rel = '';
+    if (audioName) rel = 'assets/audio/sentences/' + audioName + '.mp3';
+    else {
+      const slug = dictSlug(word);
+      if (slug) rel = 'assets/audio/words/sw-' + slug + '.mp3';
+    }
+    if (!rel) { ttsSpeak(word, btn, slow, token, done); return; }
+    const a = new Audio();
+    dictAudio = a;
+    let settled = false;
+    const fallback = () => { if (settled || token !== speakToken) return; settled = true; ttsSpeak(word, btn, slow, token, done); };
+    a.onended = () => { if (token === speakToken) { settled = true; done(); } };
+    a.onerror = fallback;
+    a.src = dictResolveAudio(rel);
+    a.playbackRate = slow ? 0.6 : 1;
+    a.onloadedmetadata = () => { a.playbackRate = slow ? 0.6 : 1; };
+    try {
+      const p = a.play();
+      if (p && p.catch) p.catch(fallback);
+    } catch (e) { fallback(); }
+    setTimeout(() => { if (!settled) { settled = true; done(); } }, 8000);
+  }
+  // 去掉标点，保留重音（用于按词形匹配预录）；单独的缩略词微调
+  function cleanWordForSpeak(t) {
+    let w = String(t == null ? '' : t).replace(/^[-\s]+/, '').replace(/[?!.,;:!]+$/, '').trim();
+    if (w === "J'") w = 'Je';
+    return w;
   }
 
   /* ---------- 视图渲染 ---------- */
@@ -237,6 +290,15 @@
     else if (st.stage === 'review') renderReview(body);
     else if (st.stage === 'result') renderResult(body);
     updateSteps();
+    updateWrongBadge();
+  }
+  // 顶部错题本角标：数量实时可见
+  function updateWrongBadge() {
+    const badge = $('#dict-wrong-badge');
+    if (!badge) return;
+    const n = loadWrong().length;
+    if (n > 0) { badge.hidden = false; badge.textContent = n; }
+    else badge.hidden = true;
   }
   function updateSteps() {
     const map = { upload: 0, confirm: 1, learn: 2, dictate: 3, review: 4, result: 5 };
@@ -525,18 +587,46 @@
     $('#dict-learn-prev').onclick = () => { if (st.idx > 0) { st.idx--; render(); } };
     $('#dict-learn-next').onclick = () => {
       if (st.idx < total - 1) { st.idx++; render(); }
-      else { st.idx = 0; st.stage = 'dictate'; render(); }
+      else {
+        // 进入默写：打乱顺序（保证与录入/学习顺序不同），重置判定状态
+        st.words = shuffledForDictate(st.words);
+        st.words.forEach(w => { w.typed = ''; w.ok = false; w.judged = false; });
+        st.idx = 0; st.stage = 'dictate'; render();
+      }
     };
+  }
+  // 默写乱序：随机打乱，且保证结果顺序与原顺序不同（≥2 个词时）
+  function shuffledForDictate(words) {
+    const arr = words.slice();
+    if (arr.length < 2) return arr;
+    const sig = a => a.map(w => w.fr).join('\u0001');
+    const original = sig(arr);
+    for (let t = 0; t < 10; t++) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      }
+      if (sig(arr) !== original) break;
+    }
+    return arr;
   }
 
   /* —— 阶段 4：默写（逐词） —— */
   function renderDictate(body) {
     const w = st.words[st.idx];
     const total = st.words.length;
+    const doneCount = st.words.filter(x => x.judged).length;
+    const okCount = st.words.filter(x => x.judged && x.ok).length;
+    const badCount = doneCount - okCount;
     const box = el('div', 'dict-card card dict-study');
     box.innerHTML =
-      '<div class="dict-progress-text">默写 ' + (st.idx + 1) + ' / ' + total + '</div>' +
-      '<div class="dict-progress"><div style="width:' + (st.idx / total * 100) + '%"></div></div>' +
+      '<div class="dict-live-stat">' +
+      '<span>已默 <b>' + doneCount + '/' + total + '</b></span>' +
+      '<span class="ls-ok">✅ 对 ' + okCount + '</span>' +
+      '<span class="ls-bad">✗ 错 ' + badCount + '</span>' +
+      '</div>' +
+      '<div class="dict-progress-text">默写 ' + (st.idx + 1) + ' / ' + total + '（顺序已打乱）</div>' +
+      '<div class="dict-progress"><div style="width:' + (doneCount / total * 100) + '%"></div></div>' +
       '<div class="dict-prompt-label">请写出意思是：</div>' +
       '<div class="dict-mean-big">' + esc(w.zh || '（未填意思）') + '</div>' +
       '<div class="dict-tip-row">' +
@@ -544,33 +634,38 @@
       '<span class="dict-tip-note">重音符号（é è ç 等）也要写对哦</span>' +
       '</div>' +
       '<input id="dict-answer" class="dict-answer" autocomplete="off" autocapitalize="off" ' +
-      'spellcheck="false" placeholder="在这里拼写法语单词">' +
-      '<div id="dict-feedback" class="dict-feedback"></div>' +
+      'spellcheck="false" placeholder="在这里拼写法语单词"' + (w.judged ? ' disabled' : '') +
+      ' value="' + esc(w.typed || '') + '">' +
+      '<div id="dict-feedback" class="dict-feedback' + (w.judged ? ' ' + (w.ok ? 'good' : 'bad') : '') + '">' +
+      (w.judged ? (w.ok ? '✅ 正确！' : '✗ 正确写法：<b>' + esc(w.fr) + '</b>　你写的：<b>' + esc(w.typed) + '</b>') : '') +
+      '</div>' +
       '<div class="dict-actions center">' +
-      '<button class="dict-btn primary" id="dict-submit">确定，下一个 →</button>' +
+      (w.judged
+        ? '<button class="dict-btn primary" id="dict-next-word">' + (st.idx < total - 1 ? '下一个 →' : '完成，去检查 →') + '</button>'
+        : '<button class="dict-btn primary" id="dict-submit">确定 ✓</button>') +
       '</div>';
     body.appendChild(box);
     const inp = $('#dict-answer');
-    setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+    if (!w.judged) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
     $('#dict-hint').onclick = e => speak(w.fr, e.currentTarget, false);
-    const submit = () => {
-      const typed = inp.value.trim();
-      if (!typed) { toast('先写出单词再提交'); return; }
-      w.typed = typed;
-      w.ok = (typed === w.fr.trim()); // 严格比对：重音/大小写都要一致
-      const fb = $('#dict-feedback');
-      fb.className = 'dict-feedback ' + (w.ok ? 'good' : 'bad');
-      fb.innerHTML = w.ok
-        ? '✅ 正确！'
-        : '✗ 正确写法：<b>' + esc(w.fr) + '</b>';
-      $('#dict-submit').disabled = true;
-      setTimeout(() => {
-        if (st.idx < total - 1) { st.idx++; render(); }
-        else { st.stage = 'review'; render(); }
-      }, w.ok ? 650 : 1300);
+    const goNext = () => {
+      if (st.idx < total - 1) { st.idx++; render(); }
+      else { st.stage = 'review'; render(); }
     };
-    $('#dict-submit').onclick = submit;
-    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
+    if (w.judged) {
+      $('#dict-next-word').onclick = goNext;
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); goNext(); } };
+    } else {
+      $('#dict-submit').onclick = () => {
+        const typed = inp.value.trim();
+        if (!typed) { toast('先写出单词再提交'); return; }
+        w.typed = typed;
+        w.ok = (typed === w.fr.trim()); // 严格比对：重音/大小写都要一致
+        w.judged = true;
+        render(); // 立即刷新：稳定显示对错 + 更新实时统计
+      };
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#dict-submit').click(); } };
+    }
   }
 
   /* —— 阶段 5：核对列表 —— */
@@ -589,7 +684,7 @@
       '</div>';
     body.appendChild(box);
     drawReview();
-    $('#dict-back-dictate').onclick = () => { st.idx = 0; st.words.forEach(w => { w.typed = ''; w.ok = false; }); st.stage = 'dictate'; render(); };
+    $('#dict-back-dictate').onclick = () => { st.idx = 0; st.words.forEach(w => { w.typed = ''; w.ok = false; w.judged = false; }); st.stage = 'dictate'; render(); };
     $('#dict-submit-final').onclick = finalize;
   }
   function drawReview() {
@@ -608,6 +703,7 @@
     });
     $$('.dict-btn.tiny', list).forEach(b => b.onclick = e => {
       st.idx = +e.currentTarget.dataset.i;
+      st.words[st.idx].judged = false; // 允许重新作答该词
       st.stage = 'dictate';
       render();
       const inp = $('#dict-answer');
@@ -628,7 +724,8 @@
     render();
     if (right === total) {
       confetti();
-      setTimeout(() => speak('Très bien ! Bravo !', null), 200);
+      // 用预录标准法语女声播放鼓励语，避免设备无法语 TTS 时读成非法语口音
+      setTimeout(() => speak('Très bien ! Bravo !', null, false, 'dict-bravo'), 200);
     }
   }
   function renderResult(body) {
@@ -715,6 +812,9 @@
     // 供 app.showView 调用
     window.ensureDictation = function () { ensureDictation(); render(); };
     window.stopDictation = stopDictSpeak;
+    // 顶部常驻错题本入口（任何阶段都能点）
+    const quick = $('#dict-wrong-quick');
+    if (quick) quick.onclick = () => startWrongBook();
     // 首次预渲染
     ensureDictation();
     render();
