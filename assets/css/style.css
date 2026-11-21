@@ -1387,6 +1387,13 @@ main{
 .tb-lplay:hover{ background: #D9E8F8; }
 .tb-lplay:active{ transform: scale(.9); }
 .tb-lplay.playing{ background: var(--blue-deep, #4A90D9); color: #fff; animation: tbPulse 1s ease infinite; }
+/* 逐句标准速 / 慢速两个按钮竖排 */
+.tb-lbtns{ flex: 0 0 auto; display: flex; flex-direction: column; gap: .28rem; align-items: center; margin-top: .1rem; }
+.tb-lplay.slow{
+  width: 30px; height: 30px; font-size: .78rem;
+  background: #EAF2FB; color: var(--blue-deep, #4A90D9);
+}
+.tb-lplay.slow.playing{ background: var(--blue-deep, #4A90D9); color: #fff; }
 /* 连播中只做透明度呼吸：transform:scale 会让按钮持续变形，
    移动端连播时想点「停止」容易点偏，且触屏上动画开销大 */
 @keyframes tbPulse{ 50%{ opacity: .72; } }

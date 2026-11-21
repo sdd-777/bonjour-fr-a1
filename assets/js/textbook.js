@@ -9,6 +9,8 @@ let tbCur = null;          // 当前选中课次 id
 let tbSeqToken = 0;        // 连播令牌（防竞态）
 let tbSeqTimer = null;     // 连播定时器
 let tbSeqMedia = null;     // 连播中的 <audio>
+let tbLineMedia = null;    // 逐句朗读（标准速/慢速）复用的 <audio>
+let tbLineToken = 0;       // 逐句朗读令牌（防竞态）
 
 function tbAudioPath(name){ return TB_AUDIO_DIR + '/' + name + '.mp3'; }
 
@@ -32,7 +34,7 @@ function renderTbLessons(){
       /* 徽章只显示标题里的中文主题（原写法会截掉法语首词，长标题会显示成残句） */
       const zhTitle = (l.title.match(/[\u4e00-\u9fa5].*$/) || [l.title])[0];
       b.innerHTML = '<b>' + esc(l.no) + '</b><span>' + esc(zhTitle) + '</span>';
-      b.onclick = () => { tbCur = id; renderTbLessons(); renderTbDetail(); };
+      b.onclick = () => { stopTbSeq(); stopTbLine(); tbCur = id; renderTbLessons(); renderTbDetail(); };
       chips.appendChild(b);
     });
     row.appendChild(chips);
@@ -70,16 +72,20 @@ function renderTbDetail(){
   textCard.innerHTML =
     '<div class="tb-card-head"><h3>📖 课文 DÉCOUVREZ · 初识</h3>' +
     '<button class="btn btn-primary tb-seq" type="button">▶ 整课连播</button></div>' +
-    '<p class="tb-tip">点每句左边的 ▶ 听这一句；点「整课连播」从头听到尾，适合跟读；' +
-    '也可以用「🎤 我的课文朗读」录下自己读的整篇课文，生成<b>带课文画面的视频</b>存到手机或电脑，' +
-    '录音过程中可随时 ⏸ 暂停 / ▶ 继续。</p>' +
+    '<p class="tb-tip">点每句左边的 ▶ 听标准速、🐢 听慢速（方便逐句跟读练习）；' +
+    '点「整课连播」从头听到尾；也可以用「🎤 我的课文朗读」录下自己读的整篇课文，' +
+    '生成<b>带课文画面的视频</b>存到手机或电脑，录音过程中可随时 ⏸ 暂停 / ▶ 继续。</p>' +
     '<div class="tb-rec" id="tb-rec-box"></div>';
   l.text.forEach((s, i) => {
     const row = document.createElement('div');
     row.className = 'tb-line';
+    const nm = tbCur + '-t' + (i + 1);
+    const tx = esc(s.fr.replace(/^— /, ''));
     row.innerHTML =
-      '<button class="tb-lplay" data-a="' + tbCur + '-t' + (i + 1) +
-        '" data-t="' + esc(s.fr.replace(/^— /, '')) + '" title="播放这一句">▶</button>' +
+      '<span class="tb-lbtns">' +
+        '<button class="tb-lplay" data-a="' + nm + '" data-t="' + tx + '" title="标准速播放这一句">▶</button>' +
+        '<button class="tb-lplay slow" data-a="' + nm + '" data-t="' + tx + '" data-slow="1" title="慢速播放这一句">🐢</button>' +
+      '</span>' +
       '<div class="tb-line-txt"><p class="tb-fr">' + esc(s.fr) + '</p><p class="tb-zh">' + esc(s.zh) + '</p></div>';
     textCard.appendChild(row);
   });
@@ -137,9 +143,13 @@ function renderTbDetail(){
         sIdx += 1;
         const row = document.createElement('div');
         row.className = 'tb-line';
+        const nm = tbCur + '-s' + sIdx;
+        const tx = esc(it.fr.replace(/^— /, ''));
         row.innerHTML =
-          '<button class="tb-lplay" data-a="' + tbCur + '-s' + sIdx +
-            '" data-t="' + esc(it.fr.replace(/^— /, '')) + '" title="播放">▶</button>' +
+          '<span class="tb-lbtns">' +
+            '<button class="tb-lplay" data-a="' + nm + '" data-t="' + tx + '" title="标准速播放">▶</button>' +
+            '<button class="tb-lplay slow" data-a="' + nm + '" data-t="' + tx + '" data-slow="1" title="慢速播放">🐢</button>' +
+          '</span>' +
           '<div class="tb-line-txt"><p class="tb-fr">' + esc(it.fr) + '</p><p class="tb-zh">' + esc(it.zh) + '</p></div>';
         sayCard.appendChild(row);
       });
@@ -175,6 +185,56 @@ function tbResolveAudio(name){
     if (M[key]) return M[key];
   }
   return rel;
+}
+
+/* 逐句朗读：标准速 / 慢速。复用同一个 <audio>，第一次播放在点击的同步栈里
+   执行以解锁移动端自动播放；之后只换 src。慢速用 playbackRate=0.6 不变调。
+   地址经 tbResolveAudio 兼容离线单文件的内联 base64；失败回退 TTS。 */
+function stopTbLine(){
+  tbLineToken += 1;
+  if (tbLineMedia){
+    try{
+      tbLineMedia.pause();
+      tbLineMedia.onended = null;
+      tbLineMedia.onerror = null;
+    }catch(e){}
+    tbLineMedia = null;
+  }
+  if (typeof $$ === 'function') $$('.tb-lplay.playing').forEach(b => b.classList.remove('playing'));
+}
+function playTbLine(btn, slow){
+  stopTbLine();
+  const token = ++tbLineToken;
+  const name = btn.dataset.a;
+  const text = btn.dataset.t || '';
+  btn.classList.add('playing');
+  const done = () => { if (token === tbLineToken && btn) btn.classList.remove('playing'); };
+  const fallback = () => {
+    if (token !== tbLineToken) return;
+    if (!window.speechSynthesis){ done(); return; }
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'fr-FR'; u.rate = slow ? 0.6 : 0.9;
+      if (typeof frVoice === 'function'){ const v = frVoice(); if (v) u.voice = v; }
+      u.onend = done; u.onerror = done;
+      speechSynthesis.speak(u);
+    }catch(e){ done(); }
+  };
+  const a = new Audio();
+  a.preload = 'auto';
+  tbLineMedia = a;
+  try{ a.preservesPitch = true; }catch(e){}
+  const rate = slow ? 0.6 : 1;
+  /* 注意：设置 src 会触发 load 算法把 playbackRate 重置为 1，
+     所以必须在 src 之后赋值，并在元数据就绪后补一次。 */
+  a.onended = done;
+  a.onerror = fallback;
+  a.onloadedmetadata = () => { try{ a.playbackRate = rate; }catch(e){} };
+  a.src = tbResolveAudio(name);
+  try{ a.playbackRate = rate; }catch(e){}
+  const p = a.play();
+  if (p && typeof p.catch === 'function') p.catch(fallback);
+  setTimeout(done, 8000);   /* 超时保护 */
 }
 
 function playTbSequence(){
@@ -1272,18 +1332,13 @@ function initTextbook(){
     if (lp){
       if (typeof stopWordAudio === 'function') stopWordAudio();
       stopTbSeq();
-      const name = lp.dataset.a;
-      const a = new Audio(tbAudioPath(name));
-      lp.classList.add('playing');
-      const done = () => { lp.classList.remove('playing'); };
-      a.onended = done; a.onerror = done;
-      a.play().catch(done);
+      playTbLine(lp, lp.dataset.slow === '1');
       return;
     }
     const seq = e.target.closest('.tb-seq');
     if (seq){
       if (seq.classList.contains('playing')) stopTbSeq();
-      else playTbSequence();
+      else { stopTbLine(); playTbSequence(); }
     }
   });
 }
@@ -1291,4 +1346,5 @@ function initTextbook(){
 if (typeof window !== 'undefined'){
   window.__initTextbook = initTextbook;
   window.__stopTbSeq = stopTbSeq;
+  window.stopTbLine = stopTbLine;
 }
