@@ -1,5 +1,5 @@
 /* =========================================================
-   动词变位模块数据（117 个常用动词 × 直陈式 4 时态 × 6 人称；含教材 L1–32 全部动词）
+   动词变位模块数据（128 个常用动词 × 直陈式 4 时态 × 6 人称；含教材 L1–36 全部动词）
    时态：pres 现在时 / pc 复合过去时 / imp 未完成过去时 / fut 简单将来时
    f = 变位形式数组（6 人称），i = 对应 IPA 音标数组
    aux = 复合过去时助动词（avoir / etre）；part = 过去分词
@@ -78,6 +78,24 @@ const VERBS = [
   ex: [
     { fr: "J'aime le café.", zh: "我喜欢咖啡。", i: "[ʒɛm lə ka.fe]" },
     { fr: "Il a aimé le film.", zh: "他喜欢这部电影。", i: "[i.la.z‿ɛ.me lə film]" }
+  ]
+},
+{
+  id: "allumer", inf: "allumer", ipa: "[a.ly.me]", zh: "点亮；点燃；打开（灯）", grp: "er", aux: "avoir", part: "allumé",
+  tenses: {
+    pres: { f: ["j'allume","allumes","allume","allumons","allumez","allument"],
+            i: ["[ʒa.lym]","[a.lym]","[a.lym]","[a.ly.mɔ̃]","[a.ly.me]","[a.lym]"] },
+    pc: { f: ["ai allumé","as allumé","a allumé","avons allumé","avez allumé","ont allumé"],
+            i: ["[ʒe.t‿a.ly.me]","[ty a.z‿a.ly.me]","[i.la.z‿a.ly.me]","[nu.z‿a.vɔ̃.z‿a.ly.me]","[vu.z‿a.ve.z‿a.ly.me]","[il.z‿ɔ̃.z‿a.ly.me]"] },
+    imp: { f: ["allumais","allumais","allumait","allumions","allumiez","allumaient"],
+            i: ["[a.ly.mɛ]","[a.ly.mɛ]","[a.ly.mɛ]","[a.ly.mjɔ̃]","[a.ly.mje]","[a.ly.mɛ]"] },
+    fut: { f: ["allumerai","allumeras","allumera","allumerons","allumerez","allumeront"],
+            i: ["[a.ly.mə.ʁe]","[a.ly.mə.ʁe]","[a.ly.mə.ʁa]","[a.ly.mə.ʁɔ̃]","[a.ly.mə.ʁe]","[a.ly.mə.ʁɔ̃]"] }
+  },
+  note: "allumer 是规则 -er 动词（变位同 aimer），意为「点亮、点燃」；je 在元音前缩合为 j'allume；s'allumer 表「（灯）自己亮起」。",
+  ex: [
+    { fr: "J'allume la lumière.", zh: "我打开灯。", i: "[ʒa.lym la ly.mjɛʁ]" },
+    { fr: "Il a allumé une cigarette.", zh: "他点了一支烟。", i: "[i.la.z‿a.ly.me yn si.ɡa.ʁɛt]" }
   ]
 },
 {
@@ -171,6 +189,24 @@ const VERBS = [
   ]
 },
 {
+  id: "briller", inf: "briller", ipa: "[bʁi.je]", zh: "发光；闪耀；出众", grp: "er", aux: "avoir", part: "brillé",
+  tenses: {
+    pres: { f: ["brille","brilles","brille","brillons","brillez","brillent"],
+            i: ["[bʁij]","[bʁij]","[bʁij]","[bʁi.jɔ̃]","[bʁi.je]","[bʁij]"] },
+    pc: { f: ["ai brillé","as brillé","a brillé","avons brillé","avez brillé","ont brillé"],
+            i: ["[ʒe bʁi.je]","[ty a bʁi.je]","[i.la bʁi.je]","[nu.z‿a.vɔ̃ bʁi.je]","[vu.z‿a.ve bʁi.je]","[il.z‿ɔ̃ bʁi.je]"] },
+    imp: { f: ["brillais","brillais","brillait","brillions","brilliez","brillaient"],
+            i: ["[bʁi.jɛ]","[bʁi.jɛ]","[bʁi.jɛ]","[bʁi.jɔ̃]","[bʁi.je]","[bʁi.jɛ]"] },
+    fut: { f: ["brillerai","brilleras","brillera","brillerons","brillerez","brilleront"],
+            i: ["[bʁi.jə.ʁe]","[bʁi.jə.ʁe]","[bʁi.jə.ʁa]","[bʁi.jə.ʁɔ̃]","[bʁi.jə.ʁe]","[bʁi.jə.ʁɔ̃]"] }
+  },
+  note: "briller 是规则 -er 动词，词干 brill- 中的 ill 读半元音 [j]（il brille [bʁij]）；也可引申为「才华出众」。",
+  ex: [
+    { fr: "Le soleil brille.", zh: "阳光闪耀。", i: "[lə sɔ.lɛj bʁij]" },
+    { fr: "Ses yeux brillaient de joie.", zh: "他的眼睛因喜悦而闪亮。", i: "[se.z‿jø bʁi.jɛ də ʒwa]" }
+  ]
+},
+{
   id: "calmer", inf: "calmer", ipa: "[kal.me]", zh: "使平静；安慰", grp: "er", aux: "etre", part: "calmé",
   tenses: {
     pres: { f: ["calme","calmes","calme","calmons","calmez","calment"],
@@ -186,6 +222,24 @@ const VERBS = [
   ex: [
     { fr: "Je me calme.", zh: "我冷静下来。", i: "[ʒə mə kalm]" },
     { fr: "Elle s'est calmée après la dispute.", zh: "争吵后她平静下来了。", i: "[ɛ.la sɛ.t‿kal.me a.pʁɛ la dis.pyt]" }
+  ]
+},
+{
+  id: "changer", inf: "changer", ipa: "[ʃɑ̃.ʒe]", zh: "改变；更换；兑换", grp: "er", aux: "avoir", part: "changé",
+  tenses: {
+    pres: { f: ["change","changes","change","changeons","changez","changent"],
+            i: ["[ʃɑ̃ʒ]","[ʃɑ̃ʒ]","[ʃɑ̃ʒ]","[ʃɑ̃.ʒɔ̃]","[ʃɑ̃.ʒe]","[ʃɑ̃ʒ]"] },
+    pc: { f: ["ai changé","as changé","a changé","avons changé","avez changé","ont changé"],
+            i: ["[ʒe ʃɑ̃.ʒe]","[ty a ʃɑ̃.ʒe]","[i.la ʃɑ̃.ʒe]","[nu.z‿a.vɔ̃ ʃɑ̃.ʒe]","[vu.z‿a.ve ʃɑ̃.ʒe]","[il.z‿ɔ̃ ʃɑ̃.ʒe]"] },
+    imp: { f: ["changeais","changeais","changeait","changions","changiez","changeaient"],
+            i: ["[ʃɑ̃.ʒɛ]","[ʃɑ̃.ʒɛ]","[ʃɑ̃.ʒɛ]","[ʃɑ̃.ʒjɔ̃]","[ʃɑ̃.ʒje]","[ʃɑ̃.ʒɛ]"] },
+    fut: { f: ["changerai","changeras","changera","changerons","changerez","changeront"],
+            i: ["[ʃɑ̃.ʒə.ʁe]","[ʃɑ̃.ʒə.ʁe]","[ʃɑ̃.ʒə.ʁa]","[ʃɑ̃.ʒə.ʁɔ̃]","[ʃɑ̃.ʒə.ʁe]","[ʃɑ̃.ʒə.ʁɔ̃]"] }
+  },
+  note: "changer 以 -ger 结尾：为在元音 a/o 前保持 [ʒ] 软音，nous/vous 现在时要加 e 写作 changeons / changez（否则会读成 [ɡ]）；未完成过去时则写作 changions / changiez。change de 意为「更换（工作、主意等）」。",
+  ex: [
+    { fr: "Je change de travail.", zh: "我换工作。", i: "[ʒə ʃɑ̃ʒ də tʁa.vaj]" },
+    { fr: "Nous avons changé d'avis.", zh: "我们改变了主意。", i: "[nu.z‿a.vɔ̃ ʃɑ̃.ʒe d‿a.vi]" }
   ]
 },
 {
@@ -369,6 +423,24 @@ const VERBS = [
   ]
 },
 {
+  id: "embrasser", inf: "embrasser", ipa: "[ɑ̃.bʁa.se]", zh: "拥抱；亲吻", grp: "er", aux: "avoir", part: "embrassé",
+  tenses: {
+    pres: { f: ["j'embrasse","embrasses","embrasse","embrassons","embrassez","embrassent"],
+            i: ["[ʒɑ̃.bʁas]","[ɑ̃.bʁas]","[ɑ̃.bʁas]","[ɑ̃.bʁa.sɔ̃]","[ɑ̃.bʁa.se]","[ɑ̃.bʁas]"] },
+    pc: { f: ["ai embrassé","as embrassé","a embrassé","avons embrassé","avez embrassé","ont embrassé"],
+            i: ["[ʒe.t‿ɑ̃.bʁa.se]","[ty a.z‿ɑ̃.bʁa.se]","[i.la.z‿ɑ̃.bʁa.se]","[nu.z‿a.vɔ̃.z‿ɑ̃.bʁa.se]","[vu.z‿a.ve.z‿ɑ̃.bʁa.se]","[il.z‿ɔ̃.z‿ɑ̃.bʁa.se]"] },
+    imp: { f: ["embrassais","embrassais","embrassait","embrassions","embrassiez","embrassaient"],
+            i: ["[ɑ̃.bʁa.sɛ]","[ɑ̃.bʁa.sɛ]","[ɑ̃.bʁa.sɛ]","[ɑ̃.bʁa.sjɔ̃]","[ɑ̃.bʁa.sje]","[ɑ̃.bʁa.sɛ]"] },
+    fut: { f: ["embrasserai","embrasseras","embrassera","embrasserons","embrasserez","embrasseront"],
+            i: ["[ɑ̃.bʁa.sə.ʁe]","[ɑ̃.bʁa.sə.ʁe]","[ɑ̃.bʁa.sə.ʁa]","[ɑ̃.bʁa.sə.ʁɔ̃]","[ɑ̃.bʁa.sə.ʁe]","[ɑ̃.bʁa.sə.ʁɔ̃]"] }
+  },
+  note: "embrasser 是规则 -er 动词（同 aimer），意为「拥抱、亲吻」；je 在元音前缩合为 j'embrasse；s'embrasser 表「互相亲吻」（代词式，pc 用 être 并配合）。",
+  ex: [
+    { fr: "Il embrasse sa mère.", zh: "他亲吻他的母亲。", i: "[il ɑ̃.bʁas sa mɛʁ]" },
+    { fr: "Elle a embrassé son ami.", zh: "她拥抱了她的朋友。", i: "[ɛ.la.z‿ɑ̃.bʁa.se sɔ̃.n‿a.mi]" }
+  ]
+},
+{
   id: "ennuyer", inf: "ennuyer", ipa: "[ɑ̃.nɥi.je]", zh: "使厌烦；使无聊", grp: "er", aux: "etre", part: "ennuyé",
   tenses: {
     pres: { f: ["j'ennuie","ennuies","ennuie","ennuyons","ennuyez","ennuient"],
@@ -420,6 +492,24 @@ const VERBS = [
   ex: [
     { fr: "Il entre dans la pièce.", zh: "他走进房间。", i: "[il ɑ̃tʁ dɑ̃ la pjɛs]" },
     { fr: "Nous avons entré les données.", zh: "我们录入了数据。", i: "[nu.z‿a.vɔ̃ ɑ̃.tʁe le dɔ.ne]" }
+  ]
+},
+{
+  id: "essayer", inf: "essayer", ipa: "[ɛ.sɛ.je]", zh: "尝试；试穿；试用", grp: "er", aux: "avoir", part: "essayé",
+  tenses: {
+    pres: { f: ["j'essaie","essaies","essaie","essayons","essayez","essaient"],
+            i: ["[ʒɛ.sɛ]","[ɛ.sɛ]","[ɛ.sɛ]","[ɛ.sɛ.jɔ̃]","[ɛ.sɛ.je]","[ɛ.sɛ]"] },
+    pc: { f: ["ai essayé","as essayé","a essayé","avons essayé","avez essayé","ont essayé"],
+            i: ["[ʒe.t‿ɛ.sɛ.je]","[ty a.z‿ɛ.sɛ.je]","[i.la.z‿ɛ.sɛ.je]","[nu.z‿a.vɔ̃.z‿ɛ.sɛ.je]","[vu.z‿a.ve.z‿ɛ.sɛ.je]","[il.z‿ɔ̃.z‿ɛ.sɛ.je]"] },
+    imp: { f: ["essayais","essayais","essayait","essayions","essayiez","essayaient"],
+            i: ["[ɛ.sɛ.jɛ]","[ɛ.sɛ.jɛ]","[ɛ.sɛ.jɛ]","[ɛ.sɛ.jɔ̃]","[ɛ.sɛ.je]","[ɛ.sɛ.jɛ]"] },
+    fut: { f: ["essayerai","essayeras","essayera","essayerons","essayerez","essayeront"],
+            i: ["[ɛ.sɛ.jə.ʁe]","[ɛ.sɛ.jə.ʁe]","[ɛ.sɛ.jə.ʁa]","[ɛ.sɛ.jə.ʁɔ̃]","[ɛ.sɛ.jə.ʁe]","[ɛ.sɛ.jə.ʁɔ̃]"] }
+  },
+  note: "essayer 属 -ayer 类动词：单数人称及 ils 用 ai（j'essaie, tu essaies, il essaie, ils essaient），nous/vous 保留 y（nous essayons, vous essayez）；未完成过去时与将来时词干均保留 y；意为「尝试、试穿」。",
+  ex: [
+    { fr: "J'essaie de comprendre.", zh: "我试着去理解。", i: "[ʒɛ.sɛ də kɔ̃.pʁɑ̃dʁ]" },
+    { fr: "Il a essayé la nouvelle méthode.", zh: "他试了那个新方法。", i: "[i.la.z‿ɛ.sɛ.je la nu.vɛl me.tɔd]" }
   ]
 },
 {
@@ -618,6 +708,42 @@ const VERBS = [
   ex: [
     { fr: "J'imagine la scène.", zh: "我想象那个场景。", i: "[ʒi.ma.ʒin la sɛn]" },
     { fr: "Elle a imaginé une histoire.", zh: "她想象出一个故事。", i: "[ɛ.la i.ma.ʒi.ne yn is.twaʁ]" }
+  ]
+},
+{
+  id: "inquiéter", inf: "inquiéter", ipa: "[ɛ̃.kje.te]", zh: "使担心；担忧（s'inquiéter）", grp: "er", aux: "etre", part: "inquiété",
+  tenses: {
+    pres: { f: ["je m'inquiète","tu t'inquiètes","il s'inquiète","nous nous inquiétons","vous vous inquiétez","ils s'inquiètent"],
+            i: ["[ʒə m‿ɛ̃.kjɛt]","[ty t‿ɛ̃.kjɛt]","[il s‿ɛ̃.kjɛt]","[nu nu.z‿ɛ̃.kje.tɔ̃]","[vu vu.z‿ɛ̃.kje.te]","[il s‿ɛ̃.kjɛt]"] },
+    pc: { f: ["suis inquiété(e)","es inquiété(e)","est inquiété(e)","sommes inquiété(e)s","êtes inquiété(e)s","sont inquiété(e)s"],
+            i: ["[sɥi.z‿ɛ̃.kje.te]","[ɛ.z‿ɛ̃.kje.te]","[ɛ.t‿ɛ̃.kje.te]","[sɔm.z‿ɛ̃.kje.te]","[ɛt.z‿ɛ̃.kje.te]","[sɔ̃.z‿ɛ̃.kje.te]"] },
+    imp: { f: ["inquiétais","inquiétais","inquiétait","inquiétions","inquiétiez","inquiétaient"],
+            i: ["[ɛ̃.kje.tɛ]","[ɛ̃.kje.tɛ]","[ɛ̃.kje.tɛ]","[ɛ̃.kje.tjɔ̃]","[ɛ̃.kje.tje]","[ɛ̃.kje.tɛ]"] },
+    fut: { f: ["inquiéterai","inquiéteras","inquiétera","inquiéterons","inquiéterez","inquiéteront"],
+            i: ["[ɛ̃.kje.tə.ʁe]","[ɛ̃.kje.tə.ʁe]","[ɛ̃.kje.tə.ʁa]","[ɛ̃.kje.tə.ʁɔ̃]","[ɛ̃.kje.tə.ʁe]","[ɛ̃.kje.tə.ʁɔ̃]"] }
+  },
+  note: "s'inquiéter 是代词式动词（se + inquiéter），意为「担心、担忧」；变位同 -éter 类：单数 é→è（il s'inquiète），nous/vous 保留 é（nous nous inquiétons）；复合过去时用 être 并与主语性数配合：je me suis inquiété(e)。",
+  ex: [
+    { fr: "Je m'inquiète pour toi.", zh: "我为你担心。", i: "[ʒə m‿ɛ̃.kjɛt puʁ twa]" },
+    { fr: "Elle s'est inquiétée de son fils.", zh: "她为儿子担心了。", i: "[ɛ.la sɛ.t‿ɛ̃.kje.te də sɔ̃ fis]" }
+  ]
+},
+{
+  id: "installer", inf: "installer", ipa: "[ɛ̃s.ta.le]", zh: "安装；安置；任命", grp: "er", aux: "avoir", part: "installé",
+  tenses: {
+    pres: { f: ["j'installe","installes","installe","installons","installez","installent"],
+            i: ["[ʒɛ̃s.tal]","[ɛ̃s.tal]","[ɛ̃s.tal]","[ɛ̃s.ta.lɔ̃]","[ɛ̃s.ta.le]","[ɛ̃s.tal]"] },
+    pc: { f: ["ai installé","as installé","a installé","avons installé","avez installé","ont installé"],
+            i: ["[ʒe.t‿ɛ̃s.ta.le]","[ty a.z‿ɛ̃s.ta.le]","[i.la.z‿ɛ̃s.ta.le]","[nu.z‿a.vɔ̃.z‿ɛ̃s.ta.le]","[vu.z‿a.ve.z‿ɛ̃s.ta.le]","[il.z‿ɔ̃.z‿ɛ̃s.ta.le]"] },
+    imp: { f: ["installais","installais","installait","installions","installiez","installaient"],
+            i: ["[ɛ̃s.ta.lɛ]","[ɛ̃s.ta.lɛ]","[ɛ̃s.ta.lɛ]","[ɛ̃s.ta.ljɔ̃]","[ɛ̃s.ta.lje]","[ɛ̃s.ta.lɛ]"] },
+    fut: { f: ["installerai","installeras","installera","installerons","installerez","installeront"],
+            i: ["[ɛ̃s.ta.lə.ʁe]","[ɛ̃s.ta.lə.ʁe]","[ɛ̃s.ta.lə.ʁa]","[ɛ̃s.ta.lə.ʁɔ̃]","[ɛ̃s.ta.lə.ʁe]","[ɛ̃s.ta.lə.ʁɔ̃]"] }
+  },
+  note: "installer 是规则 -er 动词，变位同 aimer；因词首为元音，je 形式写作 j'installe [ʒɛ̃s.tal]。常用 installer qch 安装某物、installer qqn 安置某人。",
+  ex: [
+    { fr: "J'installe le logiciel.", zh: "我安装软件。", i: "[ʒɛ̃s.tal lə lɔ.ʒi.sjɛl]" },
+    { fr: "Ils ont installé la caméra.", zh: "他们装好了摄像机。", i: "[il.z‿ɔ̃.z‿ɛ̃s.ta.le la ka.me.ʁa]" }
   ]
 },
 {
@@ -1017,6 +1143,24 @@ const VERBS = [
   ]
 },
 {
+  id: "rappeler", inf: "rappeler", ipa: "[ʁa.pə.le]", zh: "召回；提醒；再打电话", grp: "er", aux: "avoir", part: "rappelé",
+  tenses: {
+    pres: { f: ["rappelle","rappelles","rappelle","rappelons","rappelez","rappellent"],
+            i: ["[ʁa.pɛl]","[ʁa.pɛl]","[ʁa.pɛl]","[ʁa.pə.lɔ̃]","[ʁa.pə.le]","[ʁa.pɛl]"] },
+    pc: { f: ["ai rappelé","as rappelé","a rappelé","avons rappelé","avez rappelé","ont rappelé"],
+            i: ["[ʒe ʁa.pə.le]","[ty a ʁa.pə.le]","[i.la ʁa.pə.le]","[nu.z‿a.vɔ̃ ʁa.pə.le]","[vu.z‿a.ve ʁa.pə.le]","[il.z‿ɔ̃ ʁa.pə.le]"] },
+    imp: { f: ["rappelais","rappelais","rappelait","rappelions","rappeliez","rappelaient"],
+            i: ["[ʁa.pə.lɛ]","[ʁa.pə.lɛ]","[ʁa.pə.lɛ]","[ʁa.pə.ljɔ̃]","[ʁa.pə.lje]","[ʁa.pə.lɛ]"] },
+    fut: { f: ["rappellerai","rappelleras","rappellera","rappellerons","rappellerez","rappelleront"],
+            i: ["[ʁa.pɛ.lə.ʁe]","[ʁa.pɛ.lə.ʁe]","[ʁa.pɛ.lə.ʁa]","[ʁa.pɛ.lə.ʁɔ̃]","[ʁa.pɛ.lə.ʁe]","[ʁa.pɛ.lə.ʁɔ̃]"] }
+  },
+  note: "rappeler 属 -eler 类动词：单数各人称与 ils 把 é 变 è 并双写 l（rappelle, rappelles, rappelle, rappellent），nous/vous 保持单 l（rappelons, rappelez）；将来时词干双 l（rappeller-）。意为「召回、提醒、再打电话」，如 rappeler qqn 给某人回电。",
+  ex: [
+    { fr: "Je te rappelle ce soir.", zh: "我今晚再打给你。", i: "[ʒə tə ʁa.pɛl sə swaʁ]" },
+    { fr: "Elle m'a rappelé hier.", zh: "她昨天给我回了电话。", i: "[ɛ.la.ma ʁa.pə.le jɛʁ]" }
+  ]
+},
+{
   id: "rechercher", inf: "rechercher", ipa: "[ʁə.ʃɛʁ.ʃe]", zh: "寻找；研究", grp: "er", aux: "avoir", part: "recherché",
   tenses: {
     pres: { f: ["recherche","recherches","recherche","recherchons","recherchez","recherchent"],
@@ -1248,6 +1392,24 @@ const VERBS = [
   ex: [
     { fr: "La voiture roule vite.", zh: "车开得很快。", i: "[la vwa.tyʁ ʁul vit]" },
     { fr: "Nous avons roulé toute la nuit.", zh: "我们开了一整夜的车。", i: "[nu.z‿a.vɔ̃ ʁu.le tut la nɥi]" }
+  ]
+},
+{
+  id: "supprimer", inf: "supprimer", ipa: "[sy.pʁi.me]", zh: "删除；取消；撤除", grp: "er", aux: "avoir", part: "supprimé",
+  tenses: {
+    pres: { f: ["supprime","supprimes","supprime","supprimons","supprimez","suppriment"],
+            i: ["[sy.pʁim]","[sy.pʁim]","[sy.pʁim]","[sy.pʁi.mɔ̃]","[sy.pʁi.me]","[sy.pʁim]"] },
+    pc: { f: ["ai supprimé","as supprimé","a supprimé","avons supprimé","avez supprimé","ont supprimé"],
+            i: ["[ʒe sy.pʁi.me]","[ty a sy.pʁi.me]","[i.la sy.pʁi.me]","[nu.z‿a.vɔ̃ sy.pʁi.me]","[vu.z‿a.ve sy.pʁi.me]","[il.z‿ɔ̃ sy.pʁi.me]"] },
+    imp: { f: ["supprimais","supprimais","supprimait","supprimions","supprimiez","supprimaient"],
+            i: ["[sy.pʁi.mɛ]","[sy.pʁi.mɛ]","[sy.pʁi.mɛ]","[sy.pʁi.mjɔ̃]","[sy.pʁi.mje]","[sy.pʁi.mɛ]"] },
+    fut: { f: ["supprimerai","supprimeras","supprimera","supprimerons","supprimerez","supprimeront"],
+            i: ["[sy.pʁi.mə.ʁe]","[sy.pʁi.mə.ʁe]","[sy.pʁi.mə.ʁa]","[sy.pʁi.mə.ʁɔ̃]","[sy.pʁi.mə.ʁe]","[sy.pʁi.mə.ʁɔ̃]"] }
+  },
+  note: "supprimer 是规则 -er 动词，变位同 aimer；意为「删除、取消、撤除」，如 supprimer un fichier 删除文件。名词形式为 suppression。",
+  ex: [
+    { fr: "Je supprime ce fichier.", zh: "我删除这个文件。", i: "[ʒə sy.pʁim sə fi.ʃje]" },
+    { fr: "Ils ont supprimé la publication.", zh: "他们删除了那条帖子。", i: "[il.z‿ɔ̃ sy.pʁi.me la py.bli.ka.sjɔ̃]" }
   ]
 },
 {
@@ -1595,6 +1757,24 @@ const VERBS = [
   ]
 },
 {
+  id: "croire", inf: "croire", ipa: "[kʁwaʁ]", zh: "相信；认为", grp: "irr", aux: "avoir", part: "cru",
+  tenses: {
+    pres: { f: ["crois","crois","croit","croyons","croyez","croient"],
+            i: ["[kʁwa]","[kʁwa]","[kʁwa]","[kʁwa.jɔ̃]","[kʁwa.je]","[kʁwa]"] },
+    pc: { f: ["ai cru","as cru","a cru","avons cru","avez cru","ont cru"],
+            i: ["[ʒe kʁy]","[ty a kʁy]","[i.la kʁy]","[nu.z‿a.vɔ̃ kʁy]","[vu.z‿a.ve kʁy]","[il.z‿ɔ̃ kʁy]"] },
+    imp: { f: ["croyais","croyais","croyait","croyions","croyiez","croyaient"],
+            i: ["[kʁwa.jɛ]","[kʁwa.jɛ]","[kʁwa.jɛ]","[kʁwa.jɔ̃]","[kʁwa.je]","[kʁwa.jɛ]"] },
+    fut: { f: ["croirai","croiras","croira","croirons","croirez","croiront"],
+            i: ["[kʁwa.ʁe]","[kʁwa.ʁe]","[kʁwa.ʁa]","[kʁwa.ʁɔ̃]","[kʁwa.ʁe]","[kʁwa.ʁɔ̃]"] }
+  },
+  note: "croire 属第三组不规则动词：单数词干 croi-，nous/vous 用 croy-（nous croyons）；过去分词为 cru（无重音），助动词用 avoir；将来时 ils croiront；croire que 表示「认为、相信」。",
+  ex: [
+    { fr: "Je crois que tu as raison.", zh: "我相信你是对的。", i: "[ʒə kʁwa kə ty a ʁɛ.zɔ̃]" },
+    { fr: "Ils croiront à la victoire.", zh: "他们会相信胜利。", i: "[il kʁwa.ʁɔ̃ a la vik.twaʁ]" }
+  ]
+},
+{
   id: "descendre", inf: "descendre", ipa: "[də.sɑ̃dʁ]", zh: "下来；下降", grp: "irr", aux: "avoir", part: "descendu",
   tenses: {
     pres: { f: ["descends","descends","descend","descendons","descendez","descendent"],
@@ -1826,6 +2006,24 @@ const VERBS = [
   ex: [
     { fr: "Je t’offre un café.", zh: "我请你喝杯咖啡。", i: "[ʒə tɔfʁ œ̃ ka.fe]" },
     { fr: "Elle a offert un cadeau.", zh: "她送了一份礼物。", i: "[ɛ.la ɔ.fɛʁ œ̃ ka.do]" }
+  ]
+},
+{
+  id: "ouvrir", inf: "ouvrir", ipa: "[u.vʁiʁ]", zh: "打开；开启", grp: "irr", aux: "avoir", part: "ouvert",
+  tenses: {
+    pres: { f: ["j'ouvre","ouvres","ouvre","ouvrons","ouvrez","ouvrent"],
+            i: ["[ʒu.vʁ]","[u.vʁ]","[u.vʁ]","[u.vʁɔ̃]","[u.vʁe]","[u.vʁ]"] },
+    pc: { f: ["ai ouvert","as ouvert","a ouvert","avons ouvert","avez ouvert","ont ouvert"],
+            i: ["[ʒe.t‿u.vɛʁ]","[ty a.z‿u.vɛʁ]","[i.la.z‿u.vɛʁ]","[nu.z‿a.vɔ̃.z‿u.vɛʁ]","[vu.z‿a.ve.z‿u.vɛʁ]","[il.z‿ɔ̃.z‿u.vɛʁ]"] },
+    imp: { f: ["ouvrais","ouvrais","ouvrait","ouvrions","ouvriez","ouvraient"],
+            i: ["[u.vʁɛ]","[u.vʁɛ]","[u.vʁɛ]","[u.vʁjɔ̃]","[u.vʁje]","[u.vʁɛ]"] },
+    fut: { f: ["ouvrirai","ouvriras","ouvrira","ouvrirons","ouvrirez","ouvriront"],
+            i: ["[u.vʁi.ʁe]","[u.vʁi.ʁe]","[u.vʁi.ʁa]","[u.vʁi.ʁɔ̃]","[u.vʁi.ʁe]","[u.vʁi.ʁɔ̃]"] }
+  },
+  note: "ouvrir 虽以 -ir 结尾，却按 -er 型变位（ouvre / ouvres / ouvre / ouvrons / ouvrez / ouvrent），不带 -iss-；过去分词为不规则形式 ouvert，将来时词干为 ouvrir-。同族：découvrir, offrir。",
+  ex: [
+    { fr: "J'ouvre la porte.", zh: "我打开门。", i: "[ʒu.vʁ la pɔʁt]" },
+    { fr: "Elle a ouvert la fenêtre.", zh: "她打开了窗户。", i: "[ɛ.la.z‿u.vɛʁ la fə.nɛtʁ]" }
   ]
 },
 {

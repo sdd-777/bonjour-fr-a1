@@ -12,7 +12,7 @@ OUT = os.path.join(ROOT, 'assets', 'audio', 'textbook')
 VOICE = 'fr-FR-DeniseNeural'
 RATE = '-8%'
 ART = os.path.join(os.path.expanduser('~'), '.codebuddy', 'artifact', '2f8a7d30-9c21-4f0b-1d53-75c105285000')
-DATA_FILES = [os.path.join(ART, name) for name in ('u5_data.js', 'u6_data.js', 'u7_data.js', 'u8_data.js')]
+DATA_FILES = [os.path.join(ART, name) for name in ('u5_data.js', 'u6_data.js', 'u7_data.js', 'u8_data.js', 'u9_data.js')]
 
 
 def load_data():

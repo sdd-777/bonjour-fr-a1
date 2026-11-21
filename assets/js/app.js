@@ -112,6 +112,8 @@ function showView(name){
   if (typeof stopTbSeq === 'function') stopTbSeq();
   if (typeof stopTbLine === 'function') stopTbLine();
   if (typeof tbRecStop === 'function') tbRecStop();
+  if (typeof stopDictation === 'function') stopDictation();
+  if (name === 'dictation' && typeof ensureDictation === 'function') ensureDictation();
   if (name === 'games' && typeof ensureGames === 'function') ensureGames();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

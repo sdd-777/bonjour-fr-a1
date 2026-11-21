@@ -19,6 +19,9 @@ UNITS = [
     dict(n=8, title='Unité 8 · Tout le monde en parle... 大家在谈论……',
          lessons=['tb-l29', 'tb-l30', 'tb-l31', 'tb-l32'],
          src='u8_data.js', dst='assets/js/textbook-u8.js'),
+    dict(n=9, title='Unité 9 · On verra bien ! 走着瞧吧！',
+         lessons=['tb-l33', 'tb-l34', 'tb-l35', 'tb-l36'],
+         src='u9_data.js', dst='assets/js/textbook-u9.js'),
 ]
 
 NO_CN = {17:'咱们做可丽饼吧',18:'他怎么样？',19:'亲爱的蕾娅…',20:'节日',

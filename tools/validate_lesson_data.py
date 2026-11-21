@@ -8,6 +8,7 @@ EXPECT = {
     'u6_data.js': ['tb-l21', 'tb-l22', 'tb-l23', 'tb-l24'],
     'u7_data.js': ['tb-l25', 'tb-l26', 'tb-l27', 'tb-l28'],
     'u8_data.js': ['tb-l29', 'tb-l30', 'tb-l31', 'tb-l32'],
+    'u9_data.js': ['tb-l33', 'tb-l34', 'tb-l35', 'tb-l36'],
 }
 
 def load(fn=None):

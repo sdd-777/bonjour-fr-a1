@@ -1506,3 +1506,120 @@ main{
   .tb-rec-actions .tb-rec-btn{ width: 100%; }
   .tb-rec-actions .tb-rec-share{ grid-column: 1 / -1; }
 }
+
+/* =========================================================
+   ✍️ 默写模块（dictation）
+   ========================================================= */
+#view-dictation{ max-width: 760px; margin: 0 auto; }
+.dict-steps{ display:flex; flex-wrap:wrap; gap:.35rem; justify-content:center; margin:.2rem 0 1rem; }
+.dict-steps .dstep{
+  font-size:.78rem; padding:.28rem .6rem; border-radius:999px;
+  background:#F1E7D4; color:var(--ink-soft); border:1px solid var(--line);
+  white-space:nowrap;
+}
+.dict-steps .dstep.active{ background:var(--amber); color:#fff; border-color:var(--amber-deep); font-weight:700; }
+#dict-body{ display:flex; flex-direction:column; gap:1rem; }
+.dict-card{ padding:1.1rem 1rem; }
+.dict-head{ display:flex; gap:.8rem; align-items:flex-start; margin-bottom:.9rem; }
+.dict-head-ico{ font-size:1.9rem; line-height:1; flex:0 0 auto; }
+.dict-head h3{ font-size:1.12rem; color:var(--ink); }
+.dict-sub{ font-size:.86rem; color:var(--ink-soft); margin-top:.2rem; }
+.dict-sub b{ color:var(--amber-deep); }
+.dict-badge{ display:inline-block; background:var(--rose); color:#fff; border-radius:999px; padding:0 .5rem; font-size:.8rem; vertical-align:middle; }
+.dict-upload-row{ display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:.7rem; }
+.dict-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+  border:1px solid var(--line-strong); background:var(--card); color:var(--ink);
+  border-radius:14px; padding:.6rem 1rem; font-size:.92rem; cursor:pointer;
+  font-family:inherit; font-weight:600; transition:transform .12s, box-shadow .12s, background .12s;
+}
+.dict-btn:hover:not(:disabled){ transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+.dict-btn:active:not(:disabled){ transform:translateY(0); }
+.dict-btn:disabled{ opacity:.45; cursor:not-allowed; }
+.dict-btn.primary{ background:var(--amber); border-color:var(--amber-deep); color:#fff; }
+.dict-btn.ghost{ background:transparent; }
+.dict-btn.speak{ background:var(--blue-soft); border-color:var(--blue); }
+.dict-btn.hint{ background:var(--honey); border-color:var(--amber-deep); }
+.dict-btn.tiny{ padding:.3rem .6rem; font-size:.8rem; }
+.dict-btn.playing{ background:var(--amber-soft); }
+.dict-ocr-status{ margin:.5rem 0; padding:.6rem .8rem; border-radius:12px; font-size:.86rem; }
+.dict-ocr-status.loading{ background:var(--blue-soft); color:var(--ink); }
+.dict-ocr-status.ok{ background:var(--sage-soft); color:var(--ink); }
+.dict-ocr-status.warn{ background:#FBE7D3; color:var(--ink); }
+.dict-sep{ display:flex; align-items:center; gap:.7rem; color:var(--ink-soft); font-size:.82rem; margin:.4rem 0; }
+.dict-sep::before,.dict-sep::after{ content:''; flex:1; height:1px; background:var(--line); }
+.dict-textarea{
+  width:100%; border:2px solid var(--line-strong); border-radius:14px; padding:.7rem .8rem;
+  font-family:inherit; font-size:1rem; color:var(--ink); background:#FFFEF9; resize:vertical; line-height:1.7;
+}
+.dict-textarea:focus,.dict-in-fr:focus,.dict-in-zh:focus,.dict-answer:focus{ outline:none; border-color:var(--amber); }
+.dict-hint{ font-size:.82rem; color:var(--ink-soft); margin-top:.5rem; }
+.dict-hint.center{ text-align:center; }
+.dict-actions{ display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.9rem; }
+.dict-actions.center{ justify-content:center; }
+.dict-wrong-entry .dict-actions{ margin-top:.2rem; }
+
+/* 确认列表 */
+.dict-list{ display:flex; flex-direction:column; gap:.55rem; }
+.dict-row{ display:flex; gap:.6rem; align-items:flex-start; padding:.6rem; border:1px solid var(--line); border-radius:14px; background:#FFFEF9; }
+.dict-row.unknown{ border-color:#EBB98C; background:#FFF9F0; }
+.dict-row-num{ flex:0 0 1.6rem; height:1.6rem; border-radius:50%; background:var(--amber-soft); color:var(--ink); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:.85rem; }
+.dict-row-main{ flex:1; min-width:0; display:grid; grid-template-columns:1fr 1fr; gap:.35rem .6rem; }
+.dict-row-main label{ font-size:.72rem; color:var(--ink-soft); grid-column:span 1; }
+.dict-in-fr,.dict-in-zh{ width:100%; border:1.5px solid var(--line); border-radius:9px; padding:.4rem .55rem; font-family:inherit; font-size:.95rem; background:#fff; color:var(--ink); }
+.dict-in-fr{ font-weight:700; }
+.dict-row-side{ display:flex; flex-direction:column; align-items:flex-end; gap:.4rem; flex:0 0 auto; }
+.dict-tag{ font-size:.72rem; padding:.15rem .45rem; border-radius:8px; background:#F0E4D0; color:var(--ink-soft); white-space:nowrap; }
+.dict-tag.known{ background:var(--sage-soft); color:#3f6b49; }
+.dict-x{ border:none; background:var(--rose-soft); color:var(--rose-deep); width:1.7rem; height:1.7rem; border-radius:8px; cursor:pointer; font-size:.9rem; }
+
+/* 学习 / 默写 */
+.dict-study{ text-align:center; }
+.dict-progress-text{ font-size:.85rem; color:var(--ink-soft); margin-bottom:.35rem; }
+.dict-progress{ height:9px; background:var(--line); border-radius:99px; overflow:hidden; margin-bottom:1.1rem; }
+.dict-progress>div{ height:100%; background:linear-gradient(90deg,var(--amber),var(--honey)); border-radius:99px; transition:width .3s; }
+.dict-word-show{ font-size:2.5rem; font-weight:800; color:var(--amber-deep); letter-spacing:.5px; word-break:break-word; margin:.3rem 0; }
+.dict-mean-show{ font-size:1.2rem; color:var(--ink); margin-bottom:.9rem; }
+.dict-learn-nav{ margin-top:.6rem; }
+.dict-prompt-label{ font-size:.9rem; color:var(--ink-soft); }
+.dict-mean-big{ font-size:2rem; font-weight:800; color:var(--ink); margin:.3rem 0 1rem; }
+.dict-tip-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.6rem; margin-bottom:1rem; }
+.dict-tip-note{ font-size:.8rem; color:var(--rose-deep); }
+.dict-answer{
+  width:100%; max-width:520px; text-align:center; font-size:1.7rem; font-weight:700; letter-spacing:1px;
+  border:2.5px dashed var(--line-strong); border-radius:16px; padding:.6rem; background:#FFFEF9; color:var(--ink);
+}
+.dict-feedback{ min-height:2.2rem; margin:.7rem 0; font-size:1.1rem; font-weight:700; }
+.dict-feedback.good{ color:var(--sage); }
+.dict-feedback.bad{ color:var(--rose-deep); }
+
+/* 检查列表 */
+.dict-review-list{ display:flex; flex-direction:column; gap:.5rem; }
+.dict-rv-row{ display:flex; align-items:center; gap:.6rem; padding:.55rem .7rem; border-radius:12px; border:1px solid var(--line); }
+.dict-rv-row.ok{ background:var(--sage-soft); }
+.dict-rv-row.bad{ background:#FBE7E2; }
+.dict-rv-ico{ font-size:1.1rem; }
+.dict-rv-main{ flex:1; min-width:0; }
+.dict-rv-zh{ color:var(--ink-soft); font-size:.88rem; }
+.dict-rv-typed{ font-size:.84rem; color:var(--ink-soft); }
+.dict-rv-row.bad .dict-rv-typed{ color:var(--rose-deep); }
+
+/* 结果 */
+.dict-result{ text-align:center; padding:1.6rem 1rem; }
+.dict-result.perfect{ background:linear-gradient(160deg,#FFF6E0,#FDEFD6); }
+.dict-trophy{ font-size:4rem; line-height:1; }
+.dict-congrats{ font-size:2rem; color:var(--amber-deep); margin:.3rem 0; }
+.dict-congrats-sub{ color:var(--ink-soft); font-size:1rem; }
+.dict-score{ font-size:1.5rem; font-weight:800; color:var(--ink); margin:.8rem 0; }
+.dict-wrong-mini{ text-align:left; margin:.8rem auto; max-width:520px; }
+.dict-wrong-mini-row{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:baseline; padding:.35rem .5rem; border-bottom:1px dashed var(--line); font-size:.9rem; }
+.dict-wrong-mini-row span{ color:var(--ink-soft); flex:1; }
+.dict-wrong-mini-row i{ color:var(--rose-deep); font-size:.82rem; }
+
+@media (max-width: 520px){
+  .dict-row-main{ grid-template-columns:1fr; gap:.25rem; }
+  .dict-row-main label{ grid-column:span 1; }
+  .dict-word-show{ font-size:2rem; }
+  .dict-mean-big{ font-size:1.6rem; }
+  .dict-btn{ padding:.55rem .8rem; font-size:.86rem; }
+}

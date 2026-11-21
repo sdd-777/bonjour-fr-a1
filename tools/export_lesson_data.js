@@ -7,7 +7,7 @@ const path = require('path');
 const os = require('os');
 const ART = path.join(os.homedir(), '.codebuddy', 'artifact', '2f8a7d30-9c21-4f0b-1d53-75c105285000');
 const merged = {};
-for (const name of ['u5_data.js', 'u6_data.js', 'u7_data.js', 'u8_data.js']){
+for (const name of ['u5_data.js', 'u6_data.js', 'u7_data.js', 'u8_data.js', 'u9_data.js']){
   const p = path.join(ART, name);
   try{
     const d = require(p);
