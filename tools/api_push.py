@@ -33,6 +33,13 @@ def req(method, path, body=None, raw=False, attempts=6):
                 txt = f.read()
             return txt if raw else json.loads(txt)
         except urllib.error.HTTPError as e:
+            if e.code == 422 and i == attempts - 1:
+                # 打印 GitHub 返回的详细原因，便于诊断 tree / blob 问题
+                try:
+                    detail = e.read().decode('utf-8', 'ignore')
+                    print("  422 详情:", detail[:600], flush=True)
+                except Exception:
+                    pass
             retryable = e.code in (429, 500, 502, 503, 504)
             if not retryable or i == attempts - 1:
                 raise
@@ -104,6 +111,9 @@ def main():
     branch = info.get("default_branch", "main")
     base = req("GET", "/repos/%s/git/ref/heads/%s" % (repo_full, branch))
     parent = base["object"]["sha"]
+    # base_tree 必须传 tree SHA（不能传 commit SHA）。先从 parent commit 取出 tree。
+    parent_commit = req("GET", "/repos/%s/git/commits/%s" % (repo_full, parent))
+    base_tree = parent_commit["tree"]["sha"]
 
     files = collect()
     print("待推送文件:", len(files))
@@ -119,7 +129,7 @@ def main():
 
     msg = os.environ.get("MSG", "").strip() or \
           "修复 Apple 移动端单词模块打不开：iOS SpeechSynthesis 兼容 + 单词卡延迟/分批渲染"
-    new_tree = req("POST", "/repos/%s/git/trees" % repo_full, {"base_tree": parent, "tree": tree})
+    new_tree = req("POST", "/repos/%s/git/trees" % repo_full, {"base_tree": base_tree, "tree": tree})
     commit = req("POST", "/repos/%s/git/commits" % repo_full,
                  {"message": msg, "tree": new_tree["sha"], "parents": [parent]})
     ref_path = "/repos/%s/git/refs/heads/%s" % (repo_full, branch)
