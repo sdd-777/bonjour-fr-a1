@@ -611,20 +611,13 @@
     return arr;
   }
 
-  /* —— 阶段 4：默写（逐词） —— */
+  /* —— 阶段 4：默写（逐词；过程中不显示对错，交卷后统一公布） —— */
   function renderDictate(body) {
     const w = st.words[st.idx];
     const total = st.words.length;
     const doneCount = st.words.filter(x => x.judged).length;
-    const okCount = st.words.filter(x => x.judged && x.ok).length;
-    const badCount = doneCount - okCount;
     const box = el('div', 'dict-card card dict-study');
     box.innerHTML =
-      '<div class="dict-live-stat">' +
-      '<span>已默 <b>' + doneCount + '/' + total + '</b></span>' +
-      '<span class="ls-ok">✅ 对 ' + okCount + '</span>' +
-      '<span class="ls-bad">✗ 错 ' + badCount + '</span>' +
-      '</div>' +
       '<div class="dict-progress-text">默写 ' + (st.idx + 1) + ' / ' + total + '（顺序已打乱）</div>' +
       '<div class="dict-progress"><div style="width:' + (doneCount / total * 100) + '%"></div></div>' +
       '<div class="dict-prompt-label">请写出意思是：</div>' +
@@ -634,48 +627,42 @@
       '<span class="dict-tip-note">重音符号（é è ç 等）也要写对哦</span>' +
       '</div>' +
       '<input id="dict-answer" class="dict-answer" autocomplete="off" autocapitalize="off" ' +
-      'spellcheck="false" placeholder="在这里拼写法语单词"' + (w.judged ? ' disabled' : '') +
-      ' value="' + esc(w.typed || '') + '">' +
-      '<div id="dict-feedback" class="dict-feedback' + (w.judged ? ' ' + (w.ok ? 'good' : 'bad') : '') + '">' +
-      (w.judged ? (w.ok ? '✅ 正确！' : '✗ 正确写法：<b>' + esc(w.fr) + '</b>　你写的：<b>' + esc(w.typed) + '</b>') : '') +
-      '</div>' +
+      'spellcheck="false" placeholder="在这里拼写法语单词" value="' + esc(w.typed || '') + '">' +
+      '<div id="dict-feedback" class="dict-feedback"></div>' +
       '<div class="dict-actions center">' +
-      (w.judged
-        ? '<button class="dict-btn primary" id="dict-next-word">' + (st.idx < total - 1 ? '下一个 →' : '完成，去检查 →') + '</button>'
-        : '<button class="dict-btn primary" id="dict-submit">确定 ✓</button>') +
-      '</div>';
+      '<button class="dict-btn primary" id="dict-submit">确定，下一个 →</button>' +
+      '</div>' +
+      '<p class="dict-hint center">默写过程中不显示对错，全部完成并交卷后统一公布结果。</p>';
     body.appendChild(box);
     const inp = $('#dict-answer');
-    if (!w.judged) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+    setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
     $('#dict-hint').onclick = e => speak(w.fr, e.currentTarget, false);
-    const goNext = () => {
-      if (st.idx < total - 1) { st.idx++; render(); }
-      else { st.stage = 'review'; render(); }
+    const submit = () => {
+      const typed = inp.value.trim();
+      if (!typed) { toast('先写出单词再提交'); return; }
+      w.typed = typed;
+      w.ok = (typed === w.fr.trim()); // 后台记录判定（重音/大小写严格比对），交卷后才公布
+      w.judged = true;
+      const fb = $('#dict-feedback');
+      fb.className = 'dict-feedback';
+      fb.textContent = '已记录，继续…';
+      $('#dict-submit').disabled = true;
+      setTimeout(() => {
+        if (st.idx < total - 1) { st.idx++; render(); }
+        else { st.stage = 'review'; render(); }
+      }, 450);
     };
-    if (w.judged) {
-      $('#dict-next-word').onclick = goNext;
-      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); goNext(); } };
-    } else {
-      $('#dict-submit').onclick = () => {
-        const typed = inp.value.trim();
-        if (!typed) { toast('先写出单词再提交'); return; }
-        w.typed = typed;
-        w.ok = (typed === w.fr.trim()); // 严格比对：重音/大小写都要一致
-        w.judged = true;
-        render(); // 立即刷新：稳定显示对错 + 更新实时统计
-      };
-      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#dict-submit').click(); } };
-    }
+    $('#dict-submit').onclick = submit;
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
   }
 
-  /* —— 阶段 5：核对列表 —— */
+  /* —— 阶段 5：确认答案（不显示对错；交卷后才公布） —— */
   function renderReview(body) {
     const box = el('div', 'dict-card card');
-    const right = st.words.filter(w => w.ok).length;
     box.innerHTML =
       '<div class="dict-head"><span class="dict-head-ico">🔍</span><div>' +
-      '<h3>检查一下再交卷</h3>' +
-      '<p class="dict-sub">你写对了 <b>' + right + ' / ' + st.words.length + '</b> 个。想改的可以点「修改」，确认无误后交卷。</p>' +
+      '<h3>确认答案，准备交卷</h3>' +
+      '<p class="dict-sub">下面是你写下的答案，交卷前可点「修改」更正。<b>对错将在交卷后统一公布</b>，确认无误后交卷。</p>' +
       '</div></div>' +
       '<div class="dict-review-list"></div>' +
       '<div class="dict-actions">' +
@@ -691,12 +678,12 @@
     const list = $('.dict-review-list');
     list.innerHTML = '';
     st.words.forEach((w, i) => {
-      const row = el('div', 'dict-rv-row ' + (w.ok ? 'ok' : 'bad'));
+      // 中性样式：不显示 ✅/✗、不给 ok/bad 配色，避免交卷前泄露对错
+      const row = el('div', 'dict-rv-row neutral');
       row.innerHTML =
-        '<span class="dict-rv-ico">' + (w.ok ? '✅' : '✗') + '</span>' +
+        '<span class="dict-rv-ico">✏️</span>' +
         '<div class="dict-rv-main">' +
-        '<div><b>' + esc(w.fr) + '</b> <span class="dict-rv-zh">' + esc(w.zh) + '</span></div>' +
-        '<div class="dict-rv-typed">你写的：' + (w.typed ? esc(w.typed) : '<i>（空）</i>') + '</div>' +
+        '<div class="dict-rv-typed">第 ' + (i + 1) + ' 个　你写的：<b>' + (w.typed ? esc(w.typed) : '<i>（空）</i>') + '</b></div>' +
         '</div>' +
         '<button class="dict-btn tiny" data-i="' + i + '">修改</button>';
       list.appendChild(row);
@@ -720,7 +707,7 @@
     if (wrong.length) saveWrong(wrong);
     st.wrongSource = st.wrongSource; // 保留标记
     st.stage = 'result';
-    st.result = { right, total, wrong };
+    st.result = { right, total, wrong, all: st.words.slice() };
     render();
     if (right === total) {
       confetti();
@@ -728,16 +715,31 @@
       setTimeout(() => speak('Très bien ! Bravo !', null, false, 'dict-bravo'), 200);
     }
   }
+  // 交卷后公布的完整逐词清单（含对错、正确写法、你写的）
+  function fullResultList(all) {
+    return '<div class="dict-full-result">' +
+      all.map((w, i) =>
+        '<div class="dict-fr-row ' + (w.ok ? 'ok' : 'bad') + '">' +
+        '<span class="dict-fr-ico">' + (w.ok ? '✅' : '✗') + '</span>' +
+        '<div class="dict-fr-main">' +
+        '<div class="dict-fr-line"><b>' + esc(w.fr) + '</b> <span>' + esc(w.zh) + '</span></div>' +
+        '<div class="dict-fr-typed">你写的：<b>' + (w.ok ? esc(w.typed) : esc(w.typed || '（空）')) + '</b>' +
+        (w.ok ? '' : '　正确：<b>' + esc(w.fr) + '</b>') + '</div>' +
+        '</div></div>').join('') + '</div>';
+  }
   function renderResult(body) {
     const r = st.result;
     const perfect = r.right === r.total;
     const box = el('div', 'dict-card card dict-result ' + (perfect ? 'perfect' : ''));
+    const listHtml = fullResultList(r.all || r.wrong);
     if (perfect) {
       box.innerHTML =
         '<div class="dict-trophy">🏆</div>' +
         '<h2 class="dict-congrats">Très bien !</h2>' +
         '<p class="dict-congrats-sub">Bravo ! 全部拼写正确，太棒了！✨</p>' +
         '<div class="dict-score">' + r.right + ' / ' + r.total + '</div>' +
+        '<h3 class="dict-list-title">本次听写情况</h3>' +
+        listHtml +
         '<div class="dict-actions center">' +
         '<button class="dict-btn primary" id="dict-again">🔁 再听写一遍</button>' +
         '<button class="dict-btn" id="dict-go-home">返回上传</button>' +
@@ -749,18 +751,13 @@
         '<p class="dict-congrats-sub">写对 ' + r.right + ' / ' + r.total + ' 个，' + r.wrong.length +
         ' 个错的已收进错题本，可以再练一遍。</p>' +
         '<div class="dict-score">' + r.right + ' / ' + r.total + '</div>' +
-        '<div class="dict-wrong-mini"></div>' +
+        '<h3 class="dict-list-title">本次听写情况</h3>' +
+        listHtml +
         '<div class="dict-actions center">' +
         '<button class="dict-btn primary" id="dict-retry-wrong">🔁 继续听写出错的词</button>' +
         '<button class="dict-btn" id="dict-again">全部重默</button>' +
         '<button class="dict-btn ghost" id="dict-go-home">返回上传</button>' +
         '</div>';
-      const wm = $('.dict-wrong-mini', box);
-      r.wrong.forEach(w => {
-        const d = el('div', 'dict-wrong-mini-row');
-        d.innerHTML = '<b>' + esc(w.fr) + '</b> <span>' + esc(w.zh) + '</span> <i>你写的：' + esc(w.typed) + '</i>';
-        wm.appendChild(d);
-      });
     }
     body.appendChild(box);
     const again = $('#dict-again');
