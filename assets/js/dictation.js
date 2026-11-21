@@ -1,7 +1,7 @@
 /* =========================================================
    ✍️ 默写模块（dictation）
    ---------------------------------------------------------
-   流程：拍照/输入 → 识别并校验词库 → 确认单词列表 →
+   流程：拍照/输入 → 识别并校验词库（未收录词联网查有道词典）→ 确认单词列表 →
         先听音看写法 → 默写（给意思+横线，重音细节也要对）→
         逐词完成 → 列表核对 → 交卷 → 全对法语鼓励+烟花 / 有错入错题本
    依赖（全局，均在 app.js / 各数据文件之前加载）：
@@ -67,6 +67,120 @@
       return { fr: canon, zh: DICT[canon] || '' };
     }
     return null;
+  }
+
+  /* ---------- 联网查词：本地未收录时搜索中文释义 ----------
+     站点是纯静态页面（GitHub Pages），没有自己的后端，
+     这里通过公共词典 API 在浏览器端"联网搜索"。
+     主用：有道 suggest（JSONP，返回准确释义 entry/explain，且能纠正 OCR 拼写）
+     备用：MyMemory 翻译（CORS，JSON 直连）
+     查询结果缓存在 localStorage，避免重复联网。
+  ---------- */
+  const LS_ONLINE = 'dictation_online_cache_v1';
+  const ONLINE_CACHE = (function () {
+    try { return JSON.parse(localStorage.getItem(LS_ONLINE) || '{}') || {}; }
+    catch (e) { return {}; }
+  })();
+  function cacheSet(key, val) {
+    ONLINE_CACHE[key] = val;
+    try { localStorage.setItem(LS_ONLINE, JSON.stringify(ONLINE_CACHE)); } catch (e) {}
+  }
+
+  // 有道 suggest：JSONP 回调（绕过跨域），XXH 兼容 https 页面
+  function youdaoLookup(word, cb) {
+    let done = false;
+    const finish = (val) => { if (done) return; done = true; cb(val); };
+    const cname = '__dictYoudao' + Math.random().toString(36).slice(2);
+    const s = document.createElement('script');
+    window[cname] = data => {
+      try {
+        const entries = data && data.data && data.data.entries;
+        if (entries && entries.length) {
+          const best = entries.find(e => e && e.entry && e.explain) || entries[0];
+          finish({ entry: String(best.entry || '').trim(), explain: String(best.explain || '').trim() });
+        } else finish(null);
+      } catch (e) { finish(null); }
+      try { delete window[cname]; } catch (e) {}
+      if (s.parentNode) s.parentNode.removeChild(s);
+    };
+    s.onerror = () => {
+      finish(null);
+      try { delete window[cname]; } catch (e) {}
+      if (s.parentNode) s.parentNode.removeChild(s);
+    };
+    const q = encodeURIComponent(word);
+    s.src = 'https://dict.youdao.com/suggest?num=5&ver=3.0&doctype=json&encode=UTF8&le=fr&q=' + q + '&callback=' + cname;
+    document.head.appendChild(s);
+    setTimeout(() => { if (!done) { finish(null); try { delete window[cname]; } catch (e) {} if (s.parentNode) s.parentNode.removeChild(s); } }, 9000);
+  }
+
+  // MyMemory 备用：fetch JSON（CORS 允许）
+  function mymemoryLookup(word, cb) {
+    let done = false;
+    const finish = val => { if (done) return; done = true; cb(val); };
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=fr%7Czh-CN';
+    if (!window.fetch) { finish(null); return; }
+    fetch(url).then(r => r.json()).then(d => {
+      const t = d && d.responseData && d.responseData.translatedText;
+      if (t && d.responseStatus === 200) finish({ entry: '', explain: String(t).trim() });
+      else finish(null);
+    }).catch(() => finish(null));
+    setTimeout(() => finish(null), 9000);
+  }
+
+  // 从有道 explain 里提取简洁中文释义（取第一个义项、去例句噪音）
+  function cleanExplain(text) {
+    let s = String(text || '').trim();
+    s = s.split(/[;；]/)[0];                 // 只取第一个义项
+    s = s.replace(/[～~].*$/, '');            // 去掉带 ～ 的例句部分
+    s = s.replace(/[（(].*?[）)]/g, '');      // 去括号补充说明
+    s = s.replace(/\s+/g, ' ').replace(/[，,]\s*$/, '').trim();
+    return s.slice(0, 42);
+  }
+
+  // 联网查一个词：优先有道，失败回退 MyMemory；结果写入缓存
+  // 返回 Promise，resolve({fr, zh, source}) 或 resolve(null)
+  function lookupOnline(word) {
+    const raw = String(word || '').trim();
+    if (!raw) return Promise.resolve(null);
+    const key = normKey(raw) || raw.toLowerCase();
+    if (ONLINE_CACHE[key] !== undefined) {
+      const c = ONLINE_CACHE[key];
+      return Promise.resolve(c === null ? null : { fr: c.fr, zh: c.zh, source: c.source || 'online' });
+    }
+    return new Promise(resolve => {
+      youdaoLookup(raw, data => {
+        const apply = d => {
+          if (!d || !d.explain) { cacheSet(key, null); resolve(null); return; }
+          const fr = d.entry || raw;            // 有道 entry 可纠正 OCR 拼写
+          const zh = cleanExplain(d.explain) || d.explain;
+          // 过滤无效结果：释义等于原词（MyMemory 对无意义词会原样返回）视为查不到
+          const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
+          if (!norm(zh) || norm(zh) === norm(raw) || norm(zh) === norm(fr)) {
+            cacheSet(key, null); resolve(null); return;
+          }
+          const out = { fr, zh, source: 'online' };
+          cacheSet(key, out);
+          resolve(out);
+        };
+        if (data) apply(data);
+        else mymemoryLookup(raw, d2 => apply(d2));
+      });
+    });
+  }
+
+  // 批量联网补全：对未收录词逐个查（并发上限 3，避免过快）
+  async function enrichOnline(words, onProgress) {
+    const targets = words.filter(w => !w.known && String(w.fr || '').trim());
+    let done = 0;
+    const result = await Promise.all(targets.map(async w => {
+      const r = await lookupOnline(w.fr);
+      done++;
+      if (onProgress) onProgress(done, targets.length, w, r);
+      return { w, r };
+    }));
+    return result;
   }
 
   /* ---------- 状态 ---------- */
@@ -179,13 +293,16 @@
         else toast('剪贴板是空的');
       } catch (err) { toast('无法读取剪贴板，请用手动输入'); }
     };
-    $('#dict-next-confirm').onclick = () => {
+    $('#dict-next-confirm').onclick = async () => {
       const raw = $('#dict-manual').value;
       const list = parseRaw(raw);
       if (!list.length) { toast('请先输入或识别单词'); return; }
-      st.words = list.map(x => ({ fr: x.fr, zh: x.zh, typed: '', ok: false, known: x.known }));
+      st.words = list.map(x => ({ fr: x.fr, zh: x.zh, typed: '', ok: false, known: x.known, source: x.known ? 'dict' : '' }));
       st.wrongSource = false;
       st.stage = 'confirm'; render();
+      // 本地未收录的词，后台联网搜索中文释义（不阻塞，边查边刷新列表）
+      const unknown = st.words.filter(w => !w.known);
+      if (unknown.length) await fillUnknownOnline(unknown);
     };
     const ob = $('#dict-open-wrong');
     if (ob) ob.onclick = () => startWrongBook();
@@ -274,21 +391,28 @@
     box.innerHTML =
       '<div class="dict-head"><span class="dict-head-ico">✅</span><div>' +
       '<h3>核对单词列表</h3>' +
-      '<p class="dict-sub">共 <b>' + st.words.length + '</b> 个，其中 <b>' + known + '</b> 个在词库中找到中文意思。' +
-      '未收录的请补中文意思，写错的请改法语拼写，不需要的删掉。</p>' +
+      '<p class="dict-sub" id="dict-known-stat">共 <b>' + st.words.length + '</b> 个，其中 <b>' + known + '</b> 个已找到中文意思（词库或联网）。' +
+      '写错的请改法语拼写，不需要的删掉。</p>' +
       '</div></div>' +
+      '<div id="dict-online-note" class="dict-online-note" hidden>🌐 正在联网搜索未收录单词的中文意思…</div>' +
       '<div id="dict-confirm-list" class="dict-list"></div>' +
       '<div class="dict-actions">' +
       '<button class="dict-btn ghost" id="dict-back-upload">← 返回</button>' +
       '<button class="dict-btn" id="dict-add-row">＋ 添加单词</button>' +
+      '<button class="dict-btn speak" id="dict-retry-online">🌐 重查未收录</button>' +
       '<button class="dict-btn primary" id="dict-next-learn">下一步：听音看写法 →</button>' +
       '</div>';
     body.appendChild(box);
     drawConfirmList();
     $('#dict-back-upload').onclick = () => { st.stage = 'upload'; render(); };
     $('#dict-add-row').onclick = () => {
-      st.words.push({ fr: '', zh: '', typed: '', ok: false, known: false });
+      st.words.push({ fr: '', zh: '', typed: '', ok: false, known: false, source: '' });
       drawConfirmList();
+    };
+    $('#dict-retry-online').onclick = () => {
+      const unknown = st.words.filter(w => !w.known && String(w.fr || '').trim());
+      if (!unknown.length) { toast('没有未查到的词'); return; }
+      fillUnknownOnline(unknown);
     };
     $('#dict-next-learn').onclick = () => {
       const valid = st.words.filter(w => w.fr.trim());
@@ -297,6 +421,11 @@
       st.idx = 0;
       st.stage = 'learn'; render();
     };
+  }
+  function sourceTag(w) {
+    if (!w.known) return '<span class="dict-tag">? 未查到</span>';
+    if (w.source === 'online') return '<span class="dict-tag online">🌐 联网</span>';
+    return '<span class="dict-tag known">✓ 词库</span>';
   }
   function drawConfirmList() {
     const list = $('#dict-confirm-list');
@@ -313,25 +442,61 @@
         '<input class="dict-in-zh" data-i="' + i + '" value="' + esc(w.zh) + '" placeholder="中文意思">' +
         '</div>' +
         '<div class="dict-row-side">' +
-        '<span class="dict-tag ' + (w.known ? 'known' : '') + '">' + (w.known ? '✓ 已收录' : '? 未收录') + '</span>' +
+        sourceTag(w) +
         '<button class="dict-x" data-i="' + i + '" title="删除">✕</button>' +
         '</div>';
       list.appendChild(row);
     });
-    $$('.dict-in-fr', list).forEach(inp => inp.oninput = e => {
-      const i = +e.target.dataset.i;
-      st.words[i].fr = e.target.value;
-      const hit = lookup(e.target.value);
-      if (hit && !st.words[i].zh) { st.words[i].zh = hit.zh; st.words[i].known = true; }
-      const rows = $$('.dict-row', list);
-      const tag = $('.dict-tag', rows[i]);
-      if (tag) { tag.textContent = hit ? '✓ 已收录' : '? 未收录'; tag.classList.toggle('known', !!hit); }
+    $$('.dict-in-fr', list).forEach(inp => {
+      inp.oninput = e => {
+        const i = +e.target.dataset.i;
+        st.words[i].fr = e.target.value;
+        const hit = lookup(e.target.value);
+        if (hit && !st.words[i].zh) { st.words[i].zh = hit.zh; st.words[i].known = true; st.words[i].source = 'dict'; }
+        const rows = $$('.dict-row', list);
+        const side = $('.dict-row-side', rows[i]);
+        if (side) side.innerHTML = sourceTag(st.words[i]) + '<button class="dict-x" data-i="' + i + '" title="删除">✕</button>';
+        bindRowButtons(list);
+      };
     });
     $$('.dict-in-zh', list).forEach(inp => inp.oninput = e => { st.words[+e.target.dataset.i].zh = e.target.value; });
+    bindRowButtons(list);
+  }
+  function bindRowButtons(list) {
     $$('.dict-x', list).forEach(btn => btn.onclick = e => {
       st.words.splice(+e.target.dataset.i, 1);
       drawConfirmList();
     });
+  }
+
+  // 联网补全未收录词：边查边回填，查不到仍保留原词供手动填写
+  async function fillUnknownOnline(unknown) {
+    const note = $('#dict-online-note');
+    if (note) { note.hidden = false; note.classList.add('loading'); }
+    const results = await enrichOnline(unknown, (done, total) => {
+      if (note) note.textContent = '🌐 联网搜索中… ' + done + ' / ' + total;
+    });
+    // 回填：联网查到的中文意思 / 纠正后的法语写法
+    results.forEach(({ w, r }) => {
+      if (r && r.zh) {
+        if (r.fr) w.fr = r.fr;
+        w.zh = r.zh;
+        w.known = true;
+        w.source = r.source || 'online';
+      }
+    });
+    // 回填结果并重新渲染列表/统计（若用户还在 confirm 阶段）
+    if (st.stage === 'confirm') {
+      if (note) { note.hidden = true; note.classList.remove('loading'); }
+      drawConfirmList();
+      const stat = $('#dict-known-stat');
+      if (stat) {
+        const kn = st.words.filter(w => w.known).length;
+        stat.innerHTML = '共 <b>' + st.words.length + '</b> 个，其中 <b>' + kn +
+          '</b> 个已找到中文意思（词库或联网）。写错的请改法语拼写，不需要的删掉。';
+      }
+      toast('联网补全完成，请核对');
+    }
   }
 
   /* —— 阶段 3：听音看写法（可跳过） —— */
@@ -560,7 +725,7 @@
 
   // 暴露给测试/外部
   window.Dictation = {
-    lookup, parseRaw, normKey,
+    lookup, parseRaw, normKey, lookupOnline, cleanExplain, enrichOnline,
     get state() { return st; },
     render
   };

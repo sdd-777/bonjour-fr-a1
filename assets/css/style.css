@@ -1546,6 +1546,10 @@ main{
 .dict-ocr-status.loading{ background:var(--blue-soft); color:var(--ink); }
 .dict-ocr-status.ok{ background:var(--sage-soft); color:var(--ink); }
 .dict-ocr-status.warn{ background:#FBE7D3; color:var(--ink); }
+.dict-online-note{ margin:.5rem 0; padding:.55rem .8rem; border-radius:12px; font-size:.85rem; background:var(--blue-soft); color:var(--ink); }
+.dict-online-note.loading{ animation:dictPulse 1.2s ease-in-out infinite; }
+@keyframes dictPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.6; } }
+.dict-tag.online{ background:#E4EEFB; color:#2c5a94; }
 .dict-sep{ display:flex; align-items:center; gap:.7rem; color:var(--ink-soft); font-size:.82rem; margin:.4rem 0; }
 .dict-sep::before,.dict-sep::after{ content:''; flex:1; height:1px; background:var(--line); }
 .dict-textarea{
