@@ -320,6 +320,10 @@ Object.assign(TB_LESSONS, {
     ],
     "grammar": [
       {
+        "t": "文化辨析：la Chandeleur 圣蜡节 ≠ Noël 圣诞节",
+        "d": "课文首句 <b>C'est la Chandeleur.<\/b> 里的 <b>la Chandeleur<\/b> 是法国的<b>圣蜡节<\/b>（又称圣烛节、献主节，2 月 2 日，天主教节日）。法国人这一天的传统美食正是<b>可丽饼 crêpe<\/b>，所以下文才有 <b>On fait des crêpes<\/b>。<br>它<b>不是圣诞节<\/b>：法语「圣诞节」是 <b>Noël<\/b>（12 月 25 日），相关表达见第 20 课 <b>Les fêtes<\/b>（如 « Pour Noël, on fait un grand repas en famille et on fait des cadeaux. »）。两者日期与习俗都不同，请勿混淆。"
+      },
+      {
         "t": "部分冠词 l'article partitif",
         "d": "部分冠词表示「整体中一部分不确定的数量」，由介词 <b>de<\/b> 与定冠词组合而成：<br><b>du<\/b>（de + le）→ 单数阳性名词：du pain, du sucre, du cidre；<br><b>de la<\/b> → 单数阴性名词：de la farine, de la confiture, de la viande；<br><b>de l'<\/b> → 元音或哑音 h 开头的阴、阳性单数名词：de l'eau, de l'œuf；<br><b>des<\/b> → 复数名词：des œufs, des légumes, des céréales。<br>例：Achète de l'eau, du sucre, de la farine et des légumes. 买矿泉水、糖、面粉和蔬菜。On mange de la viande avec du vin rouge. 吃肉时喝红葡萄酒。"
       },

@@ -1,5 +1,5 @@
 /* =========================================================
-   动词变位模块数据（89 个常用动词 × 直陈式 4 时态 × 6 人称；含教材 L1–24 全部动词）
+   动词变位模块数据（117 个常用动词 × 直陈式 4 时态 × 6 人称；含教材 L1–32 全部动词）
    时态：pres 现在时 / pc 复合过去时 / imp 未完成过去时 / fut 简单将来时
    f = 变位形式数组（6 人称），i = 对应 IPA 音标数组
    aux = 复合过去时助动词（avoir / etre）；part = 过去分词
@@ -45,6 +45,24 @@ const VERBS = [
   ]
 },
 {
+  id: "adorer", inf: "adorer", ipa: "[a.dɔ.ʁe]", zh: "崇拜；非常喜欢", grp: "er", aux: "avoir", part: "adoré",
+  tenses: {
+    pres: { f: ["j'adore","adores","adore","adorons","adorez","adorent"],
+            i: ["[ʒa.dɔʁ]","[a.dɔʁ]","[a.dɔʁ]","[a.dɔ.ʁɔ̃]","[a.dɔ.ʁe]","[a.dɔʁ]"] },
+    pc: { f: ["ai adoré","as adoré","a adoré","avons adoré","avez adoré","ont adoré"],
+            i: ["[ʒe.t‿a.dɔ.ʁe]","[ty a.z‿a.dɔ.ʁe]","[i.la.z‿a.dɔ.ʁe]","[nu.z‿a.vɔ̃.z‿a.dɔ.ʁe]","[vu.z‿a.ve.z‿a.dɔ.ʁe]","[il.z‿ɔ̃.z‿a.dɔ.ʁe]"] },
+    imp: { f: ["adorais","adorais","adorait","adorions","adoriez","adoraient"],
+            i: ["[a.dɔ.ʁɛ]","[a.dɔ.ʁɛ]","[a.dɔ.ʁɛ]","[a.dɔ.ʁjɔ̃]","[a.dɔ.ʁje]","[a.dɔ.ʁɛ]"] },
+    fut: { f: ["adorerai","adoreras","adorera","adorerons","adorerez","adoreront"],
+            i: ["[a.dɔ.ʁə.ʁe]","[a.dɔ.ʁə.ʁe]","[a.dɔ.ʁə.ʁa]","[a.dɔ.ʁə.ʁɔ̃]","[a.dɔ.ʁə.ʁe]","[a.dɔ.ʁə.ʁɔ̃]"] }
+  },
+  note: "adorer 是规则 -er 动词，变位同 aimer；adorer qqn/qch 表示「崇拜、非常喜欢」。",
+  ex: [
+    { fr: "J'adore ce film.", zh: "我超爱这部电影。", i: "[ʒa.dɔʁ sə film]" },
+    { fr: "Elle a adoré le cadeau.", zh: "她非常喜欢这份礼物。", i: "[ɛ.la.z‿a.dɔ.ʁe lə ka.do]" }
+  ]
+},
+{
   id: "aimer", inf: "aimer", ipa: "[ɛ.me] / [e.me]", zh: "爱；喜欢", grp: "er", aux: "avoir", part: "aimé",
   tenses: {
     pres: { f: ["j'aime","aimes","aime","aimons","aimez","aiment"],
@@ -63,6 +81,24 @@ const VERBS = [
   ]
 },
 {
+  id: "amuser", inf: "amuser", ipa: "[a.my.ze]", zh: "娱乐；使开心", grp: "er", aux: "etre", part: "amusé",
+  tenses: {
+    pres: { f: ["j'amuse","amuses","amuse","amusons","amusez","amusent"],
+            i: ["[ʒa.myz]","[a.myz]","[a.myz]","[a.my.zɔ̃]","[a.my.ze]","[a.myz]"] },
+    pc: { f: ["suis amusé(e)","es amusé(e)","est amusé(e)","sommes amusé(e)s","êtes amusé(e)s","sont amusé(e)s"],
+            i: ["[sɥi.z‿a.my.ze]","[ɛ.z‿a.my.ze]","[ɛ.t‿a.my.ze]","[sɔm.z‿a.my.ze]","[ɛt.z‿a.my.ze]","[sɔ̃.z‿a.my.ze]"] },
+    imp: { f: ["amusais","amusais","amusait","amusions","amusiez","amusaient"],
+            i: ["[a.my.zɛ]","[a.my.zɛ]","[a.my.zɛ]","[a.my.zjɔ̃]","[a.my.zje]","[a.my.zɛ]"] },
+    fut: { f: ["amuserai","amuseras","amusera","amuserons","amuserez","amuseront"],
+            i: ["[a.my.zə.ʁe]","[a.my.zə.ʁe]","[a.my.zə.ʁa]","[a.my.zə.ʁɔ̃]","[a.my.zə.ʁe]","[a.my.zə.ʁɔ̃]"] }
+  },
+  note: "s'amuser 玩得开心（代词式动词：se + amuser）；复合过去时用 être 并性数配合：je me suis amusé(e)；amuser qqn 使某人发笑。",
+  ex: [
+    { fr: "Les enfants s'amusent dans le jardin.", zh: "孩子们在花园里玩。", i: "[le.z‿ɑ̃.fɑ̃ s‿a.myz dɑ̃ lə ʒaʁ.dɛ̃]" },
+    { fr: "Je me suis amusé hier.", zh: "我昨天玩得很开心。", i: "[ʒə mə sɥi.z‿a.my.ze jɛʁ]" }
+  ]
+},
+{
   id: "appeler", inf: "appeler", ipa: "[a.ple]", zh: "叫；打电话", grp: "er", aux: "avoir", part: "appelé",
   tenses: {
     pres: { f: ["appelle","appelles","appelle","appelons","appelez","appellent"],
@@ -78,6 +114,78 @@ const VERBS = [
   ex: [
     { fr: "Je t'appelle ce soir.", zh: "我今晚给你打电话。", i: "[ʒə ta.pɛl sə swaʁ]" },
     { fr: "Il a appelé le médecin.", zh: "他给医生打了电话。", i: "[i.la.z‿a.pə.le lə med.sɛ̃]" }
+  ]
+},
+{
+  id: "arrêter", inf: "arrêter", ipa: "[a.ʁɛ.te]", zh: "停止；逮捕", grp: "er", aux: "avoir", part: "arrêté",
+  tenses: {
+    pres: { f: ["j'arrête","arrêtes","arrête","arrêtons","arrêtez","arrêtent"],
+            i: ["[ʒa.ʁɛt]","[a.ʁɛt]","[a.ʁɛt]","[a.ʁɛ.tɔ̃]","[a.ʁɛ.te]","[a.ʁɛt]"] },
+    pc: { f: ["ai arrêté","as arrêté","a arrêté","avons arrêté","avez arrêté","ont arrêté"],
+            i: ["[ʒe.t‿a.ʁɛ.te]","[ty a.z‿a.ʁɛ.te]","[i.la.z‿a.ʁɛ.te]","[nu.z‿a.vɔ̃.z‿a.ʁɛ.te]","[vu.z‿a.ve.z‿a.ʁɛ.te]","[il.z‿ɔ̃.z‿a.ʁɛ.te]"] },
+    imp: { f: ["arrêtais","arrêtais","arrêtait","arrêtions","arrêtiez","arrêtaient"],
+            i: ["[a.ʁɛ.tɛ]","[a.ʁɛ.tɛ]","[a.ʁɛ.tɛ]","[a.ʁɛ.tjɔ̃]","[a.ʁɛ.tje]","[a.ʁɛ.tɛ]"] },
+    fut: { f: ["arrêterai","arrêteras","arrêtera","arrêterons","arrêterez","arrêteront"],
+            i: ["[a.ʁɛ.tə.ʁe]","[a.ʁɛ.tə.ʁe]","[a.ʁɛ.tə.ʁa]","[a.ʁɛ.tə.ʁɔ̃]","[a.ʁɛ.tə.ʁe]","[a.ʁɛ.tə.ʁɔ̃]"] }
+  },
+  note: "arrêter 是规则 -er 动词，ê 读 [ɛ] 且各人称不变（il arrête [a.ʁɛt]）；s'arrêter 表示「停下」（代词式，pc 用 être）。",
+  ex: [
+    { fr: "Le train s'arrête à midi.", zh: "火车中午停下。", i: "[lə tʁɛ̃ s‿a.ʁɛt a mi.di]" },
+    { fr: "La police a arrêté le voleur.", zh: "警察抓住了小偷。", i: "[la pɔ.lis a.z‿a.ʁɛ.te lə vɔ.lœʁ]" }
+  ]
+},
+{
+  id: "arriver", inf: "arriver", ipa: "[a.ʁi.ve]", zh: "到达；抵达；发生", grp: "er", aux: "etre", part: "arrivé",
+  tenses: {
+    pres: { f: ["arrive","arrives","arrive","arrivons","arrivez","arrivent"],
+            i: ["[a.ʁiv]","[a.ʁiv]","[a.ʁiv]","[a.ʁi.vɔ̃]","[a.ʁi.ve]","[a.ʁiv]"] },
+    pc: { f: ["suis arrivé(e)","es arrivé(e)","est arrivé(e)","sommes arrivé(e)s","êtes arrivé(e)s","sont arrivé(e)s"],
+            i: ["[sɥi.z‿a.ʁi.ve]","[ɛ.z‿a.ʁi.ve]","[ɛ.t‿a.ʁi.ve]","[sɔm.z‿a.ʁi.ve]","[ɛt.z‿a.ʁi.ve]","[sɔ̃.z‿a.ʁi.ve]"] },
+    imp: { f: ["arrivais","arrivais","arrivait","arrivions","arriviez","arrivaient"],
+            i: ["[a.ʁi.vɛ]","[a.ʁi.vɛ]","[a.ʁi.vɛ]","[a.ʁi.vjɔ̃]","[a.ʁi.vje]","[a.ʁi.vɛ]"] },
+    fut: { f: ["arriverai","arriveras","arrivera","arriverons","arriverez","arriveront"],
+            i: ["[a.ʁi.və.ʁe]","[a.ʁi.və.ʁe]","[a.ʁi.və.ʁa]","[a.ʁi.və.ʁɔ̃]","[a.ʁi.və.ʁe]","[a.ʁi.və.ʁɔ̃]"] }
+  },
+  note: "用 être 作助动词，过去分词与主语性数配合：je suis arrivé（男）/ arrivée（女）；arriver à 到达，也可表「发生」。",
+  ex: [
+    { fr: "Je suis arrivé à Paris.", zh: "我到了巴黎。", i: "[ʒə sɥi.z‿a.ʁi.ve.a pa.ʁi]" },
+    { fr: "Elle est arrivée en retard.", zh: "她迟到了。", i: "[ɛ.lɛ.t‿a.ʁi.ve.ɑ̃ ʁə.taʁ]" }
+  ]
+},
+{
+  id: "baigner", inf: "baigner", ipa: "[bɛ.ɲe]", zh: "洗澡；游泳", grp: "er", aux: "etre", part: "baigné",
+  tenses: {
+    pres: { f: ["baigne","baignes","baigne","baignons","baignez","baignent"],
+            i: ["[bɛɲ]","[bɛɲ]","[bɛɲ]","[bɛ.ɲɔ̃]","[bɛ.ɲe]","[bɛɲ]"] },
+    pc: { f: ["suis baigné(e)","es baigné(e)","est baigné(e)","sommes baigné(e)s","êtes baigné(e)s","sont baigné(e)s"],
+            i: ["[sɥi.z‿bɛ.ɲe]","[ɛ.z‿bɛ.ɲe]","[ɛ.t‿bɛ.ɲe]","[sɔm.z‿bɛ.ɲe]","[ɛt.z‿bɛ.ɲe]","[sɔ̃.z‿bɛ.ɲe]"] },
+    imp: { f: ["baignais","baignais","baignait","baignions","baigniez","baignaient"],
+            i: ["[bɛ.ɲɛ]","[bɛ.ɲɛ]","[bɛ.ɲɛ]","[bɛ.ɲjɔ̃]","[bɛ.ɲje]","[bɛ.ɲɛ]"] },
+    fut: { f: ["baignerai","baigneras","baignera","baignerons","baignerez","baigneront"],
+            i: ["[bɛ.ɲə.ʁe]","[bɛ.ɲə.ʁe]","[bɛ.ɲə.ʁa]","[bɛ.ɲə.ʁɔ̃]","[bɛ.ɲə.ʁe]","[bɛ.ɲə.ʁɔ̃]"] }
+  },
+  note: "se baigner 洗澡/游泳（代词式动词：se + baigner）；复合过去时用 être 并性数配合：je me suis baigné(e)；gn 读 [ɲ]。",
+  ex: [
+    { fr: "Je me baigne dans la mer.", zh: "我在海里游泳。", i: "[ʒə mə bɛɲ dɑ̃ la mɛʁ]" },
+    { fr: "Nous nous sommes baignés hier.", zh: "我们昨天游泳了。", i: "[nu nu sɔm.z‿bɛ.ɲe jɛʁ]" }
+  ]
+},
+{
+  id: "calmer", inf: "calmer", ipa: "[kal.me]", zh: "使平静；安慰", grp: "er", aux: "etre", part: "calmé",
+  tenses: {
+    pres: { f: ["calme","calmes","calme","calmons","calmez","calment"],
+            i: ["[kalm]","[kalm]","[kalm]","[kal.mɔ̃]","[kal.me]","[kalm]"] },
+    pc: { f: ["suis calmé(e)","es calmé(e)","est calmé(e)","sommes calmé(e)s","êtes calmé(e)s","sont calmé(e)s"],
+            i: ["[sɥi.z‿kal.me]","[ɛ.z‿kal.me]","[ɛ.t‿kal.me]","[sɔm.z‿kal.me]","[ɛt.z‿kal.me]","[sɔ̃.z‿kal.me]"] },
+    imp: { f: ["calmais","calmais","calmait","calmions","calmiez","calmaient"],
+            i: ["[kal.mɛ]","[kal.mɛ]","[kal.mɛ]","[kal.mjɔ̃]","[kal.mje]","[kal.mɛ]"] },
+    fut: { f: ["calmerai","calmeras","calmera","calmerons","calmerez","calmeront"],
+            i: ["[kal.mə.ʁe]","[kal.mə.ʁe]","[kal.mə.ʁa]","[kal.mə.ʁɔ̃]","[kal.mə.ʁe]","[kal.mə.ʁɔ̃]"] }
+  },
+  note: "se calmer 冷静下来（代词式动词：se + calmer）；复合过去时用 être 并性数配合：je me suis calmé(e)；calmer qqn 安抚某人。",
+  ex: [
+    { fr: "Je me calme.", zh: "我冷静下来。", i: "[ʒə mə kalm]" },
+    { fr: "Elle s'est calmée après la dispute.", zh: "争吵后她平静下来了。", i: "[ɛ.la sɛ.t‿kal.me a.pʁɛ la dis.pyt]" }
   ]
 },
 {
@@ -189,6 +297,42 @@ const VERBS = [
   ]
 },
 {
+  id: "demander", inf: "demander", ipa: "[də.mɑ̃.de]", zh: "要求；请求；询问", grp: "er", aux: "avoir", part: "demandé",
+  tenses: {
+    pres: { f: ["demande","demandes","demande","demandons","demandez","demandent"],
+            i: ["[də.mɑ̃d]","[də.mɑ̃d]","[də.mɑ̃d]","[də.mɑ̃.dɔ̃]","[də.mɑ̃.de]","[də.mɑ̃d]"] },
+    pc: { f: ["ai demandé","as demandé","a demandé","avons demandé","avez demandé","ont demandé"],
+            i: ["[ʒe də.mɑ̃.de]","[ty a də.mɑ̃.de]","[i.la də.mɑ̃.de]","[nu.z‿a.vɔ̃ də.mɑ̃.de]","[vu.z‿a.ve də.mɑ̃.de]","[il.z‿ɔ̃ də.mɑ̃.de]"] },
+    imp: { f: ["demandais","demandais","demandait","demandions","demandiez","demandaient"],
+            i: ["[də.mɑ̃.dɛ]","[də.mɑ̃.dɛ]","[də.mɑ̃.dɛ]","[də.mɑ̃.djɔ̃]","[də.mɑ̃.dje]","[də.mɑ̃.dɛ]"] },
+    fut: { f: ["demanderai","demanderas","demandera","demanderons","demanderez","demanderont"],
+            i: ["[də.mɑ̃.də.ʁe]","[də.mɑ̃.də.ʁe]","[də.mɑ̃.də.ʁa]","[də.mɑ̃.də.ʁɔ̃]","[də.mɑ̃.də.ʁe]","[də.mɑ̃.də.ʁɔ̃]"] }
+  },
+  note: "demander qch (à qqn) 向某人要某物；demander à faire qch 请求做某事。",
+  ex: [
+    { fr: "Je demande un café.", zh: "我要一杯咖啡。", i: "[ʒə də.mɑ̃d œ̃ ka.fe]" },
+    { fr: "Elle m'a demandé mon nom.", zh: "她问了我的名字。", i: "[ɛ.la ma də.mɑ̃.de mɔ̃ nɔ̃]" }
+  ]
+},
+{
+  id: "détester", inf: "détester", ipa: "[de.tɛs.te]", zh: "讨厌；憎恨", grp: "er", aux: "avoir", part: "détesté",
+  tenses: {
+    pres: { f: ["déteste","détestes","déteste","détestons","détestez","détestent"],
+            i: ["[de.tɛst]","[de.tɛst]","[de.tɛst]","[de.tɛs.tɔ̃]","[de.tɛs.te]","[de.tɛst]"] },
+    pc: { f: ["ai détesté","as détesté","a détesté","avons détesté","avez détesté","ont détesté"],
+            i: ["[ʒe de.tɛs.te]","[ty a de.tɛs.te]","[i.la de.tɛs.te]","[nu.z‿a.vɔ̃ de.tɛs.te]","[vu.z‿a.ve de.tɛs.te]","[il.z‿ɔ̃ de.tɛs.te]"] },
+    imp: { f: ["détestais","détestais","détestait","détestions","détestiez","détestaient"],
+            i: ["[de.tɛs.tɛ]","[de.tɛs.tɛ]","[de.tɛs.tɛ]","[de.tɛs.tjɔ̃]","[de.tɛs.tje]","[de.tɛs.tɛ]"] },
+    fut: { f: ["détesterai","détesteras","détestera","détesterons","détesterez","détesteront"],
+            i: ["[de.tɛs.tə.ʁe]","[de.tɛs.tə.ʁe]","[de.tɛs.tə.ʁa]","[de.tɛs.tə.ʁɔ̃]","[de.tɛs.tə.ʁe]","[de.tɛs.tə.ʁɔ̃]"] }
+  },
+  note: "détester 是规则 -er 动词，与 adorer 互为反义；détester faire qch 表示讨厌做某事。",
+  ex: [
+    { fr: "Je déteste le café.", zh: "我讨厌咖啡。", i: "[ʒə de.tɛst lə ka.fe]" },
+    { fr: "Il a détesté ce livre.", zh: "他讨厌这本书。", i: "[i.la de.tɛs.te sə livʁ]" }
+  ]
+},
+{
   id: "donner", inf: "donner", ipa: "[dɔ.ne]", zh: "给；给予", grp: "er", aux: "avoir", part: "donné",
   tenses: {
     pres: { f: ["donne","donnes","donne","donnons","donnez","donnent"],
@@ -222,6 +366,24 @@ const VERBS = [
   ex: [
     { fr: "J'écoute de la musique.", zh: "我在听音乐。", i: "[ʒe.kut də la my.zik]" },
     { fr: "Tu as écouté la radio ?", zh: "你听了广播吗？", i: "[ty a.z‿e.ku.te la ʁa.djo]" }
+  ]
+},
+{
+  id: "ennuyer", inf: "ennuyer", ipa: "[ɑ̃.nɥi.je]", zh: "使厌烦；使无聊", grp: "er", aux: "etre", part: "ennuyé",
+  tenses: {
+    pres: { f: ["j'ennuie","ennuies","ennuie","ennuyons","ennuyez","ennuient"],
+            i: ["[ʒɑ̃.nɥi]","[ɑ̃.nɥi]","[ɑ̃.nɥi]","[ɑ̃.nɥi.jɔ̃]","[ɑ̃.nɥi.je]","[ɑ̃.nɥi]"] },
+    pc: { f: ["suis ennuyé(e)","es ennuyé(e)","est ennuyé(e)","sommes ennuyé(e)s","êtes ennuyé(e)s","sont ennuyé(e)s"],
+            i: ["[sɥi.z‿ɑ̃.nɥi.je]","[ɛ.z‿ɑ̃.nɥi.je]","[ɛ.t‿ɑ̃.nɥi.je]","[sɔm.z‿ɑ̃.nɥi.je]","[ɛt.z‿ɑ̃.nɥi.je]","[sɔ̃.z‿ɑ̃.nɥi.je]"] },
+    imp: { f: ["ennuiais","ennuiais","ennuiait","ennuyions","ennuyiez","ennuiaient"],
+            i: ["[ɑ̃.nɥi.jɛ]","[ɑ̃.nɥi.jɛ]","[ɑ̃.nɥi.jɛ]","[ɑ̃.nɥi.jɔ̃]","[ɑ̃.nɥi.je]","[ɑ̃.nɥi.jɛ]"] },
+    fut: { f: ["ennuierai","ennuieras","ennuiera","ennuierons","ennuierez","ennuieront"],
+            i: ["[ɑ̃.nɥi.jə.ʁe]","[ɑ̃.nɥi.jə.ʁe]","[ɑ̃.nɥi.jə.ʁa]","[ɑ̃.nɥi.jə.ʁɔ̃]","[ɑ̃.nɥi.jə.ʁe]","[ɑ̃.nɥi.jə.ʁɔ̃]"] }
+  },
+  note: "s'ennuyer 感到无聊（代词式动词：se + ennuyer）；-yer 动词 je m'ennuie / nous nous ennuyons；pc 用 être 并配合：je me suis ennuyé(e)。",
+  ex: [
+    { fr: "Je m'ennuie.", zh: "我觉得无聊。", i: "[ʒə mɑ̃.nɥi]" },
+    { fr: "Elle s'est ennuyée pendant le cours.", zh: "上课时她觉得无聊。", i: "[ɛ.la sɛ.t‿ɑ̃.nɥi.je pɑ̃.dɑ̃ lə kuʁ]" }
   ]
 },
 {
@@ -333,6 +495,24 @@ const VERBS = [
   ]
 },
 {
+  id: "fabriquer", inf: "fabriquer", ipa: "[fa.bʁi.ke]", zh: "制造；制作", grp: "er", aux: "avoir", part: "fabriqué",
+  tenses: {
+    pres: { f: ["fabrique","fabriques","fabrique","fabriquons","fabriquez","fabriquent"],
+            i: ["[fa.bʁik]","[fa.bʁik]","[fa.bʁik]","[fa.bʁi.kɔ̃]","[fa.bʁi.ke]","[fa.bʁik]"] },
+    pc: { f: ["ai fabriqué","as fabriqué","a fabriqué","avons fabriqué","avez fabriqué","ont fabriqué"],
+            i: ["[ʒe fa.bʁi.ke]","[ty a fa.bʁi.ke]","[i.la fa.bʁi.ke]","[nu.z‿a.vɔ̃ fa.bʁi.ke]","[vu.z‿a.ve fa.bʁi.ke]","[il.z‿ɔ̃ fa.bʁi.ke]"] },
+    imp: { f: ["fabriquais","fabriquais","fabriquait","fabriquions","fabriquiez","fabriquaient"],
+            i: ["[fa.bʁi.kɛ]","[fa.bʁi.kɛ]","[fa.bʁi.kɛ]","[fa.bʁi.kjɔ̃]","[fa.bʁi.kje]","[fa.bʁi.kɛ]"] },
+    fut: { f: ["fabriquerai","fabriqueras","fabriquera","fabriquerons","fabriquerez","fabriqueront"],
+            i: ["[fa.bʁi.kə.ʁe]","[fa.bʁi.kə.ʁe]","[fa.bʁi.kə.ʁa]","[fa.bʁi.kə.ʁɔ̃]","[fa.bʁi.kə.ʁe]","[fa.bʁi.kə.ʁɔ̃]"] }
+  },
+  note: "-quer 动词保留 [k] 音：nous fabriquons [fa.bʁi.kɔ̃]（不读 [s]）；相关词 fabricant、fabrication。",
+  ex: [
+    { fr: "Je fabrique une table.", zh: "我做一张桌子。", i: "[ʒə fa.bʁik yn tabl]" },
+    { fr: "Elle a fabriqué un gâteau.", zh: "她做了一个蛋糕。", i: "[ɛ.la fa.bʁi.ke œ̃ ɡa.to]" }
+  ]
+},
+{
   id: "feter", inf: "fêter", ipa: "[fe.te]", zh: "庆祝；欢度", grp: "er", aux: "avoir", part: "fêté",
   tenses: {
     pres: { f: ["fête","fêtes","fête","fêtons","fêtez","fêtent"],
@@ -348,6 +528,24 @@ const VERBS = [
   ex: [
     { fr: "Nous fêtons Noël.", zh: "我们庆祝圣诞节。", i: "[nu fɛ.tɔ̃ nɔ.ɛl]" },
     { fr: "Elle a fêté son anniversaire.", zh: "她庆祝了生日。", i: "[ɛ.la fɛ.te sɔ̃.n‿a.ni.vɛʁ.sɛʁ]" }
+  ]
+},
+{
+  id: "gagner", inf: "gagner", ipa: "[ɡa.ɲe]", zh: "赢得；赚取", grp: "er", aux: "avoir", part: "gagné",
+  tenses: {
+    pres: { f: ["gagne","gagnes","gagne","gagnons","gagnez","gagnent"],
+            i: ["[ɡaɲ]","[ɡaɲ]","[ɡaɲ]","[ɡa.ɲɔ̃]","[ɡa.ɲe]","[ɡaɲ]"] },
+    pc: { f: ["ai gagné","as gagné","a gagné","avons gagné","avez gagné","ont gagné"],
+            i: ["[ʒe ɡa.ɲe]","[ty a ɡa.ɲe]","[i.la ɡa.ɲe]","[nu.z‿a.vɔ̃ ɡa.ɲe]","[vu.z‿a.ve ɡa.ɲe]","[il.z‿ɔ̃ ɡa.ɲe]"] },
+    imp: { f: ["gagnais","gagnais","gagnait","gagnions","gagniez","gagnaient"],
+            i: ["[ɡa.ɲɛ]","[ɡa.ɲɛ]","[ɡa.ɲɛ]","[ɡa.ɲjɔ̃]","[ɡa.ɲje]","[ɡa.ɲɛ]"] },
+    fut: { f: ["gagnerai","gagneras","gagnera","gagnerons","gagnererez","gagneront"],
+            i: ["[ɡa.ɲə.ʁe]","[ɡa.ɲə.ʁe]","[ɡa.ɲə.ʁa]","[ɡa.ɲə.ʁɔ̃]","[ɡa.ɲə.ʁe]","[ɡa.ɲə.ʁɔ̃]"] }
+  },
+  note: "gagner 是规则 -er 动词，gn 读 [ɲ]；gagner un match 赢比赛，gagner sa vie 谋生。",
+  ex: [
+    { fr: "Nous gagnons le match.", zh: "我们赢了比赛。", i: "[nu ɡa.ɲɔ̃ lə matʃ]" },
+    { fr: "Il a gagné beaucoup d'argent.", zh: "他赚了很多钱。", i: "[i.la ɡa.ɲe bo.ku daʁ.ʒɑ̃]" }
   ]
 },
 {
@@ -384,6 +582,24 @@ const VERBS = [
   ex: [
     { fr: "J'habite à Paris.", zh: "我住在巴黎。", i: "[ʒa.bit a pa.ʁi]" },
     { fr: "Nous avons habité à Lyon.", zh: "我们曾在里昂住过。", i: "[nu.z‿a.vɔ̃.z‿a.bi.te a ljɔ̃]" }
+  ]
+},
+{
+  id: "heurter", inf: "heurter", ipa: "[œʁ.te]", zh: "撞；碰", grp: "er", aux: "avoir", part: "heurté",
+  tenses: {
+    pres: { f: ["heurte","heurtes","heurte","heurtons","heurtez","heurtent"],
+            i: ["[œʁt]","[œʁt]","[œʁt]","[œʁ.tɔ̃]","[œʁ.te]","[œʁt]"] },
+    pc: { f: ["ai heurté","as heurté","a heurté","avons heurté","avez heurté","ont heurté"],
+            i: ["[ʒe.t‿œʁ.te]","[ty a.z‿œʁ.te]","[i.la.z‿œʁ.te]","[nu.z‿a.vɔ̃.z‿œʁ.te]","[vu.z‿a.ve.z‿œʁ.te]","[il.z‿ɔ̃.z‿œʁ.te]"] },
+    imp: { f: ["heurtais","heurtais","heurtait","heurtions","heurtiez","heurtaient"],
+            i: ["[œʁ.tɛ]","[œʁ.tɛ]","[œʁ.tɛ]","[œʁ.tjɔ̃]","[œʁ.tje]","[œʁ.tɛ]"] },
+    fut: { f: ["heurterai","heurteras","heurtera","heurterons","heurterez","heurteront"],
+            i: ["[œʁ.tə.ʁe]","[œʁ.tə.ʁe]","[œʁ.tə.ʁa]","[œʁ.tə.ʁɔ̃]","[œʁ.tə.ʁe]","[œʁ.tə.ʁɔ̃]"] }
+  },
+  note: "heurter 表「撞击、碰撞」，如 heurter la porte 撞门；过去分词 heurté 以元音 œ 开头，复合过去时要联诵。",
+  ex: [
+    { fr: "Il a heurté un arbre.", zh: "他撞到了一棵树。", i: "[i.la.z‿œʁ.te œ̃ ɑʁbʁ]" },
+    { fr: "Je me suis heurté le genou.", zh: "我撞到了膝盖。", i: "[ʒə mə sɥi.z‿œʁ.te lə ʒə.nu]" }
   ]
 },
 {
@@ -549,6 +765,24 @@ const VERBS = [
   ]
 },
 {
+  id: "marier", inf: "marier", ipa: "[ma.ʁje]", zh: "结婚；嫁娶", grp: "er", aux: "etre", part: "marié",
+  tenses: {
+    pres: { f: ["marie","maries","marie","marions","mariez","marient"],
+            i: ["[ma.ʁi]","[ma.ʁi]","[ma.ʁi]","[ma.ʁjɔ̃]","[ma.ʁje]","[ma.ʁi]"] },
+    pc: { f: ["suis marié(e)","es marié(e)","est marié(e)","sommes marié(e)s","êtes marié(e)s","sont marié(e)s"],
+            i: ["[sɥi.z‿ma.ʁje]","[ɛ.z‿ma.ʁje]","[ɛ.t‿ma.ʁje]","[sɔm.z‿ma.ʁje]","[ɛt.z‿ma.ʁje]","[sɔ̃.z‿ma.ʁje]"] },
+    imp: { f: ["mariais","mariais","mariait","mariions","mariiez","mariaient"],
+            i: ["[ma.ʁjɛ]","[ma.ʁjɛ]","[ma.ʁjɛ]","[ma.ʁi.jɔ̃]","[ma.ʁi.je]","[ma.ʁjɛ]"] },
+    fut: { f: ["marierai","marieras","mariera","marierons","marierez","marieront"],
+            i: ["[ma.ʁjə.ʁe]","[ma.ʁjə.ʁe]","[ma.ʁjə.ʁa]","[ma.ʁjə.ʁɔ̃]","[ma.ʁjə.ʁe]","[ma.ʁjə.ʁɔ̃]"] }
+  },
+  note: "se marier 结婚（代词式动词：se + marier）；复合过去时用 être 并性数配合：je me suis marié(e)；marier qqn 指为某人主持婚礼。",
+  ex: [
+    { fr: "Je me marie demain.", zh: "我明天结婚。", i: "[ʒə mə ma.ʁi də.mɛ̃]" },
+    { fr: "Elle s'est mariée avec un médecin.", zh: "她和一位医生结婚了。", i: "[ɛ.la sɛ.t‿ma.ʁje a.vɛk œ̃ med.sɛ̃]" }
+  ]
+},
+{
   id: "monter", inf: "monter", ipa: "[mɔ̃.te]", zh: "上去；爬；搬运", grp: "er", aux: "avoir", part: "monté",
   tenses: {
     pres: { f: ["monte","montes","monte","montons","montez","montent"],
@@ -621,6 +855,24 @@ const VERBS = [
   ]
 },
 {
+  id: "penser", inf: "penser", ipa: "[pɑ̃.se]", zh: "想；认为", grp: "er", aux: "avoir", part: "pensé",
+  tenses: {
+    pres: { f: ["pense","penses","pense","pensons","pensez","pensent"],
+            i: ["[pɑ̃s]","[pɑ̃s]","[pɑ̃s]","[pɑ̃.sɔ̃]","[pɑ̃.se]","[pɑ̃s]"] },
+    pc: { f: ["ai pensé","as pensé","a pensé","avons pensé","avez pensé","ont pensé"],
+            i: ["[ʒe pɑ̃.se]","[ty a pɑ̃.se]","[i.la pɑ̃.se]","[nu.z‿a.vɔ̃ pɑ̃.se]","[vu.z‿a.ve pɑ̃.se]","[il.z‿ɔ̃ pɑ̃.se]"] },
+    imp: { f: ["pensais","pensais","pensait","pensions","pensiez","pensaient"],
+            i: ["[pɑ̃.sɛ]","[pɑ̃.sɛ]","[pɑ̃.sɛ]","[pɑ̃.sjɔ̃]","[pɑ̃.sje]","[pɑ̃.sɛ]"] },
+    fut: { f: ["penserai","penseras","pensera","penserons","penserez","penseront"],
+            i: ["[pɑ̃.sə.ʁe]","[pɑ̃.sə.ʁe]","[pɑ̃.sə.ʁa]","[pɑ̃.sə.ʁɔ̃]","[pɑ̃.sə.ʁe]","[pɑ̃.sə.ʁɔ̃]"] }
+  },
+  note: "penser 是规则 -er 动词；penser à qqn/qch 想起、考虑，penser de qqn/qch 对……有看法。",
+  ex: [
+    { fr: "Je pense à toi.", zh: "我想着你。", i: "[ʒə pɑ̃.z‿a twa]" },
+    { fr: "Elle a pensé à son frère.", zh: "她想起了她的兄弟。", i: "[ɛ.la pɑ̃.se a sɔ̃ fʁɛʁ]" }
+  ]
+},
+{
   id: "porter", inf: "porter", ipa: "[pɔʁ.te]", zh: "拿；携带；穿；戴", grp: "er", aux: "avoir", part: "porté",
   tenses: {
     pres: { f: ["porte","portes","porte","portons","portez","portent"],
@@ -690,6 +942,24 @@ const VERBS = [
   ex: [
     { fr: "Je prépare le dîner.", zh: "我准备晚餐。", i: "[ʒə pʁe.paʁ lə di.ne]" },
     { fr: "Elle a préparé un gâteau.", zh: "她准备了一个蛋糕。", i: "[ɛ.la pʁe.pa.ʁe œ̃ ɡa.to]" }
+  ]
+},
+{
+  id: "présenter", inf: "présenter", ipa: "[pʁe.zɑ̃.te]", zh: "呈现；介绍；展示", grp: "er", aux: "avoir", part: "présenté",
+  tenses: {
+    pres: { f: ["présente","présentes","présente","présentons","présentez","présentent"],
+            i: ["[pʁe.zɑ̃t]","[pʁe.zɑ̃t]","[pʁe.zɑ̃t]","[pʁe.zɑ̃.tɔ̃]","[pʁe.zɑ̃.te]","[pʁe.zɑ̃t]"] },
+    pc: { f: ["ai présenté","as présenté","a présenté","avons présenté","avez présenté","ont présenté"],
+            i: ["[ʒe pʁe.zɑ̃.te]","[ty a pʁe.zɑ̃.te]","[i.la pʁe.zɑ̃.te]","[nu.z‿a.vɔ̃ pʁe.zɑ̃.te]","[vu.z‿a.ve pʁe.zɑ̃.te]","[il.z‿ɔ̃ pʁe.zɑ̃.te]"] },
+    imp: { f: ["présentais","présentais","présentait","présentions","présentiez","présentaient"],
+            i: ["[pʁe.zɑ̃.tɛ]","[pʁe.zɑ̃.tɛ]","[pʁe.zɑ̃.tɛ]","[pʁe.zɑ̃.tjɔ̃]","[pʁe.zɑ̃.tje]","[pʁe.zɑ̃.tɛ]"] },
+    fut: { f: ["présenterai","présenteras","présentera","présenterons","présenterez","présenteront"],
+            i: ["[pʁe.zɑ̃.tə.ʁe]","[pʁe.zɑ̃.tə.ʁe]","[pʁe.zɑ̃.tə.ʁa]","[pʁe.zɑ̃.tə.ʁɔ̃]","[pʁe.zɑ̃.tə.ʁe]","[pʁe.zɑ̃.tə.ʁɔ̃]"] }
+  },
+  note: "présenter qqn à qqn 把某人介绍给某人；se présenter 自我介绍、出现；é 在重读开音节变 è（il présente），nous présentons 不变。",
+  ex: [
+    { fr: "Je te présente mon ami.", zh: "我给你介绍我的朋友。", i: "[ʒə tə pʁe.zɑ̃t mɔ̃.n‿a.mi]" },
+    { fr: "Elle a présenté son projet.", zh: "她展示了她的计划。", i: "[ɛ.la pʁe.zɑ̃.te sɔ̃ pʁɔ.ʒɛ]" }
   ]
 },
 {
@@ -801,6 +1071,42 @@ const VERBS = [
   ]
 },
 {
+  id: "remercier", inf: "remercier", ipa: "[ʁə.mɛʁ.sje]", zh: "感谢", grp: "er", aux: "avoir", part: "remercié",
+  tenses: {
+    pres: { f: ["remercie","remercies","remercie","remercions","remerciez","remercient"],
+            i: ["[ʁə.mɛʁ.si]","[ʁə.mɛʁ.si]","[ʁə.mɛʁ.si]","[ʁə.mɛʁ.sjɔ̃]","[ʁə.mɛʁ.sje]","[ʁə.mɛʁ.si]"] },
+    pc: { f: ["ai remercié","as remercié","a remercié","avons remercié","avez remercié","ont remercié"],
+            i: ["[ʒe ʁə.mɛʁ.sje]","[ty a ʁə.mɛʁ.sje]","[i.la ʁə.mɛʁ.sje]","[nu.z‿a.vɔ̃ ʁə.mɛʁ.sje]","[vu.z‿a.ve ʁə.mɛʁ.sje]","[il.z‿ɔ̃ ʁə.mɛʁ.sje]"] },
+    imp: { f: ["remerciais","remerciais","remerciait","remerciions","remerciiez","remerciaient"],
+            i: ["[ʁə.mɛʁ.sjɛ]","[ʁə.mɛʁ.sjɛ]","[ʁə.mɛʁ.sjɛ]","[ʁə.mɛʁ.si.jɔ̃]","[ʁə.mɛʁ.si.je]","[ʁə.mɛʁ.sjɛ]"] },
+    fut: { f: ["remercierai","remercieras","remerciera","remercierons","remercierez","remercieront"],
+            i: ["[ʁə.mɛʁ.sje.ʁe]","[ʁə.mɛʁ.sje.ʁe]","[ʁə.mɛʁ.sje.ʁa]","[ʁə.mɛʁ.sje.ʁɔ̃]","[ʁə.mɛʁ.sje.ʁe]","[ʁə.mɛʁ.sje.ʁɔ̃]"] }
+  },
+  note: "-ier 动词：je remercie / nous remercions（词干以 i 结尾，单数不加 è）；remercier qqn de qch 因某事感谢某人。",
+  ex: [
+    { fr: "Je vous remercie.", zh: "谢谢您。", i: "[ʒə vu ʁə.mɛʁ.si]" },
+    { fr: "Elle m'a remercié.", zh: "她感谢了我。", i: "[ɛ.la ma ʁə.mɛʁ.sje]" }
+  ]
+},
+{
+  id: "rencontrer", inf: "rencontrer", ipa: "[ʁɑ̃.kɔ̃.tʁe]", zh: "遇见；遇到", grp: "er", aux: "avoir", part: "rencontré",
+  tenses: {
+    pres: { f: ["rencontre","rencontres","rencontre","rencontrons","rencontrez","rencontrent"],
+            i: ["[ʁɑ̃.kɔ̃tʁ]","[ʁɑ̃.kɔ̃tʁ]","[ʁɑ̃.kɔ̃tʁ]","[ʁɑ̃.kɔ̃.tʁɔ̃]","[ʁɑ̃.kɔ̃.tʁe]","[ʁɑ̃.kɔ̃tʁ]"] },
+    pc: { f: ["ai rencontré","as rencontré","a rencontré","avons rencontré","avez rencontré","ont rencontré"],
+            i: ["[ʒe ʁɑ̃.kɔ̃.tʁe]","[ty a ʁɑ̃.kɔ̃.tʁe]","[i.la ʁɑ̃.kɔ̃.tʁe]","[nu.z‿a.vɔ̃ ʁɑ̃.kɔ̃.tʁe]","[vu.z‿a.ve ʁɑ̃.kɔ̃.tʁe]","[il.z‿ɔ̃ ʁɑ̃.kɔ̃.tʁe]"] },
+    imp: { f: ["rencontrais","rencontrais","rencontrait","rencontrions","rencontriez","rencontraient"],
+            i: ["[ʁɑ̃.kɔ̃.tʁɛ]","[ʁɑ̃.kɔ̃.tʁɛ]","[ʁɑ̃.kɔ̃.tʁɛ]","[ʁɑ̃.kɔ̃.tʁjɔ̃]","[ʁɑ̃.kɔ̃.tʁje]","[ʁɑ̃.kɔ̃.tʁɛ]"] },
+    fut: { f: ["rencontrerai","rencontreras","rencontrera","rencontrerons","rencontrerez","rencontreront"],
+            i: ["[ʁɑ̃.kɔ̃.tʁə.ʁe]","[ʁɑ̃.kɔ̃.tʁə.ʁe]","[ʁɑ̃.kɔ̃.tʁə.ʁa]","[ʁɑ̃.kɔ̃.tʁə.ʁɔ̃]","[ʁɑ̃.kɔ̃.tʁə.ʁe]","[ʁɑ̃.kɔ̃.tʁə.ʁɔ̃]"] }
+  },
+  note: "rencontrer qqn 遇见某人；se rencontrer 相遇、见面；名词为 rencontre。",
+  ex: [
+    { fr: "J'ai rencontré Marie.", zh: "我遇到了玛丽。", i: "[ʒe ʁɑ̃.kɔ̃.tʁe ma.ʁi]" },
+    { fr: "Nous nous rencontrons souvent.", zh: "我们经常见面。", i: "[nu nu ʁɑ̃.kɔ̃.tʁɔ̃ su.vɑ̃]" }
+  ]
+},
+{
   id: "rentrer", inf: "rentrer", ipa: "[ʁɑ̃.tʁe]", zh: "回家；回来；驶入", grp: "er", aux: "etre", part: "rentré",
   tenses: {
     pres: { f: ["rentre","rentres","rentre","rentrons","rentrez","rentrent"],
@@ -888,6 +1194,60 @@ const VERBS = [
   ex: [
     { fr: "Je retourne à Paris.", zh: "我返回巴黎。", i: "[ʒə ʁə.tuʁn a pa.ʁi]" },
     { fr: "Il est retourné chez lui.", zh: "他回了自己家。", i: "[i.lɛ.t‿ʁə.tuʁ.ne ʃe lɥi]" }
+  ]
+},
+{
+  id: "retrouver", inf: "retrouver", ipa: "[ʁə.tʁu.ve]", zh: "重新找到；找回", grp: "er", aux: "avoir", part: "retrouvé",
+  tenses: {
+    pres: { f: ["retrouve","retrouves","retrouve","retrouvons","retrouvez","retrouvent"],
+            i: ["[ʁə.tʁuv]","[ʁə.tʁuv]","[ʁə.tʁuv]","[ʁə.tʁu.vɔ̃]","[ʁə.tʁu.ve]","[ʁə.tʁuv]"] },
+    pc: { f: ["ai retrouvé","as retrouvé","a retrouvé","avons retrouvé","avez retrouvé","ont retrouvé"],
+            i: ["[ʒe ʁə.tʁu.ve]","[ty a ʁə.tʁu.ve]","[i.la ʁə.tʁu.ve]","[nu.z‿a.vɔ̃ ʁə.tʁu.ve]","[vu.z‿a.ve ʁə.tʁu.ve]","[il.z‿ɔ̃ ʁə.tʁu.ve]"] },
+    imp: { f: ["retrouvais","retrouvais","retrouvait","retrouvions","retrouviez","retrouvaient"],
+            i: ["[ʁə.tʁu.vɛ]","[ʁə.tʁu.vɛ]","[ʁə.tʁu.vɛ]","[ʁə.tʁu.vjɔ̃]","[ʁə.tʁu.vje]","[ʁə.tʁu.vɛ]"] },
+    fut: { f: ["retrouverai","retrouveras","retrouvera","retrouverons","retrouverez","retrouveront"],
+            i: ["[ʁə.tʁu.və.ʁe]","[ʁə.tʁu.və.ʁe]","[ʁə.tʁu.və.ʁa]","[ʁə.tʁu.və.ʁɔ̃]","[ʁə.tʁu.və.ʁe]","[ʁə.tʁu.və.ʁɔ̃]"] }
+  },
+  note: "前缀 re- 表「再次」，retrouver 即「再找到、找回」；se retrouver 意为相聚。",
+  ex: [
+    { fr: "J'ai retrouvé mes clés.", zh: "我找回了钥匙。", i: "[ʒe ʁə.tʁu.ve me kle]" },
+    { fr: "On se retrouve demain.", zh: "我们明天见。", i: "[ɔ̃ sə ʁə.tʁuv də.mɛ̃]" }
+  ]
+},
+{
+  id: "rêver", inf: "rêver", ipa: "[ʁɛ.ve]", zh: "做梦；梦想", grp: "er", aux: "avoir", part: "rêvé",
+  tenses: {
+    pres: { f: ["rêve","rêves","rêve","rêvons","rêvez","rêvent"],
+            i: ["[ʁɛv]","[ʁɛv]","[ʁɛv]","[ʁɛ.vɔ̃]","[ʁɛ.ve]","[ʁɛv]"] },
+    pc: { f: ["ai rêvé","as rêvé","a rêvé","avons rêvé","avez rêvé","ont rêvé"],
+            i: ["[ʒe ʁɛ.ve]","[ty a ʁɛ.ve]","[i.la ʁɛ.ve]","[nu.z‿a.vɔ̃ ʁɛ.ve]","[vu.z‿a.ve ʁɛ.ve]","[il.z‿ɔ̃ ʁɛ.ve]"] },
+    imp: { f: ["rêvais","rêvais","rêvait","rêvions","rêviez","rêvaient"],
+            i: ["[ʁɛ.vɛ]","[ʁɛ.vɛ]","[ʁɛ.vɛ]","[ʁɛ.vjɔ̃]","[ʁɛ.vje]","[ʁɛ.vɛ]"] },
+    fut: { f: ["rêverai","rêveras","rêvera","rêverons","rêverez","rêveront"],
+            i: ["[ʁɛ.və.ʁe]","[ʁɛ.və.ʁe]","[ʁɛ.və.ʁa]","[ʁɛ.və.ʁɔ̃]","[ʁɛ.və.ʁe]","[ʁɛ.və.ʁɔ̃]"] }
+  },
+  note: "rêver de 梦见、梦想；注意词中有 ê [ʁɛ]，rêvasser 指「做白日梦」。",
+  ex: [
+    { fr: "Je rêve de toi.", zh: "我梦见你。", i: "[ʒə ʁɛv də twa]" },
+    { fr: "Elle a rêvé d'un voyage.", zh: "她梦想去旅行。", i: "[ɛ.la ʁɛ.ve dœ̃ vwa.jaʒ]" }
+  ]
+},
+{
+  id: "rouler", inf: "rouler", ipa: "[ʁu.le]", zh: "滚动；行驶；卷", grp: "er", aux: "avoir", part: "roulé",
+  tenses: {
+    pres: { f: ["roule","roules","roule","roulons","roulez","roulent"],
+            i: ["[ʁul]","[ʁul]","[ʁul]","[ʁu.lɔ̃]","[ʁu.le]","[ʁul]"] },
+    pc: { f: ["ai roulé","as roulé","a roulé","avons roulé","avez roulé","ont roulé"],
+            i: ["[ʒe ʁu.le]","[ty a ʁu.le]","[i.la ʁu.le]","[nu.z‿a.vɔ̃ ʁu.le]","[vu.z‿a.ve ʁu.le]","[il.z‿ɔ̃ ʁu.le]"] },
+    imp: { f: ["roulais","roulais","roulait","roulions","rouliez","roulaient"],
+            i: ["[ʁu.lɛ]","[ʁu.lɛ]","[ʁu.lɛ]","[ʁu.ljɔ̃]","[ʁu.lje]","[ʁu.lɛ]"] },
+    fut: { f: ["roulerai","rouleras","roulera","roulerons","roulerez","rouleront"],
+            i: ["[ʁu.lə.ʁe]","[ʁu.lə.ʁe]","[ʁu.lə.ʁa]","[ʁu.lə.ʁɔ̃]","[ʁu.lə.ʁe]","[ʁu.lə.ʁɔ̃]"] }
+  },
+  note: "rouler 表「滚动、行驶」，la voiture roule 车在行驶；rouler en voiture 指开车兜风。",
+  ex: [
+    { fr: "La voiture roule vite.", zh: "车开得很快。", i: "[la vwa.tyʁ ʁul vit]" },
+    { fr: "Nous avons roulé toute la nuit.", zh: "我们开了一整夜的车。", i: "[nu.z‿a.vɔ̃ ʁu.le tut la nɥi]" }
   ]
 },
 {
@@ -1016,6 +1376,24 @@ const VERBS = [
     { fr: "Elle a utilisé cette méthode.", zh: "她用了这个方法。", i: "[ɛ.la.z‿y.ti.li.ze sɛt me.tɔd]" }
   ]
 },
+{
+  id: "voyager", inf: "voyager", ipa: "[vwa.ja.ʒe]", zh: "旅行", grp: "er", aux: "avoir", part: "voyagé",
+  tenses: {
+    pres: { f: ["voyage","voyages","voyage","voyageons","voyagez","voyagent"],
+            i: ["[vwa.jaʒ]","[vwa.jaʒ]","[vwa.jaʒ]","[vwa.ja.ʒɔ̃]","[vwa.ja.ʒe]","[vwa.jaʒ]"] },
+    pc: { f: ["ai voyagé","as voyagé","a voyagé","avons voyagé","avez voyagé","ont voyagé"],
+            i: ["[ʒe vwa.ja.ʒe]","[ty a vwa.ja.ʒe]","[i.la vwa.ja.ʒe]","[nu.z‿a.vɔ̃ vwa.ja.ʒe]","[vu.z‿a.ve vwa.ja.ʒe]","[il.z‿ɔ̃ vwa.ja.ʒe]"] },
+    imp: { f: ["voyageais","voyageais","voyageait","voyagions","voyagiez","voyageaient"],
+            i: ["[vwa.ja.ʒɛ]","[vwa.ja.ʒɛ]","[vwa.ja.ʒɛ]","[vwa.ja.ʒjɔ̃]","[vwa.ja.ʒje]","[vwa.ja.ʒɛ]"] },
+    fut: { f: ["voyagerai","voyageras","voyagera","voyagerons","voyagerez","voyageront"],
+            i: ["[vwa.ja.ʒə.ʁe]","[vwa.ja.ʒə.ʁe]","[vwa.ja.ʒə.ʁa]","[vwa.ja.ʒə.ʁɔ̃]","[vwa.ja.ʒə.ʁe]","[vwa.ja.ʒə.ʁɔ̃]"] }
+  },
+  note: "voyager 是 -ger 结尾动词，nous 写作 voyageons（加 e 保持 [ʒ] 软音）；名词 voyageur 旅行者。",
+  ex: [
+    { fr: "Je voyage en France.", zh: "我在法国旅行。", i: "[ʒə vwa.jaʒ ɑ̃ fʁɑ̃s]" },
+    { fr: "Nous avons voyagé au Japon.", zh: "我们去日本旅行过。", i: "[nu.z‿a.vɔ̃ vwa.ja.ʒe o ʒa.pɔ̃]" }
+  ]
+},
 /* ================= 第二组 -ir ================= */
 {
   id: "choisir", inf: "choisir", ipa: "[ʃwa.ziʁ]", zh: "选择", grp: "ir", aux: "avoir", part: "choisi",
@@ -1109,6 +1487,42 @@ const VERBS = [
   ]
 },
 {
+  id: "apprendre", inf: "apprendre", ipa: "[a.pʁɑ̃dʁ]", zh: "学习；学会；得知", grp: "irr", aux: "avoir", part: "appris",
+  tenses: {
+    pres: { f: ["apprends","apprends","apprend","apprenons","apprenez","apprennent"],
+            i: ["[a.pʁɑ̃]","[a.pʁɑ̃]","[a.pʁɑ̃]","[a.pʁə.nɔ̃]","[a.pʁə.ne]","[a.pʁɛn]"] },
+    pc: { f: ["ai appris","as appris","a appris","avons appris","avez appris","ont appris"],
+            i: ["[ʒe.t‿a.pʁi]","[ty a.z‿a.pʁi]","[i.la.z‿a.pʁi]","[nu.z‿a.vɔ̃.z‿a.pʁi]","[vu.z‿a.ve.z‿a.pʁi]","[il.z‿ɔ̃.z‿a.pʁi]"] },
+    imp: { f: ["apprenais","apprenais","apprenait","apprenions","appreniez","apprenaient"],
+            i: ["[a.pʁə.nɛ]","[a.pʁə.nɛ]","[a.pʁə.nɛ]","[a.pʁə.njɔ̃]","[a.pʁə.nje]","[a.pʁə.nɛ]"] },
+    fut: { f: ["apprendrai","apprendras","apprendra","apprendrons","apprendrez","apprendront"],
+            i: ["[a.pʁɑ̃.dʁe]","[a.pʁɑ̃.dʁe]","[a.pʁɑ̃.dʁa]","[a.pʁɑ̃.dʁɔ̃]","[a.pʁɑ̃.dʁe]","[a.pʁɑ̃.dʁɔ̃]"] }
+  },
+  note: "不规则动词，过去分词 appris（同 prendre→pris）；apprendre que 得知；apprendre par cœur 背诵。",
+  ex: [
+    { fr: "J'apprends le français.", zh: "我学法语。", i: "[ʒa.pʁɑ̃ lə fʁɑ̃.sɛ]" },
+    { fr: "Elle a appris la nouvelle.", zh: "她得知了这个消息。", i: "[ɛ.la.z‿a.pʁi la nu.vɛl]" }
+  ]
+},
+{
+  id: "attendre", inf: "attendre", ipa: "[a.tɑ̃dʁ]", zh: "等待；等候", grp: "irr", aux: "avoir", part: "attendu",
+  tenses: {
+    pres: { f: ["j'attends","attends","attend","attendons","attendez","attendent"],
+            i: ["[ʒa.tɑ̃]","[a.tɑ̃]","[a.tɑ̃]","[a.tɑ̃.dɔ̃]","[a.tɑ̃.de]","[a.tɑ̃d]"] },
+    pc: { f: ["ai attendu","as attendu","a attendu","avons attendu","avez attendu","ont attendu"],
+            i: ["[ʒe.t‿a.tɑ̃.dy]","[ty a.z‿a.tɑ̃.dy]","[i.la.z‿a.tɑ̃.dy]","[nu.z‿a.vɔ̃.z‿a.tɑ̃.dy]","[vu.z‿a.ve.z‿a.tɑ̃.dy]","[il.z‿ɔ̃.z‿a.tɑ̃.dy]"] },
+    imp: { f: ["attendais","attendais","attendait","attendions","attendiez","attendaient"],
+            i: ["[a.tɑ̃.dɛ]","[a.tɑ̃.dɛ]","[a.tɑ̃.dɛ]","[a.tɑ̃.djɔ̃]","[a.tɑ̃.dje]","[a.tɑ̃.dɛ]"] },
+    fut: { f: ["attendrai","attendras","attendra","attendrons","attendrez","attendront"],
+            i: ["[a.tɑ̃.dʁe]","[a.tɑ̃.dʁe]","[a.tɑ̃.dʁa]","[a.tɑ̃.dʁɔ̃]","[a.tɑ̃.dʁe]","[a.tɑ̃.dʁɔ̃]"] }
+  },
+  note: "attendre 属第三组 -re 动词（按不规则组归类），变位同 descendre；过去分词 attendu；attendre qqn/qch 等待某人/某物。",
+  ex: [
+    { fr: "J'attends le bus.", zh: "我在等公交车。", i: "[ʒa.tɑ̃ lə bys]" },
+    { fr: "Nous avons attendu une heure.", zh: "我们等了一个小时。", i: "[nu.z‿a.vɔ̃.z‿a.tɑ̃.dy yn œʁ]" }
+  ]
+},
+{
   id: "avoir", inf: "avoir", ipa: "[a.vwaʁ]", zh: "有", grp: "irr", aux: "avoir", part: "eu",
   tenses: {
     pres: { f: ["ai","as","a","avons","avez","ont"],
@@ -1142,6 +1556,24 @@ const VERBS = [
   ex: [
     { fr: "Je bois de l'eau.", zh: "我喝水。", i: "[ʒə bwa də lo]" },
     { fr: "Nous avons bu du vin.", zh: "我们喝了葡萄酒。", i: "[nu.z‿a.vɔ̃ by dy vɛ̃]" }
+  ]
+},
+{
+  id: "comprendre", inf: "comprendre", ipa: "[kɔ̃.pʁɑ̃dʁ]", zh: "理解；明白", grp: "irr", aux: "avoir", part: "compris",
+  tenses: {
+    pres: { f: ["comprends","comprends","comprend","comprenons","comprenez","comprennent"],
+            i: ["[kɔ̃.pʁɑ̃]","[kɔ̃.pʁɑ̃]","[kɔ̃.pʁɑ̃]","[kɔ̃.pʁə.nɔ̃]","[kɔ̃.pʁə.ne]","[kɔ̃.pʁɛn]"] },
+    pc: { f: ["ai compris","as compris","a compris","avons compris","avez compris","ont compris"],
+            i: ["[ʒe kɔ̃.pʁi]","[ty a kɔ̃.pʁi]","[i.la kɔ̃.pʁi]","[nu.z‿a.vɔ̃ kɔ̃.pʁi]","[vu.z‿a.ve kɔ̃.pʁi]","[il.z‿ɔ̃ kɔ̃.pʁi]"] },
+    imp: { f: ["comprenais","comprenais","comprenait","comprenions","compreniez","comprenaient"],
+            i: ["[kɔ̃.pʁə.nɛ]","[kɔ̃.pʁə.nɛ]","[kɔ̃.pʁə.nɛ]","[kɔ̃.pʁə.njɔ̃]","[kɔ̃.pʁə.nje]","[kɔ̃.pʁə.nɛ]"] },
+    fut: { f: ["comprendrai","comprendras","comprendra","comprendrons","comprendrez","comprendront"],
+            i: ["[kɔ̃.pʁɑ̃.dʁe]","[kɔ̃.pʁɑ̃.dʁe]","[kɔ̃.pʁɑ̃.dʁa]","[kɔ̃.pʁɑ̃.dʁɔ̃]","[kɔ̃.pʁɑ̃.dʁe]","[kɔ̃.pʁɑ̃.dʁɔ̃]"] }
+  },
+  note: "comprendre 属第三组不规则动词，过去分词为 compris（不规则）；il/ils 词干变为 comprenn-（ils comprennent）。",
+  ex: [
+    { fr: "Je comprends la question.", zh: "我理解这个问题。", i: "[ʒə kɔ̃.pʁɑ̃ la kɛs.tjɔ̃]" },
+    { fr: "Elle a compris le problème.", zh: "她明白了这个问题。", i: "[ɛ.la kɔ̃.pʁi lə pʁɔ.blɛm]" }
   ]
 },
 {
@@ -1415,6 +1847,24 @@ const VERBS = [
   ]
 },
 {
+  id: "pleuvoir", inf: "pleuvoir", ipa: "[plœ.vwaʁ]", zh: "下雨", grp: "irr", aux: "avoir", part: "plu",
+  tenses: {
+    pres: { f: ["il pleut","il pleut","il pleut","il pleut","il pleut","il pleut"],
+            i: ["[il plø]","[il plø]","[il plø]","[il plø]","[il plø]","[il plø]"] },
+    pc: { f: ["il a plu","il a plu","il a plu","il a plu","il a plu","il a plu"],
+            i: ["[i.la ply]","[i.la ply]","[i.la ply]","[i.la ply]","[i.la ply]","[i.la ply]"] },
+    imp: { f: ["il pleuvait","il pleuvait","il pleuvait","il pleuvait","il pleuvait","il pleuvait"],
+            i: ["[il plø.vɛ]","[il plø.vɛ]","[il plø.vɛ]","[il plø.vɛ]","[il plø.vɛ]","[il plø.vɛ]"] },
+    fut: { f: ["il pleuvra","il pleuvra","il pleuvra","il pleuvra","il pleuvra","il pleuvra"],
+            i: ["[il plø.vʁa]","[il plø.vʁa]","[il plø.vʁa]","[il plø.vʁa]","[il plø.vʁa]","[il plø.vʁa]"] }
+  },
+  note: "无人称动词（仅第三人称单数 il pleut 下雨），没有 je/tu/nous/vous/ils 人称，故六个人称位置均填 il- 形式；助动词 avoir，过去分词 plu，天气表达用无人称 il。",
+  ex: [
+    { fr: "Il pleut aujourd'hui.", zh: "今天下雨。", i: "[il plø o.ʒuʁ.d‿ɥi]" },
+    { fr: "Il a plu toute la nuit.", zh: "下了整整一夜的雨。", i: "[i.la ply tut la nɥi]" }
+  ]
+},
+{
   id: "pouvoir", inf: "pouvoir", ipa: "[pu.vwaʁ]", zh: "能够；可以", grp: "irr", aux: "avoir", part: "pu",
   tenses: {
     pres: { f: ["peux","peux","peut","pouvons","pouvez","peuvent"],
@@ -1541,6 +1991,42 @@ const VERBS = [
   ]
 },
 {
+  id: "souvenir", inf: "souvenir", ipa: "[su.və.niʁ]", zh: "记得；回忆", grp: "irr", aux: "etre", part: "souvenu",
+  tenses: {
+    pres: { f: ["me souviens","te souviens","se souvient","nous souvenons","vous souvenez","se souviennent"],
+            i: ["[mə su.vjɛ̃]","[tə su.vjɛ̃]","[sə su.vjɛ̃]","[nu su.və.nɔ̃]","[vu su.və.ne]","[sə su.vjɛn]"] },
+    pc: { f: ["me suis souvenu(e)","t'es souvenu(e)","s'est souvenu(e)","nous sommes souvenu(e)s","vous êtes souvenu(e)s","se sont souvenu(e)s"],
+            i: ["[mə sɥi.z‿su.və.ny]","[te.z‿su.və.ny]","[sɛ.t‿su.və.ny]","[nu sɔm.z‿su.və.ny]","[vu.z‿ɛt.z‿su.və.ny]","[sə sɔ̃.z‿su.və.ny]"] },
+    imp: { f: ["me souvenais","te souvenais","se souvenait","nous souvenions","vous souveniez","se souvenaient"],
+            i: ["[mə su.və.nɛ]","[tə su.və.nɛ]","[sə su.və.nɛ]","[nu su.və.njɔ̃]","[vu su.və.nje]","[sə su.və.nɛ]"] },
+    fut: { f: ["me souviendrai","te souviendras","se souviendra","nous souviendrons","vous souviendrez","se souviendront"],
+            i: ["[mə su.vjɛ̃.dʁe]","[tə su.vjɛ̃.dʁe]","[sə su.vjɛ̃.dʁa]","[nu su.vjɛ̃.dʁɔ̃]","[vu su.vjɛ̃.dʁe]","[sə su.vjɛ̃.dʁɔ̃]"] }
+  },
+  note: "代词式动词 se souvenir（se + venir 类不规则变位，如 je me souviens）：用 être 作助动词，过去分词与主语性数配合（je me suis souvenu(e)）；se souvenir de qch/qqn 记得某事/某人。",
+  ex: [
+    { fr: "Je me souviens de toi.", zh: "我记得你。", i: "[ʒə mə su.vjɛ̃ də twa]" },
+    { fr: "Elle s'est souvenue de son enfance.", zh: "她回忆起了童年。", i: "[ɛ.l sɛ.t‿su.və.ny də sɔ̃.n‿ɑ̃.fɑ̃s]" }
+  ]
+},
+{
+  id: "suivre", inf: "suivre", ipa: "[sɥivʁ]", zh: "跟随；遵循；上（课）", grp: "irr", aux: "avoir", part: "suivi",
+  tenses: {
+    pres: { f: ["suis","suis","suit","suivons","suivez","suivent"],
+            i: ["[sɥi]","[sɥi]","[sɥi]","[sɥi.vɔ̃]","[sɥi.ve]","[sɥi]"] },
+    pc: { f: ["ai suivi","as suivi","a suivi","avons suivi","avez suivi","ont suivi"],
+            i: ["[ʒe sɥi.vi]","[ty a sɥi.vi]","[i.la sɥi.vi]","[nu.z‿a.vɔ̃ sɥi.vi]","[vu.z‿a.ve sɥi.vi]","[il.z‿ɔ̃ sɥi.vi]"] },
+    imp: { f: ["suivais","suivais","suivait","suivions","suiviez","suivaient"],
+            i: ["[sɥi.vɛ]","[sɥi.vɛ]","[sɥi.vɛ]","[sɥi.vjɔ̃]","[sɥi.vje]","[sɥi.vɛ]"] },
+    fut: { f: ["suivrai","suivras","suivra","suivrons","suivrez","suivront"],
+            i: ["[sɥi.vʁe]","[sɥi.vʁe]","[sɥi.vʁa]","[sɥi.vʁɔ̃]","[sɥi.vʁe]","[sɥi.vʁɔ̃]"] }
+  },
+  note: "不规则动词，过去分词 suivi；suivre un cours 上课；名词 suite（suite à 由于）。",
+  ex: [
+    { fr: "Je suis le cours de français.", zh: "我上法语课。", i: "[ʒə sɥi lə kuʁ də fʁɑ̃.sɛ]" },
+    { fr: "Elle a suivi mon conseil.", zh: "她听从了我的建议。", i: "[ɛ.la sɥi.vi mɔ̃ kɔ̃.sɛj]" }
+  ]
+},
+{
   id: "tenir", inf: "tenir", ipa: "[tə.niʁ]", zh: "拿着；保持", grp: "irr", aux: "avoir", part: "tenu",
   tenses: {
     pres: { f: ["tiens","tiens","tient","tenons","tenez","tiennent"],
@@ -1592,6 +2078,24 @@ const VERBS = [
   ex: [
     { fr: "Je viens de Chine.", zh: "我来自中国。", i: "[ʒə vjɛ̃ də ʃin]" },
     { fr: "Il est venu hier soir.", zh: "他昨晚来了。", i: "[i.lɛ.t‿və.ny jɛʁ swaʁ]" }
+  ]
+},
+{
+  id: "vivre", inf: "vivre", ipa: "[vivʁ]", zh: "生活；活着", grp: "irr", aux: "avoir", part: "vécu",
+  tenses: {
+    pres: { f: ["vis","vis","vit","vivons","vivez","vivent"],
+            i: ["[vi]","[vi]","[vi]","[vi.vɔ̃]","[vi.ve]","[viv]"] },
+    pc: { f: ["ai vécu","as vécu","a vécu","avons vécu","avez vécu","ont vécu"],
+            i: ["[ʒe ve.ky]","[ty a ve.ky]","[i.la ve.ky]","[nu.z‿a.vɔ̃ ve.ky]","[vu.z‿a.ve ve.ky]","[il.z‿ɔ̃ ve.ky]"] },
+    imp: { f: ["vivais","vivais","vivait","vivions","viviez","vivaient"],
+            i: ["[vi.vɛ]","[vi.vɛ]","[vi.vɛ]","[vi.vjɔ̃]","[vi.vje]","[vi.vɛ]"] },
+    fut: { f: ["vivrai","vivras","vivra","vivrons","vivrez","vivront"],
+            i: ["[vi.vʁe]","[vi.vʁe]","[vi.vʁa]","[vi.vʁɔ̃]","[vi.vʁe]","[vi.vʁɔ̃]"] }
+  },
+  note: "vivre 属第三组不规则动词，过去分词为 vécu，助动词用 avoir；vivre de qch 靠……谋生。",
+  ex: [
+    { fr: "Je vis à Paris.", zh: "我住在巴黎。", i: "[ʒə vi.z‿a pa.ʁi]" },
+    { fr: "Ils ont vécu à la campagne.", zh: "他们在乡下生活过。", i: "[il.z‿ɔ̃ ve.ky a la kɑ̃.paɲ]" }
   ]
 },
 {

@@ -13,6 +13,12 @@ UNITS = [
     dict(n=6, title='Unité 6 · Vivre avec les autres 与他人共处',
          lessons=['tb-l21', 'tb-l22', 'tb-l23', 'tb-l24'],
          src='u6_data.js', dst='assets/js/textbook-u6.js'),
+    dict(n=7, title='Unité 7 · Un peu, beaucoup, passionnément… 一点儿，非常，特别……',
+         lessons=['tb-l25', 'tb-l26', 'tb-l27', 'tb-l28'],
+         src='u7_data.js', dst='assets/js/textbook-u7.js'),
+    dict(n=8, title='Unité 8 · Tout le monde en parle... 大家在谈论……',
+         lessons=['tb-l29', 'tb-l30', 'tb-l31', 'tb-l32'],
+         src='u8_data.js', dst='assets/js/textbook-u8.js'),
 ]
 
 NO_CN = {17:'咱们做可丽饼吧',18:'他怎么样？',19:'亲爱的蕾娅…',20:'节日',

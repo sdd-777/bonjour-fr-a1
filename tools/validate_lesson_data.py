@@ -6,6 +6,8 @@ ART = os.path.join(os.path.expanduser('~'), '.codebuddy', 'artifact', '2f8a7d30-
 EXPECT = {
     'u5_data.js': ['tb-l17', 'tb-l18', 'tb-l19', 'tb-l20'],
     'u6_data.js': ['tb-l21', 'tb-l22', 'tb-l23', 'tb-l24'],
+    'u7_data.js': ['tb-l25', 'tb-l26', 'tb-l27', 'tb-l28'],
+    'u8_data.js': ['tb-l29', 'tb-l30', 'tb-l31', 'tb-l32'],
 }
 
 def load(fn=None):
