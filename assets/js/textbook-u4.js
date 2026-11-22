@@ -30,7 +30,8 @@ Object.assign(TB_LESSONS, {
       { fr: "— Un aller simple ou un aller-retour ?", zh: "单程还是往返？" },
       { fr: "— Un aller simple. En deuxième classe.", zh: "单程，二等舱。" },
       { fr: "— Voilà.", zh: "给您。" },
-      { fr: "— C'est combien ?", zh: "多少钱？" }
+      { fr: "— C'est combien ?", zh: "多少钱？" },
+      { fr: "— 80 euros 10.", zh: "80 欧元 10 分。" }
     ],
     vocab: [
       { fr: "aller", pos: "n.m.", g: "m", zh: "去程；单程票" },
