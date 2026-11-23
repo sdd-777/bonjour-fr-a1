@@ -17,7 +17,7 @@ const SCRIPTS = [
   'assets/js/textbook-u5.js', 'assets/js/textbook-u6.js',
   'assets/js/textbook-u7.js', 'assets/js/textbook-u8.js', 'assets/js/textbook-u9.js',
   'assets/js/mp4-remux.js', 'assets/js/textbook.js',
-  'assets/js/lexicon-data.js', 'assets/js/lexicon-extra-data.js', 'assets/js/lexicon.js', 'assets/js/dictation.js'
+  'assets/js/lexicon-data.js', 'assets/js/lexicon-extra-data.js', 'assets/js/lexicon-rich-data.js', 'assets/js/lexicon.js', 'assets/js/dictation.js'
 ];
 const AUDIO_DIRS = ['words', 'verbs', 'ipa', 'textbook', 'sentences'];
 

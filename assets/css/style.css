@@ -1660,6 +1660,7 @@ main{
 }
 .lx-input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft); }
 .lx-input::placeholder{ color:var(--ink-soft); }
+.lx-input::-webkit-search-cancel-button,.lx-input::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; display:none; }
 .lx-clear{
   position:absolute; right:.7rem; width:1.9rem; height:1.9rem; border:none;
   border-radius:50%; background:var(--line); color:var(--ink); cursor:pointer;
@@ -1687,10 +1688,59 @@ main{
   font-size:.78rem; color:var(--amber-deep); background:var(--amber-soft);
   padding:.1rem .45rem; border-radius:6px;
 }
-.lx-src{
-  font-size:.72rem; color:#256d54; background:#e4f4ec;
-  padding:.1rem .45rem; border-radius:6px; white-space:nowrap;
+/* 输入联想建议（搜索框下方） */
+.lx-suggest{
+  position:absolute; z-index:50; left:0; right:0; top:calc(100% - .2rem);
+  background:var(--card); border:1.5px solid var(--line-strong); border-radius:12px;
+  box-shadow:0 8px 24px rgba(95,74,51,.16); overflow:hidden; margin-top:.3rem;
 }
+.lx-wrap{ position:relative; }
+.lx-suggest-item{
+  display:flex; align-items:baseline; gap:.7rem; width:100%; text-align:left;
+  padding:.5rem .9rem; background:none; border:none; cursor:pointer;
+  border-bottom:1px solid var(--line); font:inherit;
+}
+.lx-suggest-item:last-child{ border-bottom:none; }
+.lx-suggest-item:hover,.lx-suggest-item:focus{ background:var(--amber-soft); outline:none; }
+.lx-suggest-word{ font-size:1rem; font-weight:700; color:var(--ink); white-space:nowrap; }
+.lx-suggest-zh{ font-size:.85rem; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 释义：分义项 + 词性分块 */
+.lx-def{ margin-top:.55rem; }
+.lx-pos-block{ font-size:.85rem; font-weight:700; color:var(--blue); margin:.5rem 0 .2rem; }
+.lx-senses{ margin:.2rem 0 0; padding-left:0; list-style:none; }
+.lx-sense{ padding:.14rem 0; line-height:1.5; display:flex; gap:.1rem; }
+.lx-sense-num{ color:var(--amber-deep); font-weight:700; margin-right:.35rem; }
+.lx-sense-zh{ color:var(--ink); font-size:1.02rem; }
+/* 分区：短语 / 例句 / 相关词 */
+.lx-sec{ margin-top:.85rem; padding-top:.7rem; border-top:1px dashed var(--line-strong); }
+.lx-sec-title{ font-size:.85rem; font-weight:700; color:var(--rose-deep); margin-bottom:.4rem; }
+.lx-phrase{ display:flex; align-items:center; gap:.45rem; padding:.22rem 0; flex-wrap:wrap; }
+.lx-speak-sm{ margin-left:0; width:1.6rem; height:1.6rem; font-size:.8rem; flex:none; }
+.lx-phrase-fr{ font-weight:600; color:var(--ink); }
+.lx-phrase-zh{ color:var(--ink-soft); font-size:.95rem; }
+.lx-example{ display:flex; gap:.55rem; align-items:flex-start; padding:.35rem 0; }
+.lx-example-body{ flex:1; min-width:0; }
+.lx-example-fr{ font-size:.98rem; color:var(--ink); line-height:1.5; }
+.lx-example-zh{ font-size:.88rem; color:var(--ink-soft); margin-top:.15rem; line-height:1.45; }
+.lx-rel-row{ display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin:.3rem 0; }
+.lx-rel-label{ font-size:.8rem; color:var(--ink-soft); min-width:2.4rem; }
+.lx-rel-btn{
+  font-size:.88rem; color:var(--blue); background:var(--blue-soft);
+  border:1px solid var(--line-strong); border-radius:999px; padding:.18rem .6rem; cursor:pointer;
+}
+.lx-rel-btn:hover{ background:var(--amber-soft); }
+/* 相关词条（含该词的其他词，置底） */
+.lx-related{ margin-top:1rem; padding-top:.8rem; border-top:2px solid var(--line); }
+.lx-related-title{ font-size:.9rem; font-weight:700; color:var(--ink-soft); margin-bottom:.6rem; }
+.lx-related-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:.45rem; }
+.lx-related-item{
+  display:flex; flex-direction:column; text-align:left; gap:.1rem;
+  padding:.45rem .6rem; background:var(--card); border:1px solid var(--line);
+  border-radius:9px; cursor:pointer; font:inherit;
+}
+.lx-related-item:hover{ background:var(--amber-soft); border-color:var(--amber); }
+.lx-related-word{ font-weight:700; color:var(--ink); font-size:.95rem; }
+.lx-related-zh{ font-size:.8rem; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lx-speak{
   margin-left:auto; flex:none; width:2.2rem; height:2.2rem; border:none;
   border-radius:50%; background:var(--blue); color:#fff; font-size:1rem; cursor:pointer;

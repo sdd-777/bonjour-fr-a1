@@ -1,11 +1,11 @@
 /* =========================================================
    🔍 法语词典 · 查词模块
    数据源：
-   1) LEXICON —— 离线法语-中文词典（FreeDict/WikDict fra-zho，CC BY-SA 3.0，10747 词）
-   2) LEXICON_EXTRA —— 补充词典（CFDICT 反转，CC BY-SA 3.0，约 3 万词）
-   3) 教材词表 TB_LESSONS[*].vocab —— 带教材标识，可跳转对应课次
-   4) 单词模块 WORD_CATS、动词模块 VERBS —— 合并进索引
-   功能：精确/前缀/包含/中文反查、音标、词性、发音、教材词标识与跳转
+   1) LEXICON       —— 主词典（FreeDict/WikDict fra-zho，CC BY-SA 3.0）
+   2) LEXICON_EXTRA —— 补充词典（CFDICT 反转，CC BY-SA 3.0）
+   3) RICH          —— 增强数据：分义项(简体)/词性分块/短语/教材例句/近反义词
+   4) TB_LESSONS —— 教材词，带教材标识可跳转课次
+   功能：输入联想、精确优先、分义项释义、短语/例句/近反义词、发音(预录优先)、教材跳转
    ========================================================= */
 'use strict';
 
@@ -18,21 +18,19 @@
   function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim(); }
-  // 法语重音还原友好：把用户输入的重音去掉做比对，但保留原词显示
 
   /* ---------- 数据源 ---------- */
-  // 主词典 LEXICON（带音标/词性）+ 补充词典 LEXICON_EXTRA（CFDICT 反转）
-  // 冲突时主词典优先，补充词库只填空缺
   const dict = {};
   if (typeof LEXICON !== 'undefined') Object.assign(dict, LEXICON);
   if (typeof LEXICON_EXTRA !== 'undefined') {
     Object.keys(LEXICON_EXTRA).forEach(w => {
-      if (dict[w]) return; // 主词典已有，不覆盖
+      if (dict[w]) return;
       const a = LEXICON_EXTRA[w] || [];
-      dict[w] = { zh: a[0] || '', ipa: a[1] || '', pos: a[2] || '', _src: 'cfdict' };
+      dict[w] = { zh: a[0] || '', ipa: a[1] || '', pos: a[2] || '' };
     });
   }
   const mainCount = (typeof LEXICON !== 'undefined') ? Object.keys(LEXICON).length : 0;
+  const RDATA = (typeof RICH !== 'undefined') ? RICH : {};
 
   // 教材词索引：norm(word) -> { fr, zh, lessons:[{id,no,title,unit}] }
   const textIndex = {};
@@ -51,59 +49,40 @@
       (L.vocab || []).forEach(v => addTextbookWord(v.fr, v.zh, lesson));
     });
   }
-
-  // 单词模块 / 动词模块额外词 -> 并入补充词典（若离线词典没有）
-  const extra = {};
-  function addExtra(fr, zh, pos, ipa) {
-    if (!fr) return;
-    const k = norm(fr);
-    if (!k) return;
-    if (!extra[k]) extra[k] = { fr, zh: zh || '', pos: pos || '', ipa: ipa || '' };
-  }
-  function buildExtraIndex() {
-    if (typeof WORD_CATS !== 'undefined') {
-      WORD_CATS.forEach(cat => (cat.items || []).forEach(it => {
-        if (it.name && it.name.fr) addExtra(it.name.fr, it.zh, '', '');
-        if (it.nat) { ['m', 'f'].forEach(g => { if (it.nat[g]) addExtra(it.nat[g].fr, it.nat[g].zh, '', ''); }); }
-      }));
-    }
-    if (typeof VERBS !== 'undefined') {
-      VERBS.forEach(v => addExtra(v.inf, v.zh, 'v.', v.ipa || ''));
-    }
-  }
-
   buildTextbookIndex();
-  buildExtraIndex();
 
-  // 预计算离线词典的归一化 key 列表（用于模糊/前缀匹配）
-  const dictKeys = Object.keys(dict);
-  const dictNorm = {}; // norm -> 原词数组
-  dictKeys.forEach(w => {
+  // 归一化 key -> 原词数组
+  const dictNorm = {};
+  Object.keys(dict).forEach(w => {
     const k = norm(w);
     (dictNorm[k] || (dictNorm[k] = [])).push(w);
   });
-  const allNormKeys = Object.keys(dictNorm).concat(Object.keys(extra)).concat(Object.keys(textIndex));
-  const uniqKeys = Array.from(new Set(allNormKeys));
+  const uniqKeys = Object.keys(dictNorm);
+  const suggestKeys = uniqKeys.slice().sort((a, b) => a.length - b.length || a.localeCompare(b));
 
-  /* ---------- 发音 ---------- */
+  /* ---------- 发音（预录法语 MP3 优先） ---------- */
   let lxAudio = null;
   function stopLexSpeak() {
     if (lxAudio) { try { lxAudio.pause(); } catch (e) {} lxAudio = null; }
     try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
     $$('#view-lexicon .lx-speak.playing').forEach(b => b.classList.remove('playing'));
   }
-  function wordAudioCandidates(fr) {
-    // 复用已有预录音频：words/sw-{slug}.mp3、verbs/vb-{id}-inf.mp3
-    const slug = norm(fr).replace(/\s+/g, '');
-    const cands = ['assets/audio/words/sw-' + slug + '.mp3', 'assets/audio/verbs/vb-' + slug + '-inf.mp3'];
-    return cands;
+  function audioSlug(fr) { return norm(fr).replace(/\s+/g, ''); }
+  function makeSpeakBtn(fr, small) {
+    const speak = el('button', 'lx-speak' + (small ? ' lx-speak-sm' : ''));
+    speak.type = 'button'; speak.textContent = '🔊'; speak.title = '听发音';
+    speak.onclick = () => speakWord(fr, speak);
+    return speak;
   }
   function speakWord(fr, btn) {
     stopLexSpeak();
     if (btn) btn.classList.add('playing');
     const done = () => { if (btn) btn.classList.remove('playing'); };
-    // 试预录音频
-    const cands = wordAudioCandidates(fr);
+    const slug = audioSlug(fr);
+    const cands = [
+      'assets/audio/words/sw-' + slug + '.mp3',
+      'assets/audio/verbs/vb-' + slug + '-inf.mp3'
+    ];
     let i = 0;
     const tryNext = () => {
       if (i < cands.length) {
@@ -113,7 +92,6 @@
         a.onerror = () => { tryNext(); };
         try { a.play(); } catch (e) { tryNext(); }
       } else {
-        // 回退 TTS（强制法语）
         if (!window.speechSynthesis) { done(); return; }
         const u = new SpeechSynthesisUtterance(fr);
         u.lang = 'fr-FR'; u.rate = 0.9;
@@ -127,137 +105,256 @@
     tryNext();
   }
 
-  /* ---------- 查询 ---------- */
+  /* ---------- 词条组装 ---------- */
+  function richOf(word) {
+    const k = norm(word);
+    if (RDATA[word]) return RDATA[word];
+    if (RDATA[k]) return RDATA[k];
+    for (const key in RDATA) { if (norm(key) === k) return RDATA[key]; }
+    return null;
+  }
   function lookupOne(word) {
-    // 返回 { fr, zh, ipa, pos, textbook:[...] } 或 null
     const k = norm(word);
     if (!k) return null;
-    let zh = '', ipa = '', pos = '', displayFr = word, src = '';
-
-    // 离线词典（取最长原词显示优先）
-    const dictWords = dictNorm[k];
-    if (dictWords && dictWords.length) {
-      displayFr = dictWords[0];
-      const d = dict[displayFr] || {};
-      zh = d.zh || ''; ipa = d.ipa || ''; pos = d.pos || ''; src = d._src || '';
-    }
-    // 补充词库（单词/动词）——优先用它的中文（更贴近教材）
-    if (extra[k]) {
-      if (!zh) zh = extra[k].zh;
-      if (!ipa) ipa = extra[k].ipa;
-      if (!pos) pos = extra[k].pos;
-      if (!displayFr) displayFr = extra[k].fr;
-    }
-    // 教材词优先提供中文
+    const words = dictNorm[k];
+    const displayFr = words ? words[0] : word;
+    const d = dict[displayFr] || {};
+    let zh = d.zh || '', ipa = d.ipa || '', pos = d.pos || '';
     const tb = textIndex[k];
-    if (tb) {
-      if (!zh) zh = tb.zh;
-      if (!displayFr) displayFr = tb.fr;
-    }
+    if (!zh && tb) zh = tb.zh;
+    const rich = richOf(word);
+    if (!zh && rich && rich.s && rich.s[0] && rich.s[0].zh) zh = rich.s[0].zh.join('、');
     if (!zh && !ipa) return null;
-    return { fr: displayFr, zh, ipa, pos, src, textbook: tb ? tb.lessons : [], key: k };
+    return { fr: displayFr, zh, ipa, pos, textbook: tb ? tb.lessons : [], key: k, rich };
   }
-
-  function search(q, limit) {
-    limit = limit || 40;
-    const k = norm(q);
-    if (!k) return [];
-    const exact = [], prefix = [], contains = [], zhhit = [];
-
-    // 先精确（法语）
-    const one = lookupOne(q);
-    if (one) exact.push(one);
-
-    // 遍历归一化 key
-    uniqKeys.forEach(key => {
-      if (key === k) return;
-      if (key.indexOf(k) === 0) prefix.push(key);
-      else if (key.indexOf(k) >= 0) contains.push(key);
-    });
-
-    // 中文反查（含中文时才做）
-    if (/[\u4e00-\u9fff]/.test(q)) {
-      const cq = q.replace(/\s+/g, '');
-      uniqKeys.forEach(key => {
-        const r = lookupOne(key);
-        if (r && r.zh && r.zh.replace(/\s+/g, '').indexOf(cq) >= 0) zhhit.push(key);
-      });
+  function searchByChinese(q) {
+    const cq = q.replace(/\s+/g, '');
+    const out = [];
+    for (const key of uniqKeys) {
+      const d = dict[dictNorm[key][0]] || {};
+      const zh = d.zh || '';
+      if (zh && zh.replace(/\s+/g, '').indexOf(cq) >= 0) out.push(key);
+      if (out.length >= 40) break;
     }
-
-    const gather = keys => {
-      const seen = new Set();
-      keys.forEach(key => {
-        if (seen.has(key)) return;
-        seen.add(key);
-        const r = lookupOne(key);
-        if (r && !exact.some(e => e.key === r.key)) exact.push(r); // 复用 exact 数组承载结果
-      });
-    };
-    gather(prefix.slice(0, limit));
-    if (exact.length < limit) gather(contains.slice(0, limit));
-    if (exact.length < limit && zhhit.length) gather(zhhit.slice(0, limit));
-
-    return exact.slice(0, limit);
+    return out;
   }
 
-  /* ---------- 渲染 ---------- */
+  /* ---------- 联想建议（搜索框下方） ---------- */
+  let suggestBox = null;
+  function renderSuggest(q) {
+    if (!suggestBox) {
+      suggestBox = el('div', 'lx-suggest');
+      suggestBox.id = 'lx-suggest';
+      suggestBox.hidden = true;
+      const bar = $('.lx-searchbar');
+      if (bar && bar.parentNode) bar.parentNode.insertBefore(suggestBox, bar.nextSibling);
+    }
+    const k = norm(q);
+    if (!k || /[\u4e00-\u9fff]/.test(q)) { suggestBox.hidden = true; suggestBox.innerHTML = ''; return; }
+    if (dictNorm[k]) { suggestBox.hidden = true; suggestBox.innerHTML = ''; return; }
+    const cand = suggestKeys.filter(key => key.indexOf(k) === 0).slice(0, 8);
+    if (!cand.length) { suggestBox.hidden = true; suggestBox.innerHTML = ''; return; }
+    suggestBox.innerHTML = '';
+    cand.forEach(key => {
+      const r = lookupOne(key);
+      const b = el('button', 'lx-suggest-item'); b.type = 'button';
+      const w = el('span', 'lx-suggest-word'); w.textContent = r ? r.fr : key;
+      const z = el('span', 'lx-suggest-zh'); z.textContent = r ? r.zh : '';
+      b.appendChild(w); b.appendChild(z);
+      b.onclick = () => {
+        const input = $('#lx-input');
+        if (input) input.value = w.textContent;
+        suggestBox.hidden = true;
+        renderResults(w.textContent);
+      };
+      suggestBox.appendChild(b);
+    });
+    suggestBox.hidden = false;
+  }
+
+  /* ---------- 渲染卡片 ---------- */
+  function renderSenseCard(r) {
+    const card = el('div', 'lx-card lx-main-card');
+    const head = el('div', 'lx-card-head');
+    const word = el('span', 'lx-word'); word.textContent = r.fr; head.appendChild(word);
+    const rich = r.rich;
+    let ipa = r.ipa, pos = r.pos, posLabel = '';
+    if (rich && rich.s && rich.s[0]) {
+      ipa = ipa || rich.s[0].ipa || '';
+      pos = pos || rich.s[0].pos || '';
+      posLabel = rich.s[0].posLabel || '';
+    }
+    if (ipa) { const p = el('span', 'lx-ipa'); p.textContent = '/' + ipa.replace(/^\/|\/$/g, '') + '/'; head.appendChild(p); }
+    if (posLabel) { const p = el('span', 'lx-pos'); p.textContent = posLabel; head.appendChild(p); }
+    else if (pos) { const p = el('span', 'lx-pos'); p.textContent = pos; head.appendChild(p); }
+    head.appendChild(makeSpeakBtn(r.fr));
+    card.appendChild(head);
+
+    // 释义：分义项 + 词性分块
+    const defBox = el('div', 'lx-def');
+    if (rich && rich.s && rich.s.length) {
+      rich.s.forEach(sg => {
+        if (rich.s.length > 1 && (sg.posLabel || sg.pos)) {
+          const h = el('div', 'lx-pos-block');
+          h.textContent = '【' + (sg.posLabel || sg.pos) + '】';
+          defBox.appendChild(h);
+        }
+        const ol = el('ol', 'lx-senses');
+        (sg.zh || []).forEach((z, i) => {
+          const li = el('li', 'lx-sense');
+          const num = el('span', 'lx-sense-num'); num.textContent = (i + 1) + '.';
+          const txt = el('span', 'lx-sense-zh'); txt.textContent = z;
+          li.appendChild(num); li.appendChild(txt); ol.appendChild(li);
+        });
+        defBox.appendChild(ol);
+      });
+    } else {
+      const p = el('div', 'lx-zh'); p.textContent = r.zh || '（暂无中文释义）'; defBox.appendChild(p);
+    }
+    card.appendChild(defBox);
+
+    // 教材标识
+    if (r.textbook && r.textbook.length) {
+      card.appendChild(makeTextbook(r.textbook));
+    }
+    // 短语
+    if (rich && rich.p && rich.p.length) {
+      const sec = el('div', 'lx-sec');
+      const h = el('div', 'lx-sec-title'); h.textContent = '短语'; sec.appendChild(h);
+      rich.p.forEach(p => {
+        const row = el('div', 'lx-phrase');
+        row.appendChild(makeSpeakBtn(p.fr, true));
+        const w = el('span', 'lx-phrase-fr'); w.textContent = p.fr;
+        const z = el('span', 'lx-phrase-zh'); z.textContent = p.zh;
+        row.appendChild(w); row.appendChild(z);
+        sec.appendChild(row);
+      });
+      card.appendChild(sec);
+    }
+    // 例句
+    if (rich && rich.x && rich.x.length) {
+      const sec = el('div', 'lx-sec');
+      const h = el('div', 'lx-sec-title'); h.textContent = '例句'; sec.appendChild(h);
+      rich.x.forEach(x => {
+        const row = el('div', 'lx-example');
+        row.appendChild(makeSpeakBtn(x.fr, true));
+        const box = el('div', 'lx-example-body');
+        const fr = el('div', 'lx-example-fr'); fr.textContent = x.fr;
+        const zh = el('div', 'lx-example-zh'); zh.textContent = x.zh;
+        box.appendChild(fr); box.appendChild(zh);
+        row.appendChild(box);
+        sec.appendChild(row);
+      });
+      card.appendChild(sec);
+    }
+    // 相关词：反义词 / 近义词
+    const syn = rich && rich.y ? rich.y : [];
+    const ant = rich && rich.a ? rich.a : [];
+    if (syn.length || ant.length) {
+      const sec = el('div', 'lx-sec');
+      const h = el('div', 'lx-sec-title'); h.textContent = '相关词'; sec.appendChild(h);
+      if (ant.length) sec.appendChild(makeRelRow('反义', ant));
+      if (syn.length) sec.appendChild(makeRelRow('近义', syn));
+      card.appendChild(sec);
+    }
+    return card;
+  }
+  function makeRelRow(label, words) {
+    const row = el('div', 'lx-rel-row');
+    const t = el('span', 'lx-rel-label'); t.textContent = label; row.appendChild(t);
+    words.forEach(w => {
+      const b = el('button', 'lx-rel-btn'); b.type = 'button'; b.textContent = w;
+      b.onclick = () => { const input = $('#lx-input'); if (input) input.value = w; renderResults(w); };
+      row.appendChild(b);
+    });
+    return row;
+  }
+  function makeTextbook(lessons) {
+    const tb = el('div', 'lx-tb');
+    const badge = el('span', 'lx-tb-badge'); badge.textContent = '📚 教材'; tb.appendChild(badge);
+    lessons.forEach(L => {
+      const b = el('button', 'lx-tb-link'); b.type = 'button';
+      b.textContent = (L.no || '课次') + (L.title ? ' · ' + L.title : '');
+      b.onclick = () => { if (typeof window.tbGoLesson === 'function') window.tbGoLesson(L.id); };
+      tb.appendChild(b);
+    });
+    return tb;
+  }
+  function makeCompactCard(r) {
+    const card = el('div', 'lx-card');
+    const head = el('div', 'lx-card-head');
+    const w = el('span', 'lx-word'); w.textContent = r.fr; head.appendChild(w);
+    if (r.ipa) { const p = el('span', 'lx-ipa'); p.textContent = '/' + r.ipa.replace(/^\/|\/$/g, '') + '/'; head.appendChild(p); }
+    if (r.pos) { const p = el('span', 'lx-pos'); p.textContent = r.pos; head.appendChild(p); }
+    head.appendChild(makeSpeakBtn(r.fr));
+    card.appendChild(head);
+    const rich = r.rich;
+    const zh = el('div', 'lx-zh');
+    if (rich && rich.s && rich.s[0]) zh.textContent = rich.s[0].zh.slice(0, 6).join('、');
+    else zh.textContent = r.zh;
+    card.appendChild(zh);
+    if (r.textbook && r.textbook.length) card.appendChild(makeTextbook(r.textbook));
+    return card;
+  }
+
   function renderResults(q) {
     const box = $('#lx-results');
     const status = $('#lx-status');
     if (!box || !status) return;
     box.innerHTML = '';
     const k = norm(q);
-    if (!k) {
-      status.textContent = '离线词库已就绪 · 输入单词开始查询';
+    if (!k) { status.textContent = '离线词库已就绪 · 输入单词开始查询'; return; }
+
+    // 中文反查
+    if (/[\u4e00-\u9fff]/.test(q)) {
+      const keys = searchByChinese(q);
+      if (!keys.length) { status.textContent = '未找到相关词条'; return; }
+      status.textContent = '找到 ' + keys.length + ' 个结果';
+      keys.forEach(key => { const r = lookupOne(key); if (r) box.appendChild(makeCompactCard(r)); });
       return;
     }
-    const results = search(q, 40);
-    if (!results.length) {
-      status.textContent = '未找到相关词条，试试别的拼写或中文意思';
-      return;
-    }
-    status.textContent = '找到 ' + results.length + ' 个结果';
 
-    results.forEach(r => {
-      const card = el('div', 'lx-card');
-      const head = el('div', 'lx-card-head');
-      const word = el('span', 'lx-word');
-      word.textContent = r.fr;
-      head.appendChild(word);
-
-      if (r.ipa) { const ipa = el('span', 'lx-ipa'); ipa.textContent = '/' + r.ipa.replace(/^\/|\/$/g, '') + '/'; head.appendChild(ipa); }
-      if (r.pos) { const pos = el('span', 'lx-pos'); pos.textContent = r.pos; head.appendChild(pos); }
-      if (r.src === 'cfdict') { const tag = el('span', 'lx-src'); tag.textContent = '补充词库'; head.appendChild(tag); }
-
-      const speak = el('button', 'lx-speak');
-      speak.type = 'button'; speak.textContent = '🔊'; speak.title = '听发音';
-      speak.onclick = () => speakWord(r.fr, speak);
-      head.appendChild(speak);
-      card.appendChild(head);
-
-      const zh = el('div', 'lx-zh');
-      zh.textContent = r.zh || '（暂无中文释义）';
-      card.appendChild(zh);
-
-      if (r.textbook && r.textbook.length) {
-        const tb = el('div', 'lx-tb');
-        const badge = el('span', 'lx-tb-badge');
-        badge.textContent = '📚 教材';
-        tb.appendChild(badge);
-        r.textbook.forEach(L => {
-          const b = el('button', 'lx-tb-link');
-          b.type = 'button';
-          b.textContent = (L.no || '课次') + (L.title ? ' · ' + L.title : '');
-          b.onclick = () => {
-            if (typeof window.tbGoLesson === 'function') window.tbGoLesson(L.id);
-          };
-          tb.appendChild(b);
-        });
-        card.appendChild(tb);
+    // 精确命中：只显示主词卡，关联词放最后
+    if (dictNorm[k]) {
+      const r = lookupOne(dictNorm[k][0]);
+      status.textContent = '找到 1 个词条';
+      if (r) box.appendChild(renderSenseCard(r));
+      const pref = [], cont = [];
+      for (const key of uniqKeys) {
+        if (key === k) continue;
+        if (key.indexOf(k) === 0) pref.push(key);
+        else if (key.indexOf(k) > 0) cont.push(key);
       }
+      const ordered = pref.concat(cont).slice(0, 20);
+      if (ordered.length) {
+        const sec = el('div', 'lx-related');
+        const h = el('div', 'lx-related-title'); h.textContent = '相关词（含 “' + q + '” 的词条）'; sec.appendChild(h);
+        const grid = el('div', 'lx-related-grid');
+        ordered.forEach(key => {
+          const rr = lookupOne(key); if (!rr) return;
+          const b = el('button', 'lx-related-item'); b.type = 'button';
+          const w = el('span', 'lx-related-word'); w.textContent = rr.fr;
+          const z = el('span', 'lx-related-zh'); z.textContent = rr.zh;
+          b.appendChild(w); b.appendChild(z);
+          b.onclick = () => { const input = $('#lx-input'); if (input) input.value = rr.fr; renderResults(rr.fr); };
+          grid.appendChild(b);
+        });
+        sec.appendChild(grid);
+        box.appendChild(sec);
+      }
+      return;
+    }
 
-      box.appendChild(card);
-    });
+    // 无精确：前缀/包含
+    const pref = [], cont = [];
+    for (const key of uniqKeys) {
+      if (key.indexOf(k) === 0) pref.push(key);
+      else if (key.indexOf(k) > 0) cont.push(key);
+    }
+    const keys = pref.concat(cont).slice(0, 30);
+    if (!keys.length) { status.textContent = '未找到相关词条，试试别的拼写或中文意思'; return; }
+    status.textContent = '找到 ' + keys.length + ' 个结果';
+    keys.forEach(key => { const r = lookupOne(key); if (r) box.appendChild(makeCompactCard(r)); });
   }
 
   /* ---------- 初始化 ---------- */
@@ -265,36 +362,49 @@
     const input = $('#lx-input');
     const clear = $('#lx-clear');
     if (!input) return;
-
     let timer = null;
     input.addEventListener('input', () => {
       clearTimeout(timer);
       const q = input.value.trim();
-      timer = setTimeout(() => renderResults(q), 180);
+      timer = setTimeout(() => { renderSuggest(q); renderResults(q); }, 160);
     });
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); renderResults(input.value.trim()); }
-      if (e.key === 'Escape') { input.value = ''; renderResults(''); }
+      if (e.key === 'Enter') {
+        e.preventDefault(); clearTimeout(timer);
+        if (suggestBox && !suggestBox.hidden) {
+          const first = suggestBox.querySelector('.lx-suggest-item');
+          if (first) { first.click(); return; }
+        }
+        renderResults(input.value.trim());
+      }
+      if (e.key === 'Escape') { input.value = ''; if (suggestBox) suggestBox.hidden = true; renderResults(''); }
     });
-    if (clear) clear.onclick = () => { input.value = ''; renderResults(''); input.focus(); };
-
+    input.addEventListener('blur', () => { setTimeout(() => { if (suggestBox) suggestBox.hidden = true; }, 150); });
+    if (clear) clear.onclick = () => { input.value = ''; if (suggestBox) suggestBox.hidden = true; renderResults(''); input.focus(); };
     $$('#lx-quick button').forEach(b => b.onclick = () => {
       input.value = b.dataset.q || b.textContent.trim();
       renderResults(input.value);
     });
   }
 
-  // 视图离开时停止发音
   window.stopLexicon = stopLexSpeak;
-
-  // 暴露给测试
   window.Lexicon = {
-    search, lookupOne,
-    get dictCount() { return dictKeys.length; },
+    search(q, limit) {
+      limit = limit || 40;
+      const k = norm(q); if (!k) return [];
+      if (dictNorm[k]) { const r = lookupOne(dictNorm[k][0]); return r ? [r] : []; }
+      const keys = [];
+      for (const key of uniqKeys) {
+        if (key.indexOf(k) >= 0) { keys.push(key); if (keys.length >= limit) break; }
+      }
+      return keys.map(key => lookupOne(key)).filter(Boolean).slice(0, limit);
+    },
+    lookupOne,
+    get dictCount() { return Object.keys(dict).length; },
     get mainCount() { return mainCount; },
-    get supplementCount() { return dictKeys.length - mainCount; },
+    get supplementCount() { return Object.keys(dict).length - mainCount; },
+    get richCount() { return Object.keys(RDATA).length; },
     get textbookCount() { return Object.keys(textIndex).length; },
-    get extraCount() { return Object.keys(extra).length; },
     render: renderResults
   };
 
