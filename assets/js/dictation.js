@@ -394,6 +394,79 @@
   }
 
   /* —— OCR（Tesseract.js 动态加载） —— */
+  /* iOS Safari 拍照识别乱码根因与修复：
+     iPhone 拍照是 HEIC 格式 + EXIF 旋转，直接把原始 File 交给 Tesseract 的
+     worker 会因 HEIC 解码/方向问题输出乱码。对策：识别前先用浏览器把图片
+     解码并"标准化"——浏览器(img/createImageBitmap)会自动按 EXIF 摆正方向，
+     再画到 canvas 限幅、转 JPEG(兼容性最好)、灰度+对比增强，把干净的图
+     交给 OCR。字太淡/太花会导致 OCR 出错，增强可显著提升识别率。 */
+  function prepareImage(file) {
+    const MAX = 1600; // 限幅，兼顾清晰度与 iOS 内存
+    return new Promise((resolve, reject) => {
+      const toCanvas = (src, w, h) => {
+        if (w > MAX || h > MAX) {
+          const r = MAX / Math.max(w, h);
+          w = Math.max(1, Math.round(w * r));
+          h = Math.max(1, Math.round(h * r));
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(src, 0, 0, w, h);
+        // 轻度灰度 + 自动对比增强，提升印刷体法语识别率
+        try {
+          const im = ctx.getImageData(0, 0, w, h);
+          const d = im.data;
+          let mn = 255, mx = 0;
+          for (let i = 0; i < d.length; i += 4) {
+            const g = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+            d[i] = d[i + 1] = d[i + 2] = g;
+            if (g < mn) mn = g;
+            if (g > mx) mx = g;
+          }
+          if (mx - mn > 30) {
+            const scale = 255 / (mx - mn);
+            for (let i = 0; i < d.length; i += 4) {
+              d[i] = d[i + 1] = d[i + 2] = Math.min(255, Math.max(0, (d[i] - mn) * scale));
+            }
+          }
+          ctx.putImageData(im, 0, 0);
+        } catch (e) { /* 某些环境禁读像素，忽略增强 */ }
+        resolve(c.toDataURL('image/jpeg', 0.92));
+      };
+      // createImageBitmap：浏览器自动按 EXIF 摆正方向，且解码 HEIC 更可靠
+      if (window.createImageBitmap) {
+        window.createImageBitmap(file)
+          .then(bmp => {
+            toCanvas(bmp, bmp.width, bmp.height).finally(() => {
+              if (bmp.close) bmp.close();
+            });
+          })
+          .catch(() => fallbackImg());
+        return;
+      }
+      fallbackImg();
+      function fallbackImg() {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { toCanvas(img, img.naturalWidth || img.width, img.naturalHeight || img.height); URL.revokeObjectURL(url); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片解码失败')); };
+        img.src = url;
+      }
+    });
+  }
+  // 清洗 OCR 文本：去乱码替换符、控制字符、只保留法语字母/数字/常见标点行
+  function cleanOCRText(text) {
+    return String(text || '')
+      .replace(/\uFFFD/g, '')                 // UTF-8 替换符
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(s => /[A-Za-zÀ-ÿ0-9]/.test(s))   // 丢掉纯乱码/符号行
+      .join('\n');
+  }
   let tessLoading = null;
   function loadTesseract() {
     if (window.Tesseract) return Promise.resolve(window.Tesseract);
@@ -421,28 +494,34 @@
     const status = $('#dict-ocr-status');
     status.hidden = false;
     status.className = 'dict-ocr-status loading';
-    status.textContent = '🔄 正在加载识别引擎…（首次需要联网下载法语识别包）';
+    status.textContent = '🔄 正在处理图片…';
     try {
+      // 关键：先把拍照原图标准化（纠正 iOS EXIF 方向 / HEIC / 超大图），再识别
+      const imageData = await prepareImage(file);
       const T = await loadTesseract();
-      status.textContent = '🔄 正在识别图片文字…';
-      const res = await T.recognize(file, 'fra', {
+      status.textContent = '🔄 正在识别图片文字…（首次需联网下载法语识别包）';
+      const res = await T.recognize(imageData, 'fra', {
         logger: m => {
           if (m.status === 'recognizing text') {
             status.textContent = '🔄 正在识别… ' + Math.round(m.progress * 100) + '%';
           }
         }
       });
-      const text = (res && res.data && res.data.text) || '';
+      const text = cleanOCRText((res && res.data && res.data.text) || '');
+      if (!text) {
+        status.className = 'dict-ocr-status warn';
+        status.innerHTML = '⚠️ 没有识别出文字，请拍照清晰、光线充足，或直接在下方<b>手动输入</b>单词。';
+        return;
+      }
       const cur = $('#dict-manual').value.trim();
-      const merged = cur ? cur + '\n' + text : text;
-      $('#dict-manual').value = merged;
+      $('#dict-manual').value = cur ? cur + '\n' + text : text;
       status.className = 'dict-ocr-status ok';
       const n = parseRaw(text).length;
       status.textContent = '✅ 识别完成，初步提取 ' + n + ' 个词条，已填入下方，请核对。';
       toast('识别完成，请核对单词');
     } catch (err) {
       status.className = 'dict-ocr-status warn';
-      status.innerHTML = '⚠️ 图片识别不可用（可能未联网）。请在下方<b>手动输入</b>单词，功能完全一样。';
+      status.innerHTML = '⚠️ 图片识别不可用（' + esc(err && err.message ? err.message : '可能未联网') + '）。请在下方<b>手动输入</b>单词，功能完全一样。';
     }
   }
 
