@@ -345,15 +345,24 @@
       return;
     }
 
-    // 无精确：前缀/包含
+    // 无精确命中：前缀/包含只是"拼写相近词"，不能当成查到了该词
     const pref = [], cont = [];
     for (const key of uniqKeys) {
       if (key.indexOf(k) === 0) pref.push(key);
       else if (key.indexOf(k) > 0) cont.push(key);
     }
-    const keys = pref.concat(cont).slice(0, 30);
-    if (!keys.length) { status.textContent = '未找到相关词条，试试别的拼写或中文意思'; return; }
-    status.textContent = '找到 ' + keys.length + ' 个结果';
+    // 相近词按重合度排序：前缀命中优先，其次词长接近输入的优先
+    const byCloseness = (a, b) => {
+      const ap = pref.indexOf(a) >= 0, bp = pref.indexOf(b) >= 0;
+      if (ap !== bp) return ap ? -1 : 1;
+      return Math.abs(a.length - k.length) - Math.abs(b.length - k.length);
+    };
+    const keys = pref.concat(cont).sort(byCloseness).slice(0, 30);
+    if (!keys.length) { status.textContent = '未找到「' + q + '」，试试别的拼写或输入中文意思'; return; }
+    status.textContent = '未找到「' + q + '」，以下是拼写相近的词（仅供参考）';
+    const note = el('div', 'lx-fuzzy-note');
+    note.textContent = '词库中没有「' + q + '」这个词。下面列出的是拼写相近的词条，请核对是否为你要查的词。';
+    box.appendChild(note);
     keys.forEach(key => { const r = lookupOne(key); if (r) box.appendChild(makeCompactCard(r)); });
   }
 
