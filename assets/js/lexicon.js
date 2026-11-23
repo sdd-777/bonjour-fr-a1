@@ -188,6 +188,18 @@
     if (posLabel) { const p = el('span', 'lx-pos'); p.textContent = posLabel; head.appendChild(p); }
     else if (pos) { const p = el('span', 'lx-pos'); p.textContent = pos; head.appendChild(p); }
     head.appendChild(makeSpeakBtn(r.fr));
+    // 阴阳性另一形式（阳/阴）
+    if (rich && rich.gen && rich.gen.f && rich.gen.m) {
+      const other = norm(r.fr) === norm(rich.gen.m) ? rich.gen.f : rich.gen.m;
+      const otherLabel = norm(r.fr) === norm(rich.gen.m) ? '阴性' : '阳性';
+      const g = el('span', 'lx-gen');
+      const t = el('span', 'lx-gen-label'); t.textContent = '另一形式（' + otherLabel + '）：'; g.appendChild(t);
+      const b = el('button', 'lx-gen-word'); b.type = 'button'; b.textContent = other; b.title = '点击查询 ' + other;
+      b.onclick = () => { const inp = $('#lx-input'); if (inp) inp.value = other; renderResults(other); };
+      g.appendChild(b);
+      g.appendChild(makeSpeakBtn(other, true));
+      head.appendChild(g);
+    }
     card.appendChild(head);
 
     // 释义：分义项 + 词性分块

@@ -1692,6 +1692,20 @@ main{
   font-size:.78rem; color:var(--amber-deep); background:var(--amber-soft);
   padding:.1rem .45rem; border-radius:6px;
 }
+/* 阴阳性另一形式 */
+.lx-gen{
+  display:inline-flex; align-items:center; gap:.25rem; flex-wrap:wrap;
+  font-size:.82rem; color:var(--ink-soft);
+  background:var(--card); border:1px dashed var(--line-strong);
+  padding:.12rem .5rem; border-radius:8px;
+}
+.lx-gen-label{ color:var(--ink-soft); }
+.lx-gen-word{
+  border:0; background:transparent; cursor:pointer;
+  color:var(--blue); font-weight:700; font-size:.9rem;
+  padding:0; text-decoration:underline dotted; text-underline-offset:3px;
+}
+.lx-gen-word:hover{ color:var(--amber-deep); }
 /* 输入联想建议（搜索框下方） */
 .lx-suggest{
   position:absolute; z-index:50; left:0; right:0; top:calc(100% - .2rem);
