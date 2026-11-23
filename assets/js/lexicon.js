@@ -68,21 +68,24 @@
     $$('#view-lexicon .lx-speak.playing').forEach(b => b.classList.remove('playing'));
   }
   function audioSlug(fr) { return norm(fr).replace(/\s+/g, ''); }
-  function makeSpeakBtn(fr, small) {
+  function makeSpeakBtn(fr, small, audioId) {
     const speak = el('button', 'lx-speak' + (small ? ' lx-speak-sm' : ''));
     speak.type = 'button'; speak.textContent = '🔊'; speak.title = '听发音';
-    speak.onclick = () => speakWord(fr, speak);
+    speak.onclick = () => speakWord(fr, speak, audioId);
     return speak;
   }
-  function speakWord(fr, btn) {
+  function speakWord(fr, btn, audioId) {
     stopLexSpeak();
     if (btn) btn.classList.add('playing');
     const done = () => { if (btn) btn.classList.remove('playing'); };
     const slug = audioSlug(fr);
-    const cands = [
+    const cands = [];
+    // 例句预录音频优先（手机浏览器 TTS 常无声）
+    if (audioId) cands.push('assets/audio/sentences/' + audioId + '.mp3');
+    cands.push(
       'assets/audio/words/sw-' + slug + '.mp3',
       'assets/audio/verbs/vb-' + slug + '-inf.mp3'
-    ];
+    );
     let i = 0;
     const tryNext = () => {
       if (i < cands.length) {
@@ -249,7 +252,7 @@
       const h = el('div', 'lx-sec-title'); h.textContent = '例句'; sec.appendChild(h);
       rich.x.forEach(x => {
         const row = el('div', 'lx-example');
-        row.appendChild(makeSpeakBtn(x.fr, true));
+        row.appendChild(makeSpeakBtn(x.fr, true, x.a));
         const box = el('div', 'lx-example-body');
         const fr = el('div', 'lx-example-fr'); fr.textContent = x.fr;
         const zh = el('div', 'lx-example-zh'); zh.textContent = x.zh;
