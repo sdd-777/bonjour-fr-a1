@@ -363,27 +363,58 @@
     const clear = $('#lx-clear');
     if (!input) return;
     let timer = null;
+    let composing = false;   // 输入法组字中（法语/中文输入法），此时不提前查询
+
+    // 执行一次完整查询（提交/搜索键走这里）：取消防抖、收起联想、立即出结果
+    function submitQuery() {
+      clearTimeout(timer);
+      if (suggestBox) suggestBox.hidden = true;
+      renderResults(input.value.trim());
+    }
+
+    input.addEventListener('compositionstart', () => { composing = true; });
+    input.addEventListener('compositionend', () => {
+      composing = false;
+      clearTimeout(timer);
+      const q = input.value.trim();
+      timer = setTimeout(() => { renderSuggest(q); renderResults(q); }, 60);
+    });
+
     input.addEventListener('input', () => {
+      if (composing) return;   // 组字过程中不触发，等 compositionend
       clearTimeout(timer);
       const q = input.value.trim();
       timer = setTimeout(() => { renderSuggest(q); renderResults(q); }, 160);
     });
+
+    // ① 桌面/部分移动浏览器：keydown 里判断回车（含旧版 keyCode 与移动端别名）
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        e.preventDefault(); clearTimeout(timer);
-        if (suggestBox && !suggestBox.hidden) {
-          const first = suggestBox.querySelector('.lx-suggest-item');
-          if (first) { first.click(); return; }
-        }
-        renderResults(input.value.trim());
+      const k = e.key;
+      const isEnter = k === 'Enter' || k === 'Search' || k === 'Go' || e.keyCode === 13;
+      if (isEnter) {
+        e.preventDefault();
+        if (composing) return;   // 组字中的第一次回车只是确认候选，不当作提交
+        submitQuery();
+        try { input.blur(); } catch (_) {}
       }
       if (e.key === 'Escape') { input.value = ''; if (suggestBox) suggestBox.hidden = true; renderResults(''); }
     });
+
+    // ② type="search" 原生搜索键：部分移动端只触发 search 事件，不触发 keydown
+    input.addEventListener('search', e => {
+      e.preventDefault();
+      submitQuery();
+    });
+
+    // ③ 兜底：若包在 form 内，软键盘"搜索/前往"键会触发 submit
+    const form = $('#lx-searchform');
+    if (form) form.addEventListener('submit', e => { e.preventDefault(); submitQuery(); });
+
     input.addEventListener('blur', () => { setTimeout(() => { if (suggestBox) suggestBox.hidden = true; }, 150); });
     if (clear) clear.onclick = () => { input.value = ''; if (suggestBox) suggestBox.hidden = true; renderResults(''); input.focus(); };
     $$('#lx-quick button').forEach(b => b.onclick = () => {
       input.value = b.dataset.q || b.textContent.trim();
-      renderResults(input.value);
+      submitQuery();
     });
   }
 
