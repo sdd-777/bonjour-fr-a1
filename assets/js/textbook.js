@@ -1347,4 +1347,15 @@ if (typeof window !== 'undefined'){
   window.__initTextbook = initTextbook;
   window.__stopTbSeq = stopTbSeq;
   window.stopTbLine = stopTbLine;
+  // 供查词模块跳转：切到教材视图并选中指定课次
+  window.tbGoLesson = function (id){
+    if (!TB_LESSONS[id]) return false;
+    if (typeof showView === 'function') showView('textbook');
+    stopTbSeq(); stopTbLine();
+    tbCur = id;
+    renderTbLessons();
+    renderTbDetail();
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+    return true;
+  };
 }

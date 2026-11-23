@@ -61,6 +61,7 @@
       <button class="nav-btn" data-view="build">🧩 造句</button>
       <button class="nav-btn" data-view="read">🎧 朗读</button>
       <button class="nav-btn" data-view="words">📖 单词</button>
+      <button class="nav-btn" data-view="lexicon">🔍 查词</button>
       <button class="nav-btn" data-view="dictation">✍️ 默写</button>
       <button class="nav-btn" data-view="textbook">📚 教材</button>
       <button class="nav-btn" data-view="games">🎮 游戏</button>
@@ -359,6 +360,30 @@
     </div>
   </section>
 
+  <!-- ===== 查词模块 ===== -->
+  <section id="view-lexicon" class="view" hidden>
+    <div class="view-head">
+      <h2>🔍 法语词典 · 查词</h2>
+    </div>
+    <div class="lx-wrap">
+      <div class="lx-searchbar">
+        <input id="lx-input" class="lx-input" type="search" autocomplete="off" spellcheck="false" placeholder="输入法语单词，如 bonjour / écrire / maison">
+        <button class="lx-clear" id="lx-clear" type="button" title="清空">✕</button>
+      </div>
+      <div class="lx-quick" id="lx-quick">
+        <span class="lx-quick-label">试试：</span>
+        <button type="button" data-q="bonjour">bonjour</button>
+        <button type="button" data-q="écrire">écrire</button>
+        <button type="button" data-q="maison">maison</button>
+        <button type="button" data-q="manger">manger</button>
+        <button type="button" data-q="beau">beau</button>
+      </div>
+      <div class="lx-status" id="lx-status">离线词库已就绪 · 输入单词开始查询</div>
+      <div id="lx-results" class="lx-results"></div>
+      <div class="lx-credit">离线词库：FreeDict / WikDict（法-中，CC BY-SA 3.0）+ CFDICT 补充词库（Chine Informations，CC BY-SA 3.0）· 完全离线可用</div>
+    </div>
+  </section>
+
   <!-- ===== 默写模块 ===== -->
   <section id="view-dictation" class="view" hidden>
     <div class="view-head">
@@ -496,6 +521,9 @@
 <script src="assets/js/textbook-u9.js"></script>
 <script src="assets/js/mp4-remux.js"></script>
 <script src="assets/js/textbook.js" onerror="reloadScript(this)"></script>
+<script src="assets/js/lexicon-data.js"></script>
+<script src="assets/js/lexicon-extra-data.js"></script>
+<script src="assets/js/lexicon.js"></script>
 <script src="assets/js/dictation.js"></script>
 </body>
 </html>

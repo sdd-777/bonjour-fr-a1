@@ -1646,3 +1646,70 @@ main{
   .dict-mean-big{ font-size:1.6rem; }
   .dict-btn{ padding:.55rem .8rem; font-size:.86rem; }
 }
+
+/* ============================================================
+   🔍 查词模块
+   ============================================================ */
+.lx-wrap{ max-width:860px; margin:0 auto; padding:0 1rem 3rem; }
+.lx-searchbar{ position:relative; display:flex; align-items:center; gap:.5rem; margin:.4rem 0 .8rem; }
+.lx-input{
+  flex:1; min-width:0; padding:.85rem 2.6rem .85rem 1rem;
+  font-size:1.08rem; color:var(--ink); background:var(--card);
+  border:2px solid var(--line-strong); border-radius:14px; outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.lx-input:focus{ border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft); }
+.lx-input::placeholder{ color:var(--ink-soft); }
+.lx-clear{
+  position:absolute; right:.7rem; width:1.9rem; height:1.9rem; border:none;
+  border-radius:50%; background:var(--line); color:var(--ink); cursor:pointer;
+  font-size:.9rem; line-height:1.9rem; text-align:center;
+}
+.lx-clear:hover{ background:var(--rose-soft); }
+.lx-quick{ display:flex; flex-wrap:wrap; align-items:center; gap:.45rem; margin-bottom:.9rem; }
+.lx-quick-label{ color:var(--ink-soft); font-size:.85rem; }
+.lx-quick button{
+  padding:.28rem .7rem; font-size:.85rem; color:var(--ink);
+  background:var(--blue-soft); border:1px solid var(--line-strong);
+  border-radius:999px; cursor:pointer;
+}
+.lx-quick button:hover{ background:var(--amber-soft); }
+.lx-status{ color:var(--ink-soft); font-size:.85rem; margin:.2rem 0 .8rem; min-height:1.2em; }
+.lx-results{ display:flex; flex-direction:column; gap:.7rem; }
+.lx-card{
+  background:var(--card); border:1.5px solid var(--line); border-radius:14px;
+  padding:.85rem 1rem; box-shadow:0 2px 8px rgba(95,74,51,.06);
+}
+.lx-card-head{ display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+.lx-word{ font-size:1.3rem; font-weight:800; color:var(--ink); }
+.lx-ipa{ color:var(--blue); font-family:"Times New Roman",serif; font-size:1rem; }
+.lx-pos{
+  font-size:.78rem; color:var(--amber-deep); background:var(--amber-soft);
+  padding:.1rem .45rem; border-radius:6px;
+}
+.lx-src{
+  font-size:.72rem; color:#256d54; background:#e4f4ec;
+  padding:.1rem .45rem; border-radius:6px; white-space:nowrap;
+}
+.lx-speak{
+  margin-left:auto; flex:none; width:2.2rem; height:2.2rem; border:none;
+  border-radius:50%; background:var(--blue); color:#fff; font-size:1rem; cursor:pointer;
+  transition:transform .12s;
+}
+.lx-speak:hover{ transform:scale(1.08); }
+.lx-speak.playing{ background:var(--amber-deep); animation:lxPulse .9s infinite; }
+@keyframes lxPulse{ 50%{ box-shadow:0 0 0 8px var(--amber-soft); } }
+.lx-zh{ margin-top:.45rem; color:var(--ink); font-size:1.05rem; line-height:1.5; }
+.lx-tb{ margin-top:.6rem; display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
+.lx-tb-badge{ font-size:.78rem; color:#fff; background:var(--rose-deep); padding:.12rem .5rem; border-radius:6px; }
+.lx-tb-link{
+  font-size:.82rem; color:var(--amber-deep); background:none;
+  border:1px dashed var(--amber); border-radius:8px; padding:.2rem .55rem; cursor:pointer;
+  transition:background .12s;
+}
+.lx-tb-link:hover{ background:var(--amber-soft); }
+@media (max-width:560px){
+  .lx-word{ font-size:1.15rem; }
+  .lx-input{ font-size:1rem; }
+}
+.lx-credit{ margin-top:1.6rem; text-align:center; color:var(--ink-soft); font-size:.72rem; opacity:.75; }
