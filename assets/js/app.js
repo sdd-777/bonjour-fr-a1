@@ -80,6 +80,51 @@ function totalStars(){
     Object.values(state.progress.readStars).reduce((a, b) => a + b, 0);
 }
 
+/* ---------- 查词词库按需加载 ----------
+   查词三大数据 + lexicon.js 共约 4.8MB，首屏用不到。改为首次进入「查词」或「默写」
+   视图时才按顺序动态加载，避免拖慢首屏；失败自动重试 3 次。 */
+let lexLoadPromise = null;
+function ensureLexicon(){
+  if (window.Lexicon) return Promise.resolve(true);      // 已加载
+  if (lexLoadPromise) return lexLoadPromise;             // 正在加载
+  const V = '?v=20261124j';
+  const files = [
+    'assets/js/lexicon-data.js',
+    'assets/js/lexicon-extra-data.js',
+    'assets/js/lexicon-rich-data.js',
+    'assets/js/lexicon.js'
+  ];
+  const status = document.getElementById('lx-status');
+  if (status) status.textContent = '🔄 离线词库首次加载中，请稍候…';
+  lexLoadPromise = new Promise(resolve => {
+    let i = 0;
+    const step = (attempt) => {
+      if (i >= files.length){
+        if (status) status.textContent = '离线词库已就绪 · 输入单词开始查询';
+        resolve(true);
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = files[i] + V + (attempt ? '&r=' + attempt : '');
+      s.onload = () => { i++; step(0); };
+      s.onerror = () => {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        if (attempt >= 3){
+          if (status) status.textContent = '⚠️ 词库加载失败，请检查网络后刷新页面重试';
+          lexLoadPromise = null;                          // 允许下次再试
+          resolve(false);
+          return;
+        }
+        setTimeout(() => step(attempt + 1), 600 * (attempt + 1));
+      };
+      document.head.appendChild(s);
+    };
+    step(0);
+  });
+  return lexLoadPromise;
+}
+window.ensureLexicon = ensureLexicon;
+
 /* ---------- 视图切换 ---------- */
 /* ---------- 脚本加载失败自愈（CDN 抖动时重试一次） ---------- */
 function reloadScript(el, attempt){
@@ -115,6 +160,8 @@ function showView(name){
   if (typeof stopDictation === 'function') stopDictation();
   if (typeof stopLexicon === 'function') stopLexicon();
   if (name === 'dictation' && typeof ensureDictation === 'function') ensureDictation();
+  // 查词词库与默写 gender 推断都依赖 RICH：进入这两个视图时才加载大词库
+  if ((name === 'lexicon' || name === 'dictation') && typeof ensureLexicon === 'function') ensureLexicon();
   if (name === 'games' && typeof ensureGames === 'function') ensureGames();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
