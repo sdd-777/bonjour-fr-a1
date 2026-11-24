@@ -384,8 +384,8 @@ const TB_LESSONS = {
     vocab: [
       { fr: "affiche",        pos: "n.f.",      g: "f", zh: "海报，广告" },
       { fr: "assiette",       pos: "n.f.",      g: "f", zh: "盘子" },
-      { fr: "au-dessus",      pos: "loc.adv.",  zh: "在上面" },
-      { fr: "au-dessus de",   pos: "loc.prép.", zh: "在上面，……以上" },
+      { fr: "au-dessous",     pos: "loc.adv.",  zh: "在下面" },
+      { fr: "au-dessus",      pos: "loc.adv.",  zh: "在上面，……以上" },
       { fr: "avec",           pos: "prép.",     zh: "具有，带有" },
       { fr: "blouson",        pos: "n.m.",      g: "m", zh: "夹克衫" },
       { fr: "chaise",         pos: "n.f.",      g: "f", zh: "椅子" },
@@ -430,7 +430,6 @@ const TB_LESSONS = {
       { fr: "verre",          pos: "n.m.",      g: "m", zh: "玻璃杯" },
       { fr: "voilà",          pos: "prép.",     zh: "那就是这，这就是" },
       { fr: "portable",       pos: "n.m.",      g: "m", zh: "手机", extra: true },
-      { fr: "au-dessous", pos: "loc.adv.", zh: "在下面" },
     ],
     grammar: [
       { t: "ça 的用法", d: "ça 在口语中用得很多，意为「这，这个，这样」，可以指代一件事、一个状态。" +
