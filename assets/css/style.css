@@ -1565,6 +1565,7 @@ main{
 .dict-btn.primary{ background:var(--amber); border-color:var(--amber-deep); color:#fff; }
 .dict-btn.ghost{ background:transparent; }
 .dict-btn.speak{ background:var(--blue-soft); border-color:var(--blue); }
+.dict-btn.album{ background:var(--blue-soft, #EAF2FB); border-color:var(--blue, #4A90D9); }
 .dict-btn.hint{ background:var(--honey); border-color:var(--amber-deep); }
 .dict-btn.tiny{ padding:.3rem .6rem; font-size:.8rem; }
 .dict-btn.playing{ background:var(--amber-soft); }

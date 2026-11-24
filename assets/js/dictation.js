@@ -325,7 +325,11 @@
       '<div class="dict-upload-row">' +
       '<label class="dict-btn primary">' +
       '<input type="file" id="dict-file" accept="image/*" capture="environment" hidden>' +
-      '📸 拍照 / 选择图片</label>' +
+      '📸 拍照</label>' +
+      /* 不带 capture：移动端会打开系统图库/文件选择器，可从相册选图 */
+      '<label class="dict-btn album">' +
+      '<input type="file" id="dict-file-album" accept="image/*" hidden>' +
+      '🖼️ 从相册选择</label>' +
       '<button class="dict-btn" id="dict-paste">📋 从剪贴板粘贴</button>' +
       '</div>' +
 
@@ -351,10 +355,12 @@
       (wrong.length ? '<button class="dict-btn ghost" id="dict-clear-wrong">清空错题本</button>' : '') + '</div>';
     body.appendChild(wbox);
 
-    $('#dict-file').onchange = e => {
+    const onPick = e => {
       const f = e.target.files && e.target.files[0];
       if (f) runOCR(f);
     };
+    $('#dict-file').onchange = onPick;
+    $('#dict-file-album').onchange = onPick;
     $('#dict-paste').onclick = async () => {
       try {
         const txt = await navigator.clipboard.readText();
