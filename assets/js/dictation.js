@@ -820,8 +820,9 @@
     render();
     if (right === total) {
       confetti();
-      // 用预录标准法语女声播放鼓励语，避免设备无法语 TTS 时读成非法语口音
-      setTimeout(() => speak('Très bien ! Bravo !', null, false, 'dict-bravo'), 200);
+      // 全对欢呼：纯「Bravo ! Bravo !」，活泼女声、提高音调与音量，更有感染力；
+      // 用预录音避免设备无法语 TTS 时读成非法语口音
+      setTimeout(() => speak('Bravo ! Bravo !', null, false, 'dict-bravo-cheer'), 200);
     }
   }
   // 交卷后公布的完整逐词清单（含对错、正确写法、你写的）
@@ -844,8 +845,8 @@
     if (perfect) {
       box.innerHTML =
         '<div class="dict-trophy">🏆</div>' +
-        '<h2 class="dict-congrats">Très bien !</h2>' +
-        '<p class="dict-congrats-sub">Bravo ! 全部拼写正确，太棒了！✨</p>' +
+        '<h2 class="dict-congrats">Bravo !</h2>' +
+        '<p class="dict-congrats-sub">全部拼写正确，太棒了！✨</p>' +
         '<div class="dict-score">' + r.right + ' / ' + r.total + '</div>' +
         '<h3 class="dict-list-title">本次听写情况</h3>' +
         listHtml +
