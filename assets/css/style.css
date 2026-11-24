@@ -1373,6 +1373,27 @@ main{
 .tb-count{ font-size: .82rem; color: var(--ink-soft); background: var(--blue-soft); border-radius: 999px; padding: .15rem .65rem; font-weight: 700; }
 .tb-tip{ font-size: .84rem; color: var(--ink-soft); margin: 0 0 .7rem; line-height: 1.6; }
 
+/* 词汇表顶部「进入默写」入口 */
+.tb-vocab-dict{
+  width: 100%; display: flex; align-items: center; gap: .7rem;
+  margin: 0 0 .75rem; padding: .6rem .75rem;
+  border: 1px solid var(--amber-deep, #B5791E); border-radius: 12px;
+  background: linear-gradient(135deg, var(--honey, #FFF3D6), var(--amber-soft, #FBEBC8));
+  color: var(--ink); cursor: pointer; text-align: left;
+  transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+}
+.tb-vocab-dict:hover{ filter: brightness(.98); box-shadow: var(--shadow-sm); }
+.tb-vocab-dict:active{ transform: scale(.99); }
+.tb-vd-ico{
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+  background: var(--amber-deep, #B5791E); color: #fff;
+}
+.tb-vd-main{ flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .12rem; }
+.tb-vd-main b{ font-size: .94rem; color: var(--ink); }
+.tb-vd-main small{ font-size: .76rem; color: var(--ink-soft); line-height: 1.45; }
+.tb-vd-arrow{ flex: 0 0 auto; font-size: 1.5rem; color: var(--amber-deep, #B5791E); line-height: 1; }
+
 .tb-line{
   display: flex; gap: .65rem; align-items: flex-start;
   padding: .5rem .3rem; border-bottom: 1px dashed #EFE3D2;
@@ -1519,6 +1540,11 @@ main{
 }
 .dict-steps .dstep.active{ background:var(--amber); color:#fff; border-color:var(--amber-deep); font-weight:700; }
 #dict-body{ display:flex; flex-direction:column; gap:1rem; }
+.dict-import-note{
+  font-size:.84rem; color:var(--ink-soft); background:var(--blue-soft, #EAF2FB);
+  border:1px solid var(--line); border-radius:10px; padding:.5rem .75rem; line-height:1.5;
+}
+.dict-import-note b{ color:var(--blue-deep, #2C6CA8); }
 .dict-card{ padding:1.1rem 1rem; }
 .dict-head{ display:flex; gap:.8rem; align-items:flex-start; margin-bottom:.9rem; }
 .dict-head-ico{ font-size:1.9rem; line-height:1; flex:0 0 auto; }

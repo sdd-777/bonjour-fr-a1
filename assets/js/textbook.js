@@ -99,7 +99,12 @@ function renderTbDetail(){
   vocCard.innerHTML =
     '<div class="tb-card-head"><h3>📗 单词表 Vocabulaire · 词汇</h3>' +
     '<span class="tb-count">' + l.vocab.length + ' 词</span></div>' +
-    '<p class="tb-tip">🔊 标准速 · 🐢 慢速跟读；阴阳性徽章：<i class="tb-g f">f</i> 阴性 <i class="tb-g m">m</i> 阳性。</p>';
+    '<p class="tb-tip">🔊 标准速 · 🐢 慢速跟读；阴阳性徽章：<i class="tb-g f">f</i> 阴性 <i class="tb-g m">m</i> 阳性。</p>' +
+    '<button class="tb-vocab-dict" type="button" data-import="' + esc(tbCur) + '">' +
+    '<span class="tb-vd-ico">✍️</span>' +
+    '<span class="tb-vd-main"><b>把这 ' + l.vocab.length + ' 个词导入默写</b>' +
+    '<small>听音看写法 → 逐词默写 → 交卷看结果；写错的自动进错题本</small></span>' +
+    '<span class="tb-vd-arrow">›</span></button>';
   l.vocab.forEach((w, i) => {
     const name = tbCur + '-w' + (i + 1);
     const row = document.createElement('div');
@@ -1326,6 +1331,19 @@ function initTextbook(){
 
   /* 播放按钮（事件委托） */
   $('#tb-detail').addEventListener('click', e => {
+    /* 词汇表 → 默写：整课词表一键导入（先听音看写法，再逐词默写） */
+    const imp = e.target.closest('.tb-vocab-dict');
+    if (imp){
+      const lid = imp.dataset.import || tbCur;
+      const lesson = TB_LESSONS[lid];
+      if (!lesson || !lesson.vocab || !lesson.vocab.length) return;
+      if (typeof window.dictImport === 'function'){
+        window.dictImport(lesson.vocab, { label: (lesson.no || lid) + ' · 单词表' });
+      } else if (typeof showView === 'function') {
+        showView('dictation');
+      }
+      return;
+    }
     const wp = e.target.closest('.tb-wplay');
     if (wp){ playWordAudio(wp.dataset.a, wp.dataset.t, wp, wp.dataset.slow === '1'); return; }
     const lp = e.target.closest('.tb-lplay');

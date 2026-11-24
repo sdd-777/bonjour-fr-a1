@@ -190,7 +190,8 @@
     words: [],         // [{fr, zh, typed, ok}]
     idx: 0,            // 当前 learn/dictate 索引
     ocrLoading: false,
-    wrongSource: false // 本次是否在听写错题（交卷后继续用）
+    wrongSource: false,// 本次是否在听写错题（交卷后继续用）
+    importLabel: ''    // 外部导入来源（如教材某一课词汇表）
   };
 
   function $(s, root) { return (root || document).querySelector(s); }
@@ -289,6 +290,12 @@
     else if (st.stage === 'dictate') renderDictate(body);
     else if (st.stage === 'review') renderReview(body);
     else if (st.stage === 'result') renderResult(body);
+    // 教材词汇表等外部导入：顶部常驻来源提示，让用户清楚这批词从哪来
+    if (st.importLabel && st.stage !== 'upload') {
+      const note = el('div', 'dict-import-note');
+      note.innerHTML = '📗 来源：<b>' + esc(st.importLabel) + '</b> ／ 共 ' + st.words.length + ' 词';
+      body.insertBefore(note, body.firstChild);
+    }
     updateSteps();
     updateWrongBadge();
   }
@@ -361,6 +368,7 @@
       if (!list.length) { toast('请先输入或识别单词'); return; }
       st.words = list.map(x => ({ fr: x.fr, zh: x.zh, typed: '', ok: false, known: x.known, source: x.known ? 'dict' : '' }));
       st.wrongSource = false;
+      st.importLabel = '';
       st.stage = 'confirm'; render();
       // 本地未收录的词，后台联网搜索中文释义（不阻塞，边查边刷新列表）
       const unknown = st.words.filter(w => !w.known);
@@ -846,7 +854,7 @@
     const rw = $('#dict-retry-wrong');
     if (rw) rw.onclick = () => {
       st.words = r.wrong.map(w => ({ fr: w.fr, zh: w.zh, typed: '', ok: false, known: true }));
-      st.idx = 0; st.wrongSource = true; st.stage = 'learn'; render();
+      st.idx = 0; st.wrongSource = true; st.importLabel = '错题本'; st.stage = 'learn'; render();
       toast('只听写这 ' + st.words.length + ' 个错词');
     };
   }
@@ -870,7 +878,48 @@
     const wrong = loadWrong();
     if (!wrong.length) { toast('错题本还是空的'); return; }
     st.words = wrong.map(w => ({ fr: w.fr, zh: w.zh, typed: '', ok: false, known: true }));
-    st.idx = 0; st.wrongSource = true; st.stage = 'learn'; render();
+    st.idx = 0; st.wrongSource = true; st.importLabel = '错题本'; st.stage = 'learn'; render();
+  }
+
+  /* ---------- 外部导入：教材词汇表 → 默写 ----------
+     供教材模块调用：把某一课的 {fr, zh} 词条直接送进默写流程。
+     · 教材词形常带可替换成分括号（étudiant(e) / appeler (s') / à côté (de)），
+       默写时去掉括号只留主词形，答案才与自然书写一致；阴阳性等已在词汇表展示。
+     · 这批词自带中文释义（known:true），无需 OCR 或联网查词，直接进「学习」阶段。
+  ---------- */
+  function importWords(words, opts) {
+    const seen = Object.create(null);
+    const list = [];
+    (words || []).forEach(raw => {
+      const w = raw || {};
+      const orig = String(w.fr || '').trim();
+      const fr = orig
+        .replace(/\s*\([^)]*\)/g, '')   // 去 (e)/(ne)/(s')/(de)/(trice) 等可替换成分
+        .replace(/\s+/g, ' ').trim();
+      if (!fr) return;
+      // 按「原词形 + 释义」去重：像 tout（仅仅）与 tout(e)（全部的）是两条不同词条，
+      // 去括号后拼写相同但意思不同，不能合并掉。
+      const key = orig + '\u0001' + String(w.zh || '');
+      if (seen[key]) return;
+      seen[key] = 1;
+      list.push({
+        fr: fr, zh: String(w.zh || '').trim(),
+        typed: '', ok: false, judged: false,
+        known: true, source: 'tb'
+      });
+    });
+    if (!list.length) { toast('这一课没有可默写的单词'); return false; }
+    ensureDictation();
+    st.words = list;
+    st.idx = 0;
+    st.wrongSource = false;
+    st.result = null;
+    st.importLabel = String((opts && opts.label) || '教材词汇表').slice(0, 60);
+    st.stage = 'learn';
+    if (typeof showView === 'function') showView('dictation');
+    else render();
+    toast('已导入 ' + list.length + ' 个词，先听音看写法，再开始默写');
+    return true;
   }
 
   /* ---------- 生命周期 ---------- */
@@ -888,6 +937,8 @@
     // 供 app.showView 调用
     window.ensureDictation = function () { ensureDictation(); render(); };
     window.stopDictation = stopDictSpeak;
+    // 教材词汇表导入入口（textbook.js 调用）
+    window.dictImport = importWords;
     // 顶部常驻错题本入口（任何阶段都能点）
     const quick = $('#dict-wrong-quick');
     if (quick) quick.onclick = () => startWrongBook();
@@ -902,6 +953,7 @@
   // 暴露给测试/外部
   window.Dictation = {
     lookup, parseRaw, normKey, lookupOnline, cleanExplain, enrichOnline,
+    importWords,
     get state() { return st; },
     render
   };
