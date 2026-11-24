@@ -243,15 +243,17 @@
   }
   // 主播放入口：优先预录法语 MP3；无对应文件/加载失败则回退 TTS。
   // slow 用 playbackRate 实现慢速（预录 0.6、TTS 0.75）
-  function speak(fr, btn, slow, audioName) {
+  // audioPath：教材词汇表自带的预录音名（如 tb-l1-w1），避免退回设备 TTS 读成英语口音
+  function speak(fr, btn, slow, audioName, audioPath) {
     stopDictSpeak();
     const token = speakToken;
     if (btn) btn.classList.add('playing');
     const done = () => { if (token === speakToken && btn) btn.classList.remove('playing'); };
     const word = cleanWordForSpeak(fr);
-    // 指定音频名（如鼓励语 dict-bravo）优先；否则按词形 slug 找预录
+    // 优先级：教材词汇预录音 > 指定句音（如 dict-bravo）> 词形 slug 预录 > TTS
     let rel = '';
-    if (audioName) rel = 'assets/audio/sentences/' + audioName + '.mp3';
+    if (audioPath) rel = 'assets/audio/textbook/' + audioPath + '.mp3';
+    else if (audioName) rel = 'assets/audio/sentences/' + audioName + '.mp3';
     else {
       const slug = dictSlug(word);
       if (slug) rel = 'assets/audio/words/sw-' + slug + '.mp3';
@@ -675,8 +677,8 @@
       '</div>' +
       '<p class="dict-hint center">先听发音、记住写法；准备好后开始默写。</p>';
     body.appendChild(box);
-    $('#dict-learn-say').onclick = e => speak(w.fr, e.currentTarget);
-    $('#dict-learn-slow').onclick = e => speak(w.fr, e.currentTarget, true);
+    $('#dict-learn-say').onclick = e => speak(w.fr, e.currentTarget, false, null, w.audio);
+    $('#dict-learn-slow').onclick = e => speak(w.fr, e.currentTarget, true, null, w.audio);
     $('#dict-learn-prev').onclick = () => { if (st.idx > 0) { st.idx--; render(); } };
     $('#dict-learn-next').onclick = () => {
       if (st.idx < total - 1) { st.idx++; render(); }
@@ -729,7 +731,7 @@
     body.appendChild(box);
     const inp = $('#dict-answer');
     setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
-    $('#dict-hint').onclick = e => speak(w.fr, e.currentTarget, false);
+    $('#dict-hint').onclick = e => speak(w.fr, e.currentTarget, false, null, w.audio);
     const submit = () => {
       const typed = inp.value.trim();
       if (!typed) { toast('先写出单词再提交'); return; }
@@ -859,7 +861,7 @@
     if (home) home.onclick = () => { st.stage = 'upload'; render(); };
     const rw = $('#dict-retry-wrong');
     if (rw) rw.onclick = () => {
-      st.words = r.wrong.map(w => ({ fr: w.fr, zh: w.zh, typed: '', ok: false, known: true }));
+      st.words = r.wrong.map(w => ({ fr: w.fr, zh: w.zh, audio: w.audio || '', typed: '', ok: false, known: true }));
       st.idx = 0; st.wrongSource = true; st.importLabel = '错题本'; st.stage = 'learn'; render();
       toast('只听写这 ' + st.words.length + ' 个错词');
     };
@@ -875,15 +877,18 @@
     wrong.forEach(w => {
       const k = normKey(w.fr) || w.fr.toLowerCase();
       const found = cur.find(x => (normKey(x.fr) || x.fr.toLowerCase()) === k);
-      if (found) { found.times = (found.times || 1) + 1; found.last = Date.now(); found.typed = w.typed; }
-      else cur.push({ fr: w.fr, zh: w.zh, typed: w.typed, times: 1, last: Date.now() });
+      if (found) {
+        found.times = (found.times || 1) + 1; found.last = Date.now(); found.typed = w.typed;
+        if (w.audio) found.audio = w.audio;
+      }
+      else cur.push({ fr: w.fr, zh: w.zh, typed: w.typed, audio: w.audio || '', times: 1, last: Date.now() });
     });
     try { localStorage.setItem(LS_WRONG, JSON.stringify(cur)); } catch (e) {}
   }
   function startWrongBook() {
     const wrong = loadWrong();
     if (!wrong.length) { toast('错题本还是空的'); return; }
-    st.words = wrong.map(w => ({ fr: w.fr, zh: w.zh, typed: '', ok: false, known: true }));
+    st.words = wrong.map(w => ({ fr: w.fr, zh: w.zh, audio: w.audio || '', typed: '', ok: false, known: true }));
     st.idx = 0; st.wrongSource = true; st.importLabel = '错题本'; st.stage = 'learn'; render();
   }
 
@@ -910,6 +915,7 @@
       seen[key] = 1;
       list.push({
         fr: fr, zh: String(w.zh || '').trim(),
+        audio: String(w.audio || ''),   // 教材预录法音名，保证任何设备都是标准法语发音
         typed: '', ok: false, judged: false,
         known: true, source: 'tb'
       });

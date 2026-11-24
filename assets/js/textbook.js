@@ -1338,7 +1338,11 @@ function initTextbook(){
       const lesson = TB_LESSONS[lid];
       if (!lesson || !lesson.vocab || !lesson.vocab.length) return;
       if (typeof window.dictImport === 'function'){
-        window.dictImport(lesson.vocab, { label: (lesson.no || lid) + ' · 单词表' });
+        // 每个词带上教材预录法音名（tb-lX-wN），默写时播放标准法语而非设备 TTS
+        const words = lesson.vocab.map((w, i) => ({
+          fr: w.fr, zh: w.zh, audio: lid + '-w' + (i + 1)
+        }));
+        window.dictImport(words, { label: (lesson.no || lid) + ' · 单词表' });
       } else if (typeof showView === 'function') {
         showView('dictation');
       }
