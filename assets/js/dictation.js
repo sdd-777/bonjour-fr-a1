@@ -221,6 +221,34 @@
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toLowerCase().replace(/[^a-z0-9'-]/g, '').replace(/^[-']+|[-']+$/g, '');
   }
+  // 阴阳性：优先用导入时自带的 g（教材词汇表最准），否则从查词词库 RICH 的 posLabel 推断。
+  // 返回 'm' / 'f' / ''（'' 表示非名词或未知，如代词、副词、动词）。
+  function genderOf(w) {
+    if (!w) return '';
+    const g = String(w.g || '').toLowerCase();
+    if (g === 'm' || g === 'f') return g;
+    // 从 pos 字段直接判断（教材词条带 n.m./n.f.）
+    const pos = String(w.pos || '');
+    if (/n\.f|nf\b/.test(pos)) return 'f';
+    if (/n\.m|nm\b/.test(pos)) return 'm';
+    // 查词库：按词形精确查 RICH 的义项词性标签
+    const R = (typeof RICH !== 'undefined') ? RICH : null;
+    const forms = [String(w.fr || '').trim(), dictSlug(w.fr)];
+    if (R) {
+      for (const f of forms) {
+        if (!f || !R[f]) continue;
+        for (const s of (R[f].s || [])) {
+          const pl = String(s.posLabel || '') + ' ' + String(s.pos || '');
+          if (/阴性/.test(pl)) return 'f';
+          if (/阳性/.test(pl)) return 'm';
+        }
+      }
+    }
+    return '';
+  }
+  // 阴阳性中文标签
+  function genderLabel(g) { return g === 'm' ? '阳性' : (g === 'f' ? '阴性' : ''); }
+
   // 解析音频地址（离线单文件版走内联映射表）
   function dictResolveAudio(rel) {
     const M = (typeof window !== 'undefined') ? window.__AUDIO_DATA__ : null;
@@ -713,7 +741,7 @@
         // 进入默写：打乱顺序（保证与录入/学习顺序不同），重置判定状态
         st.words = shuffledForDictate(st.words);
         st.words.forEach(w => { w.typed = ''; w.ok = false; w.judged = false; });
-        st.idx = 0; st.stage = 'dictate'; render();
+        st.idx = 0; st.editFromReview = false; st.stage = 'dictate'; render();
       }
     };
   }
@@ -738,12 +766,15 @@
     const w = st.words[st.idx];
     const total = st.words.length;
     const doneCount = st.words.filter(x => x.judged).length;
+    const gLabel = genderLabel(genderOf(w));
     const box = el('div', 'dict-card card dict-study');
+    const editing = !!st.editFromReview;
     box.innerHTML =
-      '<div class="dict-progress-text">默写 ' + (st.idx + 1) + ' / ' + total + '（顺序已打乱）</div>' +
+      '<div class="dict-progress-text">' + (editing ? '修改第 ' + (st.idx + 1) + ' 个' : '默写 ' + (st.idx + 1) + ' / ' + total + '（顺序已打乱）') + '</div>' +
       '<div class="dict-progress"><div style="width:' + (doneCount / total * 100) + '%"></div></div>' +
       '<div class="dict-prompt-label">请写出意思是：</div>' +
-      '<div class="dict-mean-big">' + esc(w.zh || '（未填意思）') + '</div>' +
+      '<div class="dict-mean-big">' + esc(w.zh || '（未填意思）') +
+        (gLabel ? '　<span class="dict-gender-tag">' + gLabel + '</span>' : '') + '</div>' +
       '<div class="dict-tip-row">' +
       '<button class="dict-btn hint" id="dict-hint">💡 提示：听发音</button>' +
       '<span class="dict-tip-note">重音符号（é è ç 等）也要写对哦</span>' +
@@ -752,9 +783,12 @@
       'spellcheck="false" placeholder="在这里拼写法语单词" value="' + esc(w.typed || '') + '">' +
       '<div id="dict-feedback" class="dict-feedback"></div>' +
       '<div class="dict-actions center">' +
-      '<button class="dict-btn primary" id="dict-submit">确定，下一个 →</button>' +
+      (editing
+        ? '<button class="dict-btn primary" id="dict-submit">确定，返回检查 →</button>' +
+          '<button class="dict-btn ghost" id="dict-cancel-edit">取消修改</button>'
+        : '<button class="dict-btn primary" id="dict-submit">确定，下一个 →</button>') +
       '</div>' +
-      '<p class="dict-hint center">默写过程中不显示对错，全部完成并交卷后统一公布结果。</p>';
+      '<p class="dict-hint center">' + (editing ? '改好后直接返回检查界面，无需逐词确认。' : '默写过程中不显示对错，全部完成并交卷后统一公布结果。') + '</p>';
     body.appendChild(box);
     const inp = $('#dict-answer');
     setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
@@ -767,15 +801,20 @@
       w.judged = true;
       const fb = $('#dict-feedback');
       fb.className = 'dict-feedback';
-      fb.textContent = '已记录，继续…';
+      fb.textContent = st.editFromReview ? '已更新，返回检查…' : '已记录，继续…';
       $('#dict-submit').disabled = true;
       setTimeout(() => {
-        if (st.idx < total - 1) { st.idx++; render(); }
+        if (st.editFromReview) {
+          st.editFromReview = false;   // 改完直接回检查界面
+          st.stage = 'review'; render();
+        } else if (st.idx < total - 1) { st.idx++; render(); }
         else { st.stage = 'review'; render(); }
       }, 450);
     };
     $('#dict-submit').onclick = submit;
     inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
+    const cancelBtn = $('#dict-cancel-edit');
+    if (cancelBtn) cancelBtn.onclick = () => { st.editFromReview = false; st.stage = 'review'; render(); };
   }
 
   /* —— 阶段 5：确认答案（不显示对错；交卷后才公布） —— */
@@ -793,7 +832,7 @@
       '</div>';
     body.appendChild(box);
     drawReview();
-    $('#dict-back-dictate').onclick = () => { st.idx = 0; st.words.forEach(w => { w.typed = ''; w.ok = false; w.judged = false; }); st.stage = 'dictate'; render(); };
+    $('#dict-back-dictate').onclick = () => { st.idx = 0; st.editFromReview = false; st.words.forEach(w => { w.typed = ''; w.ok = false; w.judged = false; }); st.stage = 'dictate'; render(); };
     $('#dict-submit-final').onclick = finalize;
   }
   function drawReview() {
@@ -801,11 +840,14 @@
     list.innerHTML = '';
     st.words.forEach((w, i) => {
       // 中性样式：不显示 ✅/✗、不给 ok/bad 配色，避免交卷前泄露对错
+      const gLabel = genderLabel(genderOf(w));
       const row = el('div', 'dict-rv-row neutral');
       row.innerHTML =
         '<span class="dict-rv-ico">✏️</span>' +
         '<div class="dict-rv-main">' +
-        '<div class="dict-rv-typed">第 ' + (i + 1) + ' 个　你写的：<b>' + (w.typed ? esc(w.typed) : '<i>（空）</i>') + '</b></div>' +
+        '<div class="dict-rv-typed">' + (i + 1) + '. （' + esc(w.zh || '未填意思') + '）' +
+          (gLabel ? ' <span class="dict-gender-tag">' + gLabel + '</span>' : '') +
+          '<div class="dict-rv-your">你写的：<b>' + (w.typed ? esc(w.typed) : '<i>（空）</i>') + '</b></div>' +
         '</div>' +
         '<button class="dict-btn tiny" data-i="' + i + '">修改</button>';
       list.appendChild(row);
@@ -813,6 +855,7 @@
     $$('.dict-btn.tiny', list).forEach(b => b.onclick = e => {
       st.idx = +e.currentTarget.dataset.i;
       st.words[st.idx].judged = false; // 允许重新作答该词
+      st.editFromReview = true;        // 从检查界面进来：改完一个词就直接返回，不必逐词点到最后
       st.stage = 'dictate';
       render();
       const inp = $('#dict-answer');
@@ -944,6 +987,7 @@
       list.push({
         fr: fr, zh: String(w.zh || '').trim(),
         audio: String(w.audio || ''),   // 教材预录法音名，保证任何设备都是标准法语发音
+        g: String(w.g || ''), pos: String(w.pos || ''),  // 阴阳性信息（用于默写提示区分同义不同性）
         typed: '', ok: false, judged: false,
         known: true, source: 'tb'
       });

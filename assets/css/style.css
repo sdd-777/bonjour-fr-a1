@@ -1621,6 +1621,13 @@ main{
 .dict-learn-nav{ margin-top:.6rem; }
 .dict-prompt-label{ font-size:.9rem; color:var(--ink-soft); }
 .dict-mean-big{ font-size:2rem; font-weight:800; color:var(--ink); margin:.3rem 0 1rem; }
+/* 阴阳性标签：提示该写阳性还是阴性形式（同义不同性的词很关键） */
+.dict-gender-tag{
+  display:inline-block; font-size:.82rem; font-weight:700; line-height:1;
+  padding:.32em .7em; border-radius:999px; vertical-align:middle;
+  background:var(--blue-soft); color:var(--blue); border:1px solid var(--blue);
+  white-space:nowrap;
+}
 .dict-tip-row{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.6rem; margin-bottom:1rem; }
 .dict-tip-note{ font-size:.8rem; color:var(--rose-deep); }
 .dict-answer{
@@ -1639,8 +1646,10 @@ main{
 .dict-rv-ico{ font-size:1.1rem; }
 .dict-rv-main{ flex:1; min-width:0; }
 .dict-rv-zh{ color:var(--ink-soft); font-size:.88rem; }
-.dict-rv-typed{ font-size:.84rem; color:var(--ink-soft); }
-.dict-rv-row.bad .dict-rv-typed{ color:var(--rose-deep); }
+.dict-rv-typed{ font-size:.92rem; color:var(--ink); font-weight:600; line-height:1.5; }
+.dict-rv-typed .dict-gender-tag{ margin-left:.15rem; }
+.dict-rv-your{ font-size:.8rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; }
+.dict-rv-row.bad .dict-rv-your{ color:var(--rose-deep); }
 
 /* 结果 */
 .dict-result{ text-align:center; padding:1.6rem 1rem; }
