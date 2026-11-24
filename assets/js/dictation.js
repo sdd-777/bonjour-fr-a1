@@ -860,8 +860,8 @@
       row.innerHTML =
         '<span class="dict-rv-ico">✏️</span>' +
         '<div class="dict-rv-main">' +
-        '<div class="dict-rv-typed">' + (i + 1) + '. （' + esc(w.zh || '未填意思') + '）' +
-          (gLabel ? ' <span class="dict-gender-tag">' + gLabel + '</span>' : '') +
+        '<div class="dict-rv-typed">' + (i + 1) + '. ' + esc(w.zh || '未填意思') +
+          (gLabel ? '　<span class="dict-gender-tag">' + gLabel + '</span>' : '') +
           '<div class="dict-rv-your">你写的：<b>' + (w.typed ? esc(w.typed) : '<i>（空）</i>') + '</b></div>' +
         '</div>' +
         '<button class="dict-btn tiny" data-i="' + i + '">修改</button>';
