@@ -484,25 +484,35 @@
       .join('\n');
   }
   let tessLoading = null;
+  /* OCR 引擎完全本地化：原先从 jsdelivr/unpkg 加载引擎、从 tessdata.projectnaptha.com
+     下载法语识别包，国内网络下这些境外源经常不可达，导致「已联网却识别不可用」。
+     现在引擎(wasm)/worker/法语数据都放本站 assets/ocr/，只依赖本站即可识别。 */
+  const OCR_LOCAL = {
+    workerPath: 'assets/ocr/worker/worker.min.js',
+    corePath: 'assets/ocr/core/tesseract-core-simd-lstm.wasm.js',
+    langPath: 'assets/ocr/lang'
+  };
   function loadTesseract() {
     if (window.Tesseract) return Promise.resolve(window.Tesseract);
     if (tessLoading) return tessLoading;
     tessLoading = new Promise((resolve, reject) => {
-      const CDN = [
+      // 本地优先，境外 CDN 仅作最后兜底
+      const SRC = [
+        'assets/js/tesseract.min.js',
         'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',
         'https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'
       ];
       let i = 0;
       const tryNext = () => {
-        if (i >= CDN.length) { reject(new Error('OCR 引擎加载失败')); return; }
+        if (i >= SRC.length) { reject(new Error('OCR 引擎加载失败')); return; }
         const s = document.createElement('script');
-        s.src = CDN[i++];
+        s.src = SRC[i++];
         s.onload = () => window.Tesseract ? resolve(window.Tesseract) : tryNext();
         s.onerror = tryNext;
         document.head.appendChild(s);
       };
       tryNext();
-      setTimeout(() => reject(new Error('OCR 加载超时')), 20000);
+      setTimeout(() => { if (!window.Tesseract) reject(new Error('OCR 加载超时')); }, 30000);
     });
     return tessLoading;
   }
@@ -515,8 +525,12 @@
       // 关键：先把拍照原图标准化（纠正 iOS EXIF 方向 / HEIC / 超大图），再识别
       const imageData = await prepareImage(file);
       const T = await loadTesseract();
-      status.textContent = '🔄 正在识别图片文字…（首次需联网下载法语识别包）';
+      status.textContent = '🔄 正在识别图片文字…（首次加载识别引擎，请稍候）';
+      // 全部走本地 OCR 资源，不依赖任何境外 CDN
       const res = await T.recognize(imageData, 'fra', {
+        workerPath: OCR_LOCAL.workerPath,
+        corePath: OCR_LOCAL.corePath,
+        langPath: OCR_LOCAL.langPath,
         logger: m => {
           if (m.status === 'recognizing text') {
             status.textContent = '🔄 正在识别… ' + Math.round(m.progress * 100) + '%';
