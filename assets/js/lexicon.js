@@ -61,6 +61,7 @@
   const suggestKeys = uniqKeys.slice().sort((a, b) => a.length - b.length || a.localeCompare(b));
 
   /* ---------- 发音（预录法语 MP3 优先） ---------- */
+  let lxNoFrVoiceWarned = false;
   let lxAudio = null;
   function stopLexSpeak() {
     if (lxAudio) { try { lxAudio.pause(); } catch (e) {} lxAudio = null; }
@@ -95,11 +96,22 @@
         a.onerror = () => { tryNext(); };
         try { a.play(); } catch (e) { tryNext(); }
       } else {
-        if (!window.speechSynthesis) { done(); return; }
+        if (!window.speechSynthesis) { toast('此浏览器不支持语音朗读'); done(); return; }
+        // 朗读前刷新语音列表：iOS/部分 Android 的 voices 异步加载，首次可能为空，
+        // 否则会误判为无法语语音、被系统默认英语声读出法语（听起来是英文发音）。
+        if (typeof refreshVoices === 'function') refreshVoices();
         const u = new SpeechSynthesisUtterance(fr);
         u.lang = 'fr-FR'; u.rate = 0.9;
-        const v = (typeof frVoice === 'function') ? frVoice() : null;
+        let v = (typeof frVoice === 'function') ? frVoice() : null;
+        // 兜底：精确匹配不到时，用任意 lang 含 fr 的语音，避免退回默认英语声
+        if (!v && window.speechSynthesis.getVoices) {
+          try { v = speechSynthesis.getVoices().find(x => /fr/i.test(x.lang)) || null; } catch (e) {}
+        }
         if (v) u.voice = v;
+        else if (!lxNoFrVoiceWarned) {
+          lxNoFrVoiceWarned = true;
+          toast('设备未安装法语语音，此词朗读口音可能不准（建议下载法语语音包）');
+        }
         u.onend = done; u.onerror = done;
         try { speechSynthesis.speak(u); } catch (e) { done(); }
         setTimeout(done, 4000);
