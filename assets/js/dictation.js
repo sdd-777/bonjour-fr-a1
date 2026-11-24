@@ -793,9 +793,16 @@
     const inp = $('#dict-answer');
     setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
     $('#dict-hint').onclick = e => speak(w.fr, e.currentTarget, false, null, w.audio);
+    // 防重复提交：移动端键盘长按回车会触发 keydown 连发，或在 450ms 过渡期内
+    // 同时点到「确定」和回车。旧逻辑每次 submit 都排一个 idx++ 定时器，一次跳过
+    // 多个词——表现为检查界面出现「（空）」，而那个词默写时一闪而过甚至没弹出。
+    let submitting = false;
     const submit = () => {
+      if (submitting) return;              // 同一个词只接受一次提交
       const typed = inp.value.trim();
       if (!typed) { toast('先写出单词再提交'); return; }
+      submitting = true;
+      inp.disabled = true;                 // 过渡期内锁住输入框，杜绝连发
       w.typed = typed;
       w.ok = (typed === w.fr.trim()); // 后台记录判定（重音/大小写严格比对），交卷后才公布
       w.judged = true;
@@ -807,14 +814,22 @@
         if (st.editFromReview) {
           st.editFromReview = false;   // 改完直接回检查界面
           st.stage = 'review'; render();
-        } else if (st.idx < total - 1) { st.idx++; render(); }
-        else { st.stage = 'review'; render(); }
+        } else {
+          // 自愈推进：跳到下一个「还没作答」的词。正常情况下就是当前词的下一个；
+          // 万一此前因任何原因漏掉了某个词，这里会把它找回来，绝不让空白答案进入检查界面。
+          const next = st.words.findIndex(x => !x.judged);
+          if (next >= 0) { st.idx = next; render(); }
+          else { st.stage = 'review'; render(); }
+        }
       }, 450);
     };
     $('#dict-submit').onclick = submit;
     inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
     const cancelBtn = $('#dict-cancel-edit');
-    if (cancelBtn) cancelBtn.onclick = () => { st.editFromReview = false; st.stage = 'review'; render(); };
+    if (cancelBtn) cancelBtn.onclick = () => {
+      st.words[st.idx].judged = true;   // 取消修改：恢复原判定，避免该词被误当成漏答
+      st.editFromReview = false; st.stage = 'review'; render();
+    };
   }
 
   /* —— 阶段 5：确认答案（不显示对错；交卷后才公布） —— */
@@ -865,6 +880,20 @@
 
   /* —— 阶段 6：交卷结果 —— */
   function finalize() {
+    // 最后一道防线：若仍有未作答（空白）的词，先回去把它默写掉，
+    // 避免用户带着漏答的词交卷却浑然不觉。
+    const blankIdx = st.words.findIndex(w => !String(w.typed || '').trim());
+    if (blankIdx >= 0) {
+      st.idx = blankIdx;
+      st.editFromReview = false;
+      st.stage = 'dictate';
+      render();
+      const inp = $('#dict-answer');
+      if (inp) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+      const n = st.words.filter(w => !String(w.typed || '').trim()).length;
+      toast('还有 ' + n + ' 个词没写，已跳到第一个，写完再交卷');
+      return;
+    }
     const right = st.words.filter(w => w.ok).length;
     const total = st.words.length;
     const wrong = st.words.filter(w => !w.ok);
