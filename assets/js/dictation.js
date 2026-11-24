@@ -230,13 +230,26 @@
     }
     return rel;
   }
+  let dictNoFrVoiceWarned = false;
   function ttsSpeak(fr, btn, slow, token, done) {
     if (!window.speechSynthesis) { toast('此浏览器不支持语音朗读'); done(); return; }
+    // 朗读前刷新一次语音列表：iOS/部分 Android 的 voices 是异步加载的，
+    // 首次调用时列表可能为空，导致误判为「无法语语音」而用英语声读。
+    if (typeof refreshVoices === 'function') refreshVoices();
     const u = new SpeechSynthesisUtterance(fr);
     u.lang = 'fr-FR';
     u.rate = slow ? 0.75 : 0.95;
-    const v = (typeof frVoice === 'function') ? frVoice() : null;
+    let v = (typeof frVoice === 'function') ? frVoice() : null;
+    // 退一步：若精确匹配不到法语语音，用 lang 含 'fr' 的任意语音兜底
+    if (!v && window.speechSynthesis.getVoices) {
+      try { v = speechSynthesis.getVoices().find(x => /fr/i.test(x.lang)) || null; } catch (e) {}
+    }
     if (v) u.voice = v;
+    else if (!dictNoFrVoiceWarned) {
+      // 设备确实没有法语语音：明确告知此词读法可能不准，建议补预录音/装法语包
+      dictNoFrVoiceWarned = true;
+      toast('此词暂无法语预录音，且设备未安装法语语音；朗读口音可能不准');
+    }
     u.onend = done; u.onerror = done;
     try { speechSynthesis.speak(u); } catch (e) { done(); }
     setTimeout(done, 4500);
