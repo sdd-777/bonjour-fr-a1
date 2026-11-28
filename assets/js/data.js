@@ -504,3 +504,39 @@ const SENTENCES = [
     ]
   },
 ];
+
+/* =========================================================
+   造句练习「题组」：把问答句配对到同一界面，独立句单独成组。
+   - lines: 引用的 SENTENCES id 数组（问句在前、答句在后）；每组 1~2 句
+   - 同一个句子 id 只出现一次，避免重复计数（35 句全覆盖）
+   - qa=true 表示这是一组问答（界面上会标注「问 / 答」）
+   - 严格按 lines 顺序逐句手写、逐句批改
+   ========================================================= */
+const BUILD_GROUPS = [
+  /* ---------- U1 相遇 ---------- */
+  { id: "G01", unit: "U1", cat: "问候", emoji: "👋", qa: false, lines: [101] },
+  { id: "G02", unit: "U1", cat: "姓名", emoji: "🪪", qa: true,  lines: [102, 103] },
+  { id: "G03", unit: "U1", cat: "身份", emoji: "🎓", qa: true,  lines: [104, 105] },
+  { id: "G04", unit: "U1", cat: "国籍", emoji: "🌍", qa: true,  lines: [106, 107] },
+  { id: "G05", unit: "U1", cat: "国籍", emoji: "🇨🇳", qa: false, lines: [108] },
+  { id: "G06", unit: "U1", cat: "年龄", emoji: "🎂", qa: true,  lines: [109, 110] },
+  { id: "G07", unit: "U1", cat: "住址", emoji: "🏠", qa: false, lines: [111] },
+  { id: "G08", unit: "U1", cat: "近况", emoji: "😊", qa: false, lines: [112] },
+  /* ---------- U2 画像 ---------- */
+  { id: "G09", unit: "U2", cat: "名称", emoji: "📖", qa: true,  lines: [113, 114] },
+  { id: "G10", unit: "U2", cat: "名称", emoji: "🔑", qa: false, lines: [115] },
+  { id: "G11", unit: "U2", cat: "颜色", emoji: "🎨", qa: true,  lines: [116, 117] },
+  { id: "G12", unit: "U2", cat: "所属", emoji: "🧥", qa: true,  lines: [118, 119] },
+  { id: "G13", unit: "U2", cat: "位置", emoji: "🔍", qa: true,  lines: [120, 121] },
+  { id: "G14", unit: "U2", cat: "价格", emoji: "💶", qa: true,  lines: [122, 123] },
+  /* ---------- U3 在哪儿 ---------- */
+  { id: "G15", unit: "U3", cat: "问路", emoji: "🏛️", qa: true,  lines: [124, 125] },
+  { id: "G16", unit: "U3", cat: "方位", emoji: "🚇", qa: true,  lines: [126, 127] },
+  { id: "G17", unit: "U3", cat: "问路", emoji: "📏", qa: true,  lines: [128, 129] },
+  { id: "G18", unit: "U3", cat: "指路", emoji: "⬆️", qa: false, lines: [130] },
+  { id: "G19", unit: "U3", cat: "指路", emoji: "➡️", qa: false, lines: [131] },
+  { id: "G20", unit: "U3", cat: "指路", emoji: "↩️", qa: false, lines: [132] },
+  { id: "G21", unit: "U3", cat: "交通", emoji: "🚶", qa: false, lines: [133] },
+  { id: "G22", unit: "U3", cat: "交通", emoji: "🚇", qa: false, lines: [134] },
+  { id: "G23", unit: "U3", cat: "方位", emoji: "🏦", qa: false, lines: [135] },
+];

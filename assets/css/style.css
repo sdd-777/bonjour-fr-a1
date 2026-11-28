@@ -352,6 +352,76 @@ main{
 .bi-input.wrong{ border-color: #C04A4A; background: #FDECEC; }
 .bi-input.right{ border-color: var(--sage); background: #EEF7F0; }
 .bi-answer{ font-weight: 800; color: #C04A4A; font-size: 1rem; white-space: nowrap; }
+
+/* 整句手写：一条条横格线，写不下自动换到下一行 */
+.answer-slots.qa-mode{ gap: 1rem; }
+.bl-row{
+  position: relative;
+  padding: .55rem .7rem .7rem 3.4rem;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: #FFFDF4;
+  transition: border-color .15s ease, background .15s ease;
+}
+.bl-row.bl-ok{ border-color: var(--sage); background: #F2F8F3; }
+.bl-row.bl-bad{ border-color: #E0A0A0; background: #FDF1F1; }
+.bl-role{
+  position: absolute; top: .6rem; left: .7rem;
+  font-size: .82rem; font-weight: 800; color: #fff;
+  border-radius: 8px; padding: .2rem .55rem; line-height: 1.4;
+}
+.bl-role.q{ background: #B04E7E; }
+.bl-role.a{ background: #3E8A86; }
+.bl-zh{
+  font-size: .95rem; font-weight: 600; color: var(--ink-soft);
+  margin: 0 2rem .4rem 0;
+}
+.bl-line{
+  display: block; width: 100%;
+  font-size: 1.12rem; font-weight: 600; color: var(--ink);
+  line-height: 2.15rem;                 /* 与横格间距对齐 */
+  min-height: 4.3rem; padding: .1rem .35rem;
+  border: none; outline: none; resize: vertical;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent calc(2.15rem - 1px),
+    #D9C69C calc(2.15rem - 1px), #D9C69C 2.15rem
+  );
+  background-position: 0 .1rem;
+  overflow: hidden;
+}
+.bl-line::placeholder{ color: #C4B69C; font-weight: 400; }
+.bl-line:disabled{ color: var(--ink); }
+.bl-line.wrong{ color: #9C3A3A; }
+.bl-line.right{ color: #2F6B40; }
+.bl-audio{
+  position: absolute; right: .6rem; bottom: .7rem;
+  border: 1px solid #D9C69C; background: #FBF3E2; color: #8A6B3B;
+  border-radius: 10px; padding: .18rem .5rem; font-size: 1rem;
+  cursor: pointer; line-height: 1.3;
+}
+.bl-audio:hover{ background: #F3E6C8; }
+.bl-answer{
+  margin: .5rem .2rem 0 .2rem; padding: .35rem .6rem;
+  font-size: .92rem; font-weight: 700; color: #9C3A3A;
+  background: #FDECEC; border-radius: 8px;
+}
+.hint-tag{
+  display: inline-block; font-size: .75rem; font-weight: 800; color: #fff;
+  border-radius: 6px; padding: .05rem .4rem; margin-right: .35rem;
+}
+.hint-tag.q{ background: #B04E7E; }
+.hint-tag.a{ background: #3E8A86; }
+.qa-flag{
+  display: inline-block; font-size: .62rem; font-weight: 800; color: #fff;
+  background: #8A6BB8; border-radius: 5px; padding: .05rem .3rem;
+  margin-right: .3rem; vertical-align: 1px; letter-spacing: .5px;
+}
+.kw-sep{
+  width: 100%; flex-basis: 100%; margin: .5rem 0 .15rem;
+  font-size: .9rem; font-weight: 700; color: #8A6B3B;
+}
+.kw-group-row td{ background: #FBF3E2; font-weight: 700; color: #8A6B3B; }
 .build-result{
   border-radius: 12px; padding: .7rem .9rem; margin-bottom: 1rem;
   font-size: .96rem; line-height: 1.6;
