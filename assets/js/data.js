@@ -1,2140 +1,506 @@
 /* =========================================================
-   Bonjour ! 法语启蒙小屋 — A1 句子数据（56 句）
-   - fr: 完整法语句子
-   - words: 单词拆分（t=含标点的词形, r=句子成分角色, zh=词义）
-   - structure: 一句话结构总览
+   Bonjour ! 法语启蒙小屋 — 句型数据（讲义精选 35 句）
+   来源：《法语 A1 复习讲义 · 自我介绍 / 描述物体 / 问路方位》
+   按教材单元分组：U1 相遇(L1-4) / U2 画像(L5-8) / U3 在哪儿(L9-12)
+   - fr: 完整法语句子（含标点，用于朗读）
+   - words: 打字填空的词形拆分（t=纯词形, r=句子成分角色, zh=词义）
+   - structure: 句型结构提示（具体到成分，如 谓语/主语）
    - note: 语法小贴士
-   拼接规则（joinWords）：前一个词以 ' 结尾，或后一个词以 - 开头时，
-   直接相连不加空格 —— 这样拼接结果与 fr 完全一致。
-   素材来源：《你好，法语！1》（Le Nouveau Taxi 1 · 学生用书）各单元核心句型
-   —— 问候、自我介绍、国籍职业、年龄日期、时间作息、方位、购物、
-   描述外貌、过去记述、约定邀请、天气否定、存在、感叹与日常口语。
+   严格比对：逐词比对 t（大小写 + 重音敏感），仅归一化撇号弯直差异。
    ========================================================= */
 
 const ROLES = {
-  sujet:         { label: '主语',     color: '#D0707F' },
-  verbe:         { label: '谓语',     color: '#5E8F6D' },
-  objet:         { label: '宾语',     color: '#5E84AC' },
-  attribut:      { label: '表语',     color: '#C97F1F' },
-  complement:    { label: '补语',     color: '#8A6BB8' },
-  adjectif:      { label: '形容词',   color: '#B98A1F' },
-  numeral:       { label: '数词',     color: '#C96A3E' },
-  determinant:   { label: '限定词',   color: '#7E8AA8' },
-  conjonction:   { label: '连词',     color: '#8E8378' },
-  interrogation: { label: '疑问词',   color: '#B04E7E' },
-  politesse:     { label: '礼貌用语', color: '#3E8A86' },
-  salutation:    { label: '问候语',   color: '#C25E6E' },
-  presentation:  { label: '提示词',   color: '#8A6BB8' },
-  preposition:   { label: '介词',     color: '#6B8455' },
-  'nom-propre':  { label: '专有名词', color: '#9C7423' },
-  nom:           { label: '名词',     color: '#4E7FA6' },
-  temps:         { label: '时间词',   color: '#C9A227' },
-  direction:     { label: '方位词',   color: '#6B8455' },
-  'manière':     { label: '方式词',   color: '#8A6BB8' },
-  lieu:          { label: '地点词',   color: '#7E8AA8' },
-  adverbe:       { label: '副词',     color: '#9C8A3C' },
-  'négation':    { label: '否定词',   color: '#B04E4E' }
+  "sujet": { label: "主语", color: "#D0707F" },
+  "verbe": { label: "谓语", color: "#5E8F6D" },
+  "objet": { label: "宾语", color: "#5E84AC" },
+  "attribut": { label: "表语", color: "#C97F1F" },
+  "complement": { label: "补语", color: "#8A6BB8" },
+  "adjectif": { label: "形容词", color: "#B98A1F" },
+  "numeral": { label: "数词", color: "#C96A3E" },
+  "determinant": { label: "限定词", color: "#7E8AA8" },
+  "conjonction": { label: "连词", color: "#8E8378" },
+  "interrogation": { label: "疑问词", color: "#B04E7E" },
+  "politesse": { label: "礼貌用语", color: "#3E8A86" },
+  "salutation": { label: "问候语", color: "#C25E6E" },
+  "presentation": { label: "提示词", color: "#8A6BB8" },
+  "preposition": { label: "介词", color: "#6B8455" },
+  "nom-propre": { label: "专有名词", color: "#9C7423" },
+  "nom": { label: "名词", color: "#4E7FA6" },
+  "temps": { label: "时间词", color: "#C9A227" },
+  "direction": { label: "方位词", color: "#6B8455" },
+  "manière": { label: "方式词", color: "#8A6BB8" },
+  "lieu": { label: "地点词", color: "#7E8AA8" },
+  "adverbe": { label: "副词", color: "#9C8A3C" },
+  "negation": { label: "否定词", color: "#B04E4E" },
+};
+
+const UNITS = {
+  U1: { name: "U1 相遇 Rencontres", sub: "自我介绍 · Leçon 1-4", emoji: "👋" },
+  U2: { name: "U2 画像 Portraits", sub: "描述物体 · Leçon 5-8", emoji: "🖼️" },
+  U3: { name: "U3 在哪儿 Où ça se trouve", sub: "问路方位 · Leçon 9-12", emoji: "🧭" }
 };
 
 const SENTENCES = [
   {
-    id: 1,
-    cat: '寒暄',
-    emoji: '👋',
-    fr: 'Bonjour, ça va ?',
-    zh: '你好，好吗？',
-    structure: '问候语 + 主语 + 谓语（一般疑问句）',
-    note: 'ça va ? 是法语里使用频率最高的寒暄，直译是“这进行得怎么样？”。回答可以说 Ça va bien !（我很好！）。',
+    id: 101, unit: "U1", cat: "问候", emoji: "👋",
+    fr: "Bonjour, je m'appelle Li Na.",
+    zh: "你好，我叫李娜。",
+    structure: "问候语(Bonjour) + 主语(je) + 自反谓语(m'appelle) + 专有名词",
+    note: "s'appeler 是自反动词：je m'appelle（我叫）、tu t'appelles、il s'appelle。人名前不加冠词。",
     words: [
-      {
-        t: 'Bonjour,',
-        r: 'salutation',
-        zh: '你好（白天问候）'
-      },
-      {
-        t: 'ça',
-        r: 'sujet',
-        zh: '这；情况'
-      },
-      {
-        t: 'va ?',
-        r: 'verbe',
-        zh: '进行；去'
-      }
+      { t: "Bonjour", r: "salutation", zh: "你好" },
+      { t: "je", r: "sujet", zh: "我" },
+      { t: "m'appelle", r: "verbe", zh: "名叫（自反动词）" },
+      { t: "Li Na", r: "nom-propre", zh: "李娜" },
     ]
   },
   {
-    id: 2,
-    cat: '寒暄',
-    emoji: '😊',
-    fr: 'Je vais bien, merci.',
-    zh: '我很好，谢谢。',
-    structure: '主语 + 谓语 + 程度补语 + 礼貌用语',
-    note: 'aller（走）是不规则动词，je vais 是它最常用的变位；bien 是副词，表示“好”。',
+    id: 102, unit: "U1", cat: "姓名", emoji: "🪪",
+    fr: "Comment vous appelez-vous ?",
+    zh: "您叫什么名字？",
+    structure: "特殊疑问词(Comment) + 主语(vous) + 谓语(appelez-vous，主谓倒装)",
+    note: "正式问法把动词与主语倒装（appelez-vous）；口语也可说 Vous vous appelez comment ?",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'vais',
-        r: 'verbe',
-        zh: '去；处于……状态'
-      },
-      {
-        t: 'bien,',
-        r: 'complement',
-        zh: '好'
-      },
-      {
-        t: 'merci.',
-        r: 'politesse',
-        zh: '谢谢'
-      }
+      { t: "Comment", r: "interrogation", zh: "什么／怎样" },
+      { t: "vous", r: "sujet", zh: "您" },
+      { t: "appelez-vous", r: "verbe", zh: "名叫（倒装）" },
     ]
   },
   {
-    id: 3,
-    cat: '寒暄',
-    emoji: '🎩',
-    fr: 'Comment allez-vous ?',
-    zh: '您好吗？',
-    structure: '疑问词 + 谓语 + 主语（主谓倒装 · 礼貌体）',
-    note: 'allez-vous 把动词放到主语前面，这叫“主谓倒装”，是礼貌的说法。朋友之间可以说 Comment tu vas ?（不用倒装）。',
+    id: 103, unit: "U1", cat: "姓名", emoji: "🪪",
+    fr: "Je m'appelle Wang Ming.",
+    zh: "我叫王明。",
+    structure: "主语(Je) + 自反谓语(m'appelle) + 专有名词",
+    note: "回答姓名用 Je m'appelle + 名字；中文姓名直接按拼音写。",
     words: [
-      {
-        t: 'Comment',
-        r: 'interrogation',
-        zh: '怎样；如何'
-      },
-      {
-        t: 'allez',
-        r: 'verbe',
-        zh: '去；走（vous 的变位）'
-      },
-      {
-        t: '-vous ?',
-        r: 'sujet',
-        zh: '您；你们'
-      }
+      { t: "Je", r: "sujet", zh: "我" },
+      { t: "m'appelle", r: "verbe", zh: "名叫" },
+      { t: "Wang Ming", r: "nom-propre", zh: "王明" },
     ]
   },
   {
-    id: 4,
-    cat: '寒暄',
-    emoji: '🚪',
-    fr: 'Au revoir !',
-    zh: '再见！',
-    structure: '介词 + 动词不定式（固定告别语）',
-    note: 'au revoir 直译是“到再次相见（的时候）”，正式场合和口语都能用。au = à + le 的合写。',
+    id: 104, unit: "U1", cat: "身份", emoji: "🎓",
+    fr: "Est-ce que vous êtes étudiant ?",
+    zh: "您是学生吗？",
+    structure: "est-ce que（一般疑问引导） + 主语(vous) + 系动词(êtes) + 表语(étudiant)",
+    note: "est-ce que 后接陈述句语序，是最常用的一般疑问句；回答 Oui / Non。",
     words: [
-      {
-        t: 'Au',
-        r: 'preposition',
-        zh: '到……去（à + le）'
-      },
-      {
-        t: 'revoir !',
-        r: 'verbe',
-        zh: '再次见到'
-      }
+      { t: "Est-ce que", r: "interrogation", zh: "是否（一般疑问）" },
+      { t: "vous", r: "sujet", zh: "您" },
+      { t: "êtes", r: "verbe", zh: "是" },
+      { t: "étudiant", r: "attribut", zh: "学生" },
     ]
   },
   {
-    id: 5,
-    cat: '自我介绍',
-    emoji: '🙋',
-    fr: 'Je m\'appelle Marie.',
-    zh: '我叫玛丽。',
-    structure: '主语 + 代词式谓语 + 专有名词',
-    note: 's\'appeler 是“代词式动词”，me 在以元音开头的词前要写成 m\'，所以是 Je m\'appelle（不是 Je appelle）。',
+    id: 105, unit: "U1", cat: "身份", emoji: "🎓",
+    fr: "Je suis étudiant.",
+    zh: "我是学生。",
+    structure: "主语(Je) + 系动词(suis) + 表语(étudiant)",
+    note: "être 的变位：je suis / tu es / il est / nous sommes / vous êtes / ils sont。职业名词作表语前不加冠词。",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'm\'appelle',
-        r: 'verbe',
-        zh: '名叫（s\'appeler）'
-      },
-      {
-        t: 'Marie.',
-        r: 'nom-propre',
-        zh: '玛丽（人名）'
-      }
+      { t: "Je", r: "sujet", zh: "我" },
+      { t: "suis", r: "verbe", zh: "是" },
+      { t: "étudiant", r: "attribut", zh: "学生" },
     ]
   },
   {
-    id: 6,
-    cat: '自我介绍',
-    emoji: '🎓',
-    fr: 'Je suis étudiant.',
-    zh: '我是学生。',
-    structure: '主语 + 系动词 + 表语',
-    note: 'être（是）的变位：je suis。女生要把 étudiant 改成 étudiante（阴性加 -e）。',
+    id: 106, unit: "U1", cat: "国籍", emoji: "🌍",
+    fr: "D'où venez-vous ?",
+    zh: "您来自哪里？",
+    structure: "特殊疑问词(D'où) + 谓语(venez，主谓倒装) + 主语(vous)",
+    note: "d'où = de + où，问「从哪儿来」；venir de + 国家／城市。",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'suis',
-        r: 'verbe',
-        zh: '是（être）'
-      },
-      {
-        t: 'étudiant.',
-        r: 'attribut',
-        zh: '学生（男）'
-      }
+      { t: "D'où", r: "interrogation", zh: "从哪儿" },
+      { t: "venez-vous", r: "verbe", zh: "来（倒装）" },
     ]
   },
   {
-    id: 7,
-    cat: '自我介绍',
-    emoji: '❓',
-    fr: 'Tu t\'appelles comment ?',
-    zh: '你叫什么名字？',
-    structure: '主语 + 谓语 + 疑问词（口语不倒装）',
-    note: '口语里 comment 直接放在句尾就可以，这是朋友之间最自然的问法。',
+    id: 107, unit: "U1", cat: "国籍", emoji: "🌍",
+    fr: "Je viens de Chine.",
+    zh: "我来自中国。",
+    structure: "主语(Je) + 谓语(viens) + 介词(de) + 专有名词(Chine)",
+    note: "venir de + 国家；国家名前用 de，如 de Chine、de France。",
     words: [
-      {
-        t: 'Tu',
-        r: 'sujet',
-        zh: '你'
-      },
-      {
-        t: 't\'appelles',
-        r: 'verbe',
-        zh: '名叫（s\'appeler）'
-      },
-      {
-        t: 'comment ?',
-        r: 'interrogation',
-        zh: '怎样；什么'
-      }
+      { t: "Je", r: "sujet", zh: "我" },
+      { t: "viens", r: "verbe", zh: "来" },
+      { t: "de", r: "preposition", zh: "从" },
+      { t: "Chine", r: "nom-propre", zh: "中国" },
     ]
   },
   {
-    id: 8,
-    cat: '自我介绍',
-    emoji: '🎂',
-    fr: 'J\'ai vingt ans.',
-    zh: '我二十岁。',
-    structure: '主语 + 谓语 + 数词 + 数量补语',
-    note: '问年龄说 Quel âge as-tu ?（你几岁？）。J\'ai = je ai，je 在元音前省音写成 J\'。',
+    id: 108, unit: "U1", cat: "国籍", emoji: "🇨🇳",
+    fr: "Je suis chinois.",
+    zh: "我是中国人。",
+    structure: "主语(Je) + 系动词(suis) + 表语(国籍形容词 chinois)",
+    note: "国籍形容词与主语性数配合：chinois / chinoise。",
     words: [
-      {
-        t: 'J\'',
-        r: 'sujet',
-        zh: '我（je 的省音）'
-      },
-      {
-        t: 'ai',
-        r: 'verbe',
-        zh: '有（avoir）'
-      },
-      {
-        t: 'vingt',
-        r: 'numeral',
-        zh: '二十'
-      },
-      {
-        t: 'ans.',
-        r: 'complement',
-        zh: '岁；年'
-      }
+      { t: "Je", r: "sujet", zh: "我" },
+      { t: "suis", r: "verbe", zh: "是" },
+      { t: "chinois", r: "attribut", zh: "中国的；中国人" },
     ]
   },
   {
-    id: 9,
-    cat: '家庭',
-    emoji: '👨‍👩‍👧',
-    fr: 'Voici ma famille.',
-    zh: '这是我的家人。',
-    structure: '提示词 + 限定词 + 宾语',
-    note: 'famille 是阴性名词，所以用 ma famille；阳性会用 mon，比如 mon frère（我的兄弟）。',
+    id: 109, unit: "U1", cat: "年龄", emoji: "🎂",
+    fr: "Quel âge avez-vous ?",
+    zh: "您多大年纪？",
+    structure: "特殊疑问词(Quel âge) + 谓语(avez，主谓倒装) + 主语(vous)",
+    note: "问年龄用 avoir：Quel âge avez-vous ? 回答 J'ai vingt ans.",
     words: [
-      {
-        t: 'Voici',
-        r: 'presentation',
-        zh: '这是；请看'
-      },
-      {
-        t: 'ma',
-        r: 'determinant',
-        zh: '我的（阴性）'
-      },
-      {
-        t: 'famille.',
-        r: 'objet',
-        zh: '家人；家庭'
-      }
+      { t: "Quel", r: "interrogation", zh: "什么" },
+      { t: "âge", r: "nom", zh: "年龄" },
+      { t: "avez-vous", r: "verbe", zh: "有（倒装）" },
     ]
   },
   {
-    id: 10,
-    cat: '家庭',
-    emoji: '👨‍⚕️',
-    fr: 'Mon père est médecin.',
-    zh: '我爸爸是医生。',
-    structure: '限定词 + 主语 + 系动词 + 表语',
-    note: 'médecin 男女同形：mon père est médecin 和 ma mère est médecin 都能说。',
+    id: 110, unit: "U1", cat: "年龄", emoji: "🎂",
+    fr: "J'ai vingt ans.",
+    zh: "我二十岁。",
+    structure: "主语(J') + 谓语(ai) + 数词(vingt) + 补语(ans)",
+    note: "法语年龄用 avoir + 数字 + ans，不用 être。",
     words: [
-      {
-        t: 'Mon',
-        r: 'determinant',
-        zh: '我的（阳性）'
-      },
-      {
-        t: 'père',
-        r: 'sujet',
-        zh: '父亲'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是（il/elle 的变位）'
-      },
-      {
-        t: 'médecin.',
-        r: 'attribut',
-        zh: '医生'
-      }
+      { t: "J'", r: "sujet", zh: "我（元音前缩合）" },
+      { t: "ai", r: "verbe", zh: "有" },
+      { t: "vingt", r: "numeral", zh: "二十" },
+      { t: "ans", r: "nom", zh: "岁" },
     ]
   },
   {
-    id: 11,
-    cat: '家庭',
-    emoji: '🐱',
-    fr: 'J\'ai un chat.',
-    zh: '我有一只猫。',
-    structure: '主语 + 谓语 + 不定冠词 + 宾语',
-    note: 'un 用在阳性单数可数名词前；如果想特指“那只猫”，要用定冠词 le chat。',
+    id: 111, unit: "U1", cat: "住址", emoji: "🏠",
+    fr: "J'habite à Shanghai.",
+    zh: "我住在上海。",
+    structure: "主语(J') + 谓语(habite) + 介词(à) + 专有名词(Shanghai)",
+    note: "habiter à + 城市：à Paris、à Shanghai。",
     words: [
-      {
-        t: 'J\'',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'ai',
-        r: 'verbe',
-        zh: '有'
-      },
-      {
-        t: 'un',
-        r: 'determinant',
-        zh: '一只；一个'
-      },
-      {
-        t: 'chat.',
-        r: 'objet',
-        zh: '猫'
-      }
+      { t: "J'", r: "sujet", zh: "我" },
+      { t: "habite", r: "verbe", zh: "居住" },
+      { t: "à", r: "preposition", zh: "在" },
+      { t: "Shanghai", r: "nom-propre", zh: "上海" },
     ]
   },
   {
-    id: 12,
-    cat: '日常生活',
-    emoji: '🏠',
-    fr: 'J\'habite à Paris.',
-    zh: '我住在巴黎。',
-    structure: '主语 + 谓语 + 介词 + 地点',
-    note: '城市前用 à（à Paris 在巴黎），国家前常说 en（en Chine）或 au（au Japon）。',
+    id: 112, unit: "U1", cat: "近况", emoji: "😊",
+    fr: "Ça va bien, merci.",
+    zh: "很好，谢谢。",
+    structure: "主语(Ça) + 谓语(va) + 状语(bien) + 礼貌用语(merci)",
+    note: "回答近况的标准说法；反问对方可加 Et vous ?",
     words: [
-      {
-        t: 'J\'',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'habite',
-        r: 'verbe',
-        zh: '居住'
-      },
-      {
-        t: 'à',
-        r: 'preposition',
-        zh: '在；到'
-      },
-      {
-        t: 'Paris.',
-        r: 'nom-propre',
-        zh: '巴黎（城市）'
-      }
+      { t: "Ça", r: "sujet", zh: "这／情况" },
+      { t: "va", r: "verbe", zh: "进行" },
+      { t: "bien", r: "adverbe", zh: "好" },
+      { t: "merci", r: "politesse", zh: "谢谢" },
     ]
   },
   {
-    id: 14,
-    cat: '日常生活',
-    emoji: '🕗',
-    fr: 'Il est huit heures.',
-    zh: '现在八点钟。',
-    structure: '形式主语 + 谓语 + 数词 + 时间补语',
-    note: '报时用 Il est + 时间：Il est huit heures（八点了）。heures 永远是复数。',
+    id: 113, unit: "U2", cat: "名称", emoji: "📖",
+    fr: "Qu'est-ce que c'est ?",
+    zh: "这是什么？",
+    structure: "固定疑问短语(Qu'est-ce que) + 主语(c') + 系动词(est)",
+    note: "问「这是什么」，回答 C'est un/une... 或 Ce sont des...",
     words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '他；它（表时间）'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'huit',
-        r: 'numeral',
-        zh: '八'
-      },
-      {
-        t: 'heures.',
-        r: 'complement',
-        zh: '点钟；小时'
-      }
+      { t: "Qu'est-ce que", r: "interrogation", zh: "是什么" },
+      { t: "c'", r: "sujet", zh: "这" },
+      { t: "est", r: "verbe", zh: "是" },
     ]
   },
   {
-    id: 15,
-    cat: '喜好',
-    emoji: '☕',
-    fr: 'J\'aime le café.',
-    zh: '我喜欢咖啡。',
-    structure: '主语 + 谓语 + 定冠词 + 宾语',
-    note: 'aimer 表示“喜欢”；定冠词 le 让 café 泛指“（这种）咖啡”这类事物。',
+    id: 114, unit: "U2", cat: "名称", emoji: "📖",
+    fr: "C'est un livre.",
+    zh: "这是一本书。",
+    structure: "主语(C') + 系动词(est) + 不定冠词(un) + 名词(livre)",
+    note: "un 阳性、une 阴性、des 复数；livre 是阳性名词。",
     words: [
-      {
-        t: 'J\'',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'aime',
-        r: 'verbe',
-        zh: '喜欢'
-      },
-      {
-        t: 'le',
-        r: 'determinant',
-        zh: '这；那个（定冠词）'
-      },
-      {
-        t: 'café.',
-        r: 'objet',
-        zh: '咖啡'
-      }
+      { t: "C'", r: "sujet", zh: "这" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "un", r: "determinant", zh: "一个（阳性）" },
+      { t: "livre", r: "nom", zh: "书" },
     ]
   },
   {
-    id: 16,
-    cat: '喜好',
-    emoji: '😻',
-    fr: 'Le chat est mignon.',
-    zh: '这只猫很可爱。',
-    structure: '限定词 + 主语 + 系动词 + 形容词表语',
-    note: '很多法语形容词放在名词后面：un chat mignon。mignon 的阴性形式是 mignonne。',
+    id: 115, unit: "U2", cat: "名称", emoji: "🔑",
+    fr: "Ce sont des clés.",
+    zh: "这些是钥匙。",
+    structure: "主语(Ce) + 系动词(sont) + 不定冠词(des) + 名词复数(clés)",
+    note: "复数用 Ce sont...；clé 是阴性名词，复数加 s。",
     words: [
-      {
-        t: 'Le',
-        r: 'determinant',
-        zh: '这；那只（定冠词）'
-      },
-      {
-        t: 'chat',
-        r: 'sujet',
-        zh: '猫'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'mignon.',
-        r: 'adjectif',
-        zh: '可爱的'
-      }
+      { t: "Ce", r: "sujet", zh: "这些" },
+      { t: "sont", r: "verbe", zh: "是" },
+      { t: "des", r: "determinant", zh: "一些（复数）" },
+      { t: "clés", r: "nom", zh: "钥匙" },
     ]
   },
   {
-    id: 17,
-    cat: '喜好',
-    emoji: '🥤',
-    fr: 'Je voudrais un café.',
-    zh: '我想要一杯咖啡。',
-    structure: '主语 + 谓语 + 冠词 + 宾语',
-    note: 'voudrais 是 vouloir 的条件式，比 je veux（我想要）礼貌得多，点餐时说 Je voudrais… 就对了。',
+    id: 116, unit: "U2", cat: "颜色", emoji: "🎨",
+    fr: "De quelle couleur est ce sac ?",
+    zh: "这个包是什么颜色？",
+    structure: "介词(De) + 特殊疑问词(quelle couleur) + 系动词(est) + 主语(ce sac)",
+    note: "问颜色用 De quelle couleur est... ? 回答 Il est rouge.",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'voudrais',
-        r: 'verbe',
-        zh: '想要（vouloir 条件式）'
-      },
-      {
-        t: 'un',
-        r: 'determinant',
-        zh: '一杯；一个'
-      },
-      {
-        t: 'café.',
-        r: 'objet',
-        zh: '咖啡'
-      }
+      { t: "De", r: "preposition", zh: "的" },
+      { t: "quelle", r: "interrogation", zh: "什么（阴性）" },
+      { t: "couleur", r: "nom", zh: "颜色" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "ce", r: "determinant", zh: "这个" },
+      { t: "sac", r: "nom", zh: "包" },
     ]
   },
   {
-    id: 18,
-    cat: '餐厅',
-    emoji: '🧾',
-    fr: 'L\'addition, s\'il vous plaît !',
-    zh: '买单，谢谢！',
-    structure: '宾语 + 礼貌用语（省略句）',
-    note: '完整句是 Je voudrais l\'addition, s\'il vous plaît。s\'il = si + il 的省音，直译“如果这使您愉快”。',
+    id: 117, unit: "U2", cat: "颜色", emoji: "🔴",
+    fr: "Il est rouge.",
+    zh: "它是红色的。",
+    structure: "主语(Il) + 系动词(est) + 形容词表语(rouge)",
+    note: "颜色形容词与名词性数配合；rouge 阴阳同形，复数加 s。",
     words: [
-      {
-        t: 'L\'addition,',
-        r: 'objet',
-        zh: '账单（le 的省音）'
-      },
-      {
-        t: 's\'il vous plaît !',
-        r: 'politesse',
-        zh: '请（礼貌用语）'
-      }
+      { t: "Il", r: "sujet", zh: "它（阳性）" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "rouge", r: "adjectif", zh: "红色的" },
     ]
   },
   {
-    id: 13,
-    cat: '语言',
-    emoji: '🗣️',
-    fr: 'Je parle français.',
-    zh: '我说法语。',
-    structure: '主语 + 谓语 + 宾语',
-    note: 'parler 后面直接跟语言，中间不加介词：parler français / anglais / chinois。',
+    id: 118, unit: "U2", cat: "所属", emoji: "🧥",
+    fr: "À qui est ce manteau ?",
+    zh: "这件外套是谁的？",
+    structure: "介词(À) + 疑问词(qui) + 系动词(est) + 主语(ce manteau)",
+    note: "问所属用 À qui est... ? 回答 C'est à moi.",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'parle',
-        r: 'verbe',
-        zh: '说（某种语言）'
-      },
-      {
-        t: 'français.',
-        r: 'objet',
-        zh: '法语'
-      }
+      { t: "À", r: "preposition", zh: "属于" },
+      { t: "qui", r: "interrogation", zh: "谁" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "ce", r: "determinant", zh: "这件" },
+      { t: "manteau", r: "nom", zh: "外套" },
     ]
   },
   {
-    id: 25,
-    cat: '语言',
-    emoji: '🌍',
-    fr: 'Je parle chinois, anglais et français.',
-    zh: '我说中文、英语和法语。',
-    structure: '主语 + 谓语 + 宾语 × 3（et 连接）',
-    note: '多项并列时，只有最后一项前面才加 et（和）。这句话一口气练三种语言，跟读挑战会很有成就感！',
+    id: 119, unit: "U2", cat: "所属", emoji: "🙋",
+    fr: "C'est à moi.",
+    zh: "是我的。",
+    structure: "主语(C') + 系动词(est) + 介词(à) + 补语(moi，重读人称代词)",
+    note: "à + 重读人称代词：à moi（我的）、à toi、à lui、à elle。",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'parle',
-        r: 'verbe',
-        zh: '说'
-      },
-      {
-        t: 'chinois,',
-        r: 'objet',
-        zh: '中文'
-      },
-      {
-        t: 'anglais',
-        r: 'objet',
-        zh: '英语'
-      },
-      {
-        t: 'et',
-        r: 'conjonction',
-        zh: '和'
-      },
-      {
-        t: 'français.',
-        r: 'objet',
-        zh: '法语'
-      }
+      { t: "C'", r: "sujet", zh: "这" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "à", r: "preposition", zh: "属于" },
+      { t: "moi", r: "complement", zh: "我（重读）" },
     ]
   },
   {
-    id: 28,
-    cat: '代词',
-    emoji: '🙋',
-    fr: 'Moi, c\'est Antonio.',
-    zh: '我是安东尼奥。',
-    structure: '重读代词（强调主语）+ c\'est + 专有名词',
-    note: 'Moi, c\'est… 介绍自己时强调“是我”，比 Je m\'appelle… 更随意、更热情。moi 是第一人称重读人称代词。',
+    id: 120, unit: "U2", cat: "位置", emoji: "🔍",
+    fr: "Où est la clé ?",
+    zh: "钥匙在哪里？",
+    structure: "特殊疑问词(Où) + 系动词(est) + 主语(la clé)",
+    note: "问位置用 Où est... ? 回答 Elle est sur la table.",
     words: [
-      {
-        t: 'Moi,',
-        r: 'sujet',
-        zh: '我（重读代词）'
-      },
-      {
-        t: 'c\'est',
-        r: 'verbe',
-        zh: '这是；他是（ce + est）'
-      },
-      {
-        t: 'Antonio.',
-        r: 'nom-propre',
-        zh: '安东尼奥（人名）'
-      }
+      { t: "Où", r: "interrogation", zh: "哪里" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "la", r: "determinant", zh: "这（阴性）" },
+      { t: "clé", r: "nom", zh: "钥匙" },
     ]
   },
   {
-    id: 29,
-    cat: '代词',
-    emoji: '🙂',
-    fr: 'Il est américain, et toi ?',
-    zh: '他是美国人，你呢？',
-    structure: '主语 + 系动词 + 表语 + 连词 + 重读代词（省略问句）',
-    note: 'et toi ?（你呢？）是无动词省略句，完整形式是 Et toi, tu es américain ? 重读代词 toi 在这里单独站成问句。',
+    id: 121, unit: "U2", cat: "位置", emoji: "🪑",
+    fr: "Elle est sur la table.",
+    zh: "它在桌子上。",
+    structure: "主语(Elle) + 系动词(est) + 介词(sur) + 定冠词(la) + 名词(table)",
+    note: "方位介词：sur 在…上、dans 在…里、sous 在…下。",
     words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '他'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'américain,',
-        r: 'attribut',
-        zh: '美国人'
-      },
-      {
-        t: 'et',
-        r: 'conjonction',
-        zh: '那么；和'
-      },
-      {
-        t: 'toi ?',
-        r: 'complement',
-        zh: '你呢（重读代词）'
-      }
+      { t: "Elle", r: "sujet", zh: "它（阴性）" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "sur", r: "preposition", zh: "在…上" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "table", r: "nom", zh: "桌子" },
     ]
   },
   {
-    id: 30,
-    cat: '代词',
-    emoji: '🏡',
-    fr: 'Elle est chez elle.',
-    zh: '她在自己家里。',
-    structure: '主语 + 系动词 + 介词 + 重读代词',
-    note: 'chez 表示“在……家里”：chez moi（在我家）、chez toi（在你家）、chez elle（在她家）。',
+    id: 122, unit: "U2", cat: "价格", emoji: "💶",
+    fr: "Combien coûte ce livre ?",
+    zh: "这本书多少钱？",
+    structure: "特殊疑问词(Combien) + 谓语(coûte) + 主语(ce livre)",
+    note: "问价格用 Combien coûte... ? 或 Ça coûte combien ?",
     words: [
-      {
-        t: 'Elle',
-        r: 'sujet',
-        zh: '她'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是；在'
-      },
-      {
-        t: 'chez',
-        r: 'preposition',
-        zh: '在……家'
-      },
-      {
-        t: 'elle.',
-        r: 'complement',
-        zh: '她（重读代词）'
-      }
+      { t: "Combien", r: "interrogation", zh: "多少" },
+      { t: "coûte", r: "verbe", zh: "价值／卖" },
+      { t: "ce", r: "determinant", zh: "这本" },
+      { t: "livre", r: "nom", zh: "书" },
     ]
   },
   {
-    id: 31,
-    cat: '职业',
-    emoji: '🎬',
-    fr: 'C\'est un acteur.',
-    zh: '他是一位演员。',
-    structure: 'c\'est + 不定冠词 + 表语（介绍身份）',
-    note: 'c\'est = ce + est，用来介绍“这是……”。介绍职业时说 C\'est un acteur.（他是演员。）',
+    id: 123, unit: "U2", cat: "价格", emoji: "💶",
+    fr: "Ça coûte 15 euros.",
+    zh: "这个卖 15 欧元。",
+    structure: "主语(Ça) + 谓语(coûte) + 数词(15) + 货币单位(euros)",
+    note: "coûter 表价值；euro 复数加 s。",
     words: [
-      {
-        t: 'C\'est',
-        r: 'verbe',
-        zh: '这是'
-      },
-      {
-        t: 'un',
-        r: 'determinant',
-        zh: '一位（阳性不定冠词）'
-      },
-      {
-        t: 'acteur.',
-        r: 'attribut',
-        zh: '演员（男）'
-      }
+      { t: "Ça", r: "sujet", zh: "这" },
+      { t: "coûte", r: "verbe", zh: "卖" },
+      { t: "15", r: "numeral", zh: "十五" },
+      { t: "euros", r: "nom", zh: "欧元" },
     ]
   },
   {
-    id: 34,
-    cat: '职业',
-    emoji: '📰',
-    fr: 'Je suis journaliste.',
-    zh: '我是记者。',
-    structure: '主语 + 系动词 + 表语（零冠词）',
-    note: 'journaliste（记者）阴阳同形：un journaliste / une journaliste 都是它。作表语同样省略冠词。',
+    id: 124, unit: "U3", cat: "问路", emoji: "🏛️",
+    fr: "Où est la mairie, s'il vous plaît ?",
+    zh: "请问市政厅在哪里？",
+    structure: "特殊疑问词(Où) + 系动词(est) + 主语(la mairie) + 礼貌用语(s'il vous plaît)",
+    note: "s'il vous plaît 是礼貌用语「请」，句首句尾均可。",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'suis',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'journaliste.',
-        r: 'attribut',
-        zh: '记者'
-      }
+      { t: "Où", r: "interrogation", zh: "哪里" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "mairie", r: "nom", zh: "市政厅" },
+      { t: "s'il vous plaît", r: "politesse", zh: "请" },
     ]
   },
   {
-    id: 42,
-    cat: '名词与冠词',
-    emoji: '🗞️',
-    fr: 'Le journal est là.',
-    zh: '报纸在那儿。',
-    structure: '定冠词 + 主语 + 系动词 + 地点副词',
-    note: 'journal（报纸）的复数把 -al 改成 -aux：des journaux。-al 结尾的名词都走这条路。',
+    id: 125, unit: "U3", cat: "方位", emoji: "📍",
+    fr: "Elle se trouve sur la place.",
+    zh: "它在广场上。",
+    structure: "主语(Elle) + 代词式谓语(se trouve) + 介词(sur) + 名词(la place)",
+    note: "se trouver 表示「位于」，比 être 更正式。",
     words: [
-      {
-        t: 'Le',
-        r: 'determinant',
-        zh: '那份（定冠词）'
-      },
-      {
-        t: 'journal',
-        r: 'sujet',
-        zh: '报纸'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是；在'
-      },
-      {
-        t: 'là.',
-        r: 'complement',
-        zh: '那里'
-      }
+      { t: "Elle", r: "sujet", zh: "它（阴性）" },
+      { t: "se trouve", r: "verbe", zh: "位于（代词式）" },
+      { t: "sur", r: "preposition", zh: "在…上" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "place", r: "nom", zh: "广场" },
     ]
   },
   {
-    id: 46,
-    cat: '名词与冠词',
-    emoji: '📕',
-    fr: 'C\'est le livre de Pascal.',
-    zh: '这是帕斯卡尔的书。',
-    structure: 'c\'est + 定冠词 + 宾语 + de + 专有名词',
-    note: 'le + 名词 + de + 人名 表示“某人的某物”。对比：C\'est un livre.（这是一本书。）不定冠词介绍，定冠词特指。',
+    id: 126, unit: "U3", cat: "方位", emoji: "🚇",
+    fr: "Où se trouve la station de métro ?",
+    zh: "地铁站在哪里？",
+    structure: "特殊疑问词(Où) + 代词式谓语(se trouve) + 主语(la station de métro)",
+    note: "la station de métro 地铁站；se trouver 用于问地点。",
     words: [
-      {
-        t: 'C\'est',
-        r: 'verbe',
-        zh: '这是'
-      },
-      {
-        t: 'le',
-        r: 'determinant',
-        zh: '那本（定冠词）'
-      },
-      {
-        t: 'livre',
-        r: 'objet',
-        zh: '书'
-      },
-      {
-        t: 'de',
-        r: 'preposition',
-        zh: '……的'
-      },
-      {
-        t: 'Pascal.',
-        r: 'nom-propre',
-        zh: '帕斯卡尔（人名）'
-      }
+      { t: "Où", r: "interrogation", zh: "哪里" },
+      { t: "se trouve", r: "verbe", zh: "位于" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "station", r: "nom", zh: "车站" },
+      { t: "de", r: "preposition", zh: "的" },
+      { t: "métro", r: "nom", zh: "地铁" },
     ]
   },
   {
-    id: 49,
-    cat: '结识他人',
-    emoji: '🌍',
-    fr: 'Tu viens d\'où ?',
-    zh: '你来自哪里？',
-    structure: '主语 + 谓语 + 介词 de + 疑问代词 où（口语不倒装）',
-    note: 'venir de + 地点 = 来自某地；回答用 Je viens de Chine.（我来自中国）。',
+    id: 127, unit: "U3", cat: "方位", emoji: "🏫",
+    fr: "Elle est à côté de l'école.",
+    zh: "它在学校旁边。",
+    structure: "主语(Elle) + 系动词(est) + 方位短语(à côté de l'école)",
+    note: "à côté de 在…旁边；l'école = l' + école（元音前缩合）。",
     words: [
-      {
-        t: 'Tu',
-        r: 'sujet',
-        zh: '你'
-      },
-      {
-        t: 'viens',
-        r: 'verbe',
-        zh: '来（venir 的 tu 变位）'
-      },
-      {
-        t: 'd\'où ?',
-        r: 'interrogation',
-        zh: '从哪里（de + où）'
-      }
+      { t: "Elle", r: "sujet", zh: "它" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "à", r: "preposition", zh: "在" },
+      { t: "côté", r: "nom", zh: "旁边" },
+      { t: "de", r: "preposition", zh: "的" },
+      { t: "l'école", r: "nom", zh: "学校" },
     ]
   },
   {
-    id: 50,
-    cat: '结识他人',
-    emoji: '🧭',
-    fr: 'Je viens de Chine.',
-    zh: '我来自中国。',
-    structure: '主语 + 谓语 + 介词 de + 地点',
-    note: '城市用 de（je viens de Paris），阴性国家用 de la，阳性国家用 du：je viens du Japon。',
+    id: 128, unit: "U3", cat: "问路", emoji: "📏",
+    fr: "C'est loin d'ici ?",
+    zh: "离这儿远吗？",
+    structure: "主语(C') + 系动词(est) + 副词(loin) + 地点短语(d'ici，语调疑问)",
+    note: "口语疑问句可不用 est-ce que，靠语调上扬表疑问。",
     words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'viens',
-        r: 'verbe',
-        zh: '来（venir）'
-      },
-      {
-        t: 'de',
-        r: 'preposition',
-        zh: '从；来自'
-      },
-      {
-        t: 'Chine.',
-        r: 'nom-propre',
-        zh: '中国（阴性国名）'
-      }
+      { t: "C'", r: "sujet", zh: "这" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "loin", r: "adverbe", zh: "远" },
+      { t: "d'ici", r: "lieu", zh: "这儿" },
     ]
   },
   {
-    id: 51,
-    cat: '结识他人',
-    emoji: '✍️',
-    fr: 'Comment ça s\'écrit ?',
-    zh: '这个怎么拼写？',
-    structure: '疑问词 + 主语 + 代词式动词（第三人称单数）',
-    note: 's\'écrire 是「被书写」。问姓名拼写最自然的一句：— Marie. — Comment ça s\'écrit ? — M-A-R-I-E.',
+    id: 129, unit: "U3", cat: "问路", emoji: "🚶",
+    fr: "Non, c'est tout près.",
+    zh: "不，很近。",
+    structure: "否定回答(Non) + 主语(c') + 系动词(est) + 状语(tout près)",
+    note: "tout près 很近；près de 在…附近。",
     words: [
-      {
-        t: 'Comment',
-        r: 'interrogation',
-        zh: '怎样'
-      },
-      {
-        t: 'ça',
-        r: 'sujet',
-        zh: '这；这个（cela 的口语）'
-      },
-      {
-        t: 's\'écrit ?',
-        r: 'verbe',
-        zh: '被写；拼作（s\'écrire）'
-      }
+      { t: "Non", r: "politesse", zh: "不" },
+      { t: "c'", r: "sujet", zh: "这" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "tout", r: "adverbe", zh: "很／完全" },
+      { t: "près", r: "lieu", zh: "近" },
     ]
   },
   {
-    id: 52,
-    cat: '个人信息',
-    emoji: '🎂',
-    fr: 'Quel âge as-tu ?',
-    zh: '你多大了？',
-    structure: '疑问形容词 + 主语 + 谓语 + 倒装主语代词',
-    note: 'quel 疑问形容词要与名词阴阳性配合：Quel âge ?（阳性）/ Quelle heure ?（阴性）。as-tu 是主谓倒装。',
+    id: 130, unit: "U3", cat: "指路", emoji: "⬆️",
+    fr: "Allez tout droit.",
+    zh: "一直往前走。",
+    structure: "命令式谓语(Allez, vous 形) + 副词短语(tout droit)",
+    note: "命令式 vous 形式由直陈式去掉主语得到：Allez；tout droit 直走。",
     words: [
-      {
-        t: 'Quel',
-        r: 'interrogation',
-        zh: '什么；哪（阳性疑问形容词）'
-      },
-      {
-        t: 'âge',
-        r: 'complement',
-        zh: '年龄'
-      },
-      {
-        t: 'as-tu ?',
-        r: 'verbe',
-        zh: '你有吗（avoir + tu 倒装）'
-      }
+      { t: "Allez", r: "verbe", zh: "走（命令式）" },
+      { t: "tout", r: "adverbe", zh: "完全／一直" },
+      { t: "droit", r: "direction", zh: "直" },
     ]
   },
   {
-    id: 53,
-    cat: '日常生活',
-    emoji: '🕗',
-    fr: 'Il est quelle heure ?',
-    zh: '现在几点了？',
-    structure: '形式主语 + 系动词 + 阴性疑问形容词 + 主语（口语语序）',
-    note: '口语说 Il est quelle heure ?，正式一点是 Quelle heure est-il ? 两种都要会。',
+    id: 131, unit: "U3", cat: "指路", emoji: "➡️",
+    fr: "Tournez à droite.",
+    zh: "右转。",
+    structure: "命令式谓语(Tournez) + 介词(à) + 方位词(droite)",
+    note: "tourner à droite 右转；à gauche 左转。",
     words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '它（表时间的形式主语）'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'quelle',
-        r: 'interrogation',
-        zh: '哪一（阴性疑问形容词）'
-      },
-      {
-        t: 'heure ?',
-        r: 'complement',
-        zh: '时刻；点钟'
-      }
+      { t: "Tournez", r: "verbe", zh: "转（命令式）" },
+      { t: "à", r: "preposition", zh: "向" },
+      { t: "droite", r: "direction", zh: "右" },
     ]
   },
   {
-    id: 54,
-    cat: '方位',
-    emoji: '👜',
-    fr: 'Où est le sac ?',
-    zh: '包在哪里？',
-    structure: '疑问副词 + 系动词 + 定冠词 + 主语',
-    note: 'où 问地点；复数变 Où sont les sacs ? 定冠词 le/les 别漏。',
+    id: 132, unit: "U3", cat: "指路", emoji: "↩️",
+    fr: "Prenez la deuxième rue à gauche.",
+    zh: "走左边第二条街。",
+    structure: "命令式谓语(Prenez) + 宾语(la deuxième rue) + 方位短语(à gauche)",
+    note: "deuxième 第二（序数词）；prendre la rue 走某条街。",
     words: [
-      {
-        t: 'Où',
-        r: 'interrogation',
-        zh: '在哪里'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是；在'
-      },
-      {
-        t: 'le',
-        r: 'determinant',
-        zh: '那个（定冠词）'
-      },
-      {
-        t: 'sac ?',
-        r: 'sujet',
-        zh: '包；袋子'
-      }
+      { t: "Prenez", r: "verbe", zh: "走（命令式）" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "deuxième", r: "numeral", zh: "第二" },
+      { t: "rue", r: "nom", zh: "街道" },
+      { t: "à", r: "preposition", zh: "向" },
+      { t: "gauche", r: "direction", zh: "左" },
     ]
   },
   {
-    id: 55,
-    cat: '方位',
-    emoji: '📖',
-    fr: 'Le livre est sur la table.',
-    zh: '书在桌子上。',
-    structure: '定冠词 + 主语 + 系动词 + 介词 + 定冠词 + 地点补语',
-    note: '方位介词家族：sur 在……上、sous 在……下、dans 在……里、devant 在……前、derrière 在……后。',
+    id: 133, unit: "U3", cat: "交通", emoji: "🚶",
+    fr: "Je vais à l'université à pied.",
+    zh: "我走路去大学。",
+    structure: "主语(Je) + 谓语(vais) + 地点(à l'université) + 方式(à pied)",
+    note: "交通方式：à pied 步行、en métro 地铁、en bus 公交、à vélo 骑车。",
     words: [
-      {
-        t: 'Le',
-        r: 'determinant',
-        zh: '那本（定冠词）'
-      },
-      {
-        t: 'livre',
-        r: 'sujet',
-        zh: '书'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是；在'
-      },
-      {
-        t: 'sur',
-        r: 'preposition',
-        zh: '在……上面'
-      },
-      {
-        t: 'la',
-        r: 'determinant',
-        zh: '这张（定冠词）'
-      },
-      {
-        t: 'table.',
-        r: 'complement',
-        zh: '桌子'
-      }
+      { t: "Je", r: "sujet", zh: "我" },
+      { t: "vais", r: "verbe", zh: "去" },
+      { t: "à", r: "preposition", zh: "到" },
+      { t: "l'université", r: "nom", zh: "大学" },
+      { t: "à", r: "preposition", zh: "以…方式" },
+      { t: "pied", r: "manière", zh: "步行" },
     ]
   },
   {
-    id: 56,
-    cat: '购物',
-    emoji: '💶',
-    fr: 'C\'est combien ?',
-    zh: '这个多少钱？',
-    structure: '指示代词 + 系动词 + 疑问副词（省略句）',
-    note: '问价格万能句。正式一点：Ça coûte combien ? 日常 C\'est combien ? 最顺口。',
+    id: 134, unit: "U3", cat: "交通", emoji: "🚇",
+    fr: "Allez-y en métro.",
+    zh: "坐地铁去吧。",
+    structure: "命令式谓语(Allez-y，含副代词 y) + 方式状语(en métro)",
+    note: "y 代替前面提到的地点；Allez-y 去那儿；en métro 坐地铁。",
     words: [
-      {
-        t: 'C\'est',
-        r: 'verbe',
-        zh: '这是'
-      },
-      {
-        t: 'combien ?',
-        r: 'interrogation',
-        zh: '多少（数量/价格）'
-      }
+      { t: "Allez-y", r: "verbe", zh: "去（那儿，命令式）" },
+      { t: "en", r: "preposition", zh: "乘" },
+      { t: "métro", r: "manière", zh: "地铁" },
     ]
   },
   {
-    id: 57,
-    cat: '购物',
-    emoji: '🧾',
-    fr: 'C\'est quinze euros.',
-    zh: '十五欧元。',
-    structure: '指示代词 + 系动词 + 数词 + 货币单位',
-    note: '报价句型 C\'est + 价格。quinze = 15；欧元 euro 复数加 s。',
+    id: 135, unit: "U3", cat: "方位", emoji: "🏦",
+    fr: "La banque est en face de la poste.",
+    zh: "银行在邮局对面。",
+    structure: "主语(La banque) + 系动词(est) + 方位短语(en face de la poste)",
+    note: "en face de 在…正对面；la poste 邮局。",
     words: [
-      {
-        t: 'C\'est',
-        r: 'verbe',
-        zh: '这是（售价）'
-      },
-      {
-        t: 'quinze',
-        r: 'numeral',
-        zh: '十五'
-      },
-      {
-        t: 'euros.',
-        r: 'complement',
-        zh: '欧元（复数）'
-      }
+      { t: "La", r: "determinant", zh: "这" },
+      { t: "banque", r: "nom", zh: "银行" },
+      { t: "est", r: "verbe", zh: "是" },
+      { t: "en", r: "preposition", zh: "在" },
+      { t: "face", r: "nom", zh: "对面" },
+      { t: "de", r: "preposition", zh: "的" },
+      { t: "la", r: "determinant", zh: "这" },
+      { t: "poste", r: "nom", zh: "邮局" },
     ]
   },
-  {
-    id: 58,
-    cat: '购物',
-    emoji: '🥖',
-    fr: 'Je voudrais du pain et de l\'eau.',
-    zh: '我想要面包和水。',
-    structure: '主语 + 谓语（条件式）+ 部分冠词 + 宾语 + 连词 + 部分冠词 + 宾语',
-    note: '部分冠词 du/de la/de l\'/des 表示「一些」不确定的量：du pain 一些面包，de l\'eau 一些水。voudrais 比 vouloir 礼貌得多。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'voudrais',
-        r: 'verbe',
-        zh: '想要（vouloir 条件式，礼貌）'
-      },
-      {
-        t: 'du',
-        r: 'determinant',
-        zh: '一些（de + le，阳性部分冠词）'
-      },
-      {
-        t: 'pain',
-        r: 'objet',
-        zh: '面包'
-      },
-      {
-        t: 'et',
-        r: 'conjonction',
-        zh: '和'
-      },
-      {
-        t: 'de',
-        r: 'determinant',
-        zh: '一些（阴性部分冠词 de + la）'
-      },
-      {
-        t: 'l\'eau.',
-        r: 'objet',
-        zh: '水（le 的省音）'
-      }
-    ]
-  },
-  {
-    id: 59,
-    cat: '职业',
-    emoji: '💼',
-    fr: 'Qu\'est-ce que tu fais dans la vie ?',
-    zh: '你做什么工作？',
-    structure: '疑问短语 + 主语 + 谓语 + 介词短语',
-    note: '问职业最地道的问法！faire dans la vie = 以……为业。回答：Je suis étudiant. / Je travaille dans le marketing.',
-    words: [
-      {
-        t: 'Qu\'est-ce',
-        r: 'interrogation',
-        zh: '什么（que + est-ce 的缩合）'
-      },
-      {
-        t: 'que',
-        r: 'interrogation',
-        zh: '什么（疑问代词）'
-      },
-      {
-        t: 'tu',
-        r: 'sujet',
-        zh: '你'
-      },
-      {
-        t: 'fais',
-        r: 'verbe',
-        zh: '做（faire 的 tu 变位）'
-      },
-      {
-        t: 'dans',
-        r: 'preposition',
-        zh: '在……方面'
-      },
-      {
-        t: 'la',
-        r: 'determinant',
-        zh: '（定冠词）'
-      },
-      {
-        t: 'vie ?',
-        r: 'complement',
-        zh: '生活；人生'
-      }
-    ]
-  },
-  {
-    id: 60,
-    cat: '过去的事',
-    emoji: '🎉',
-    fr: 'Tu as fait quoi ce week-end ?',
-    zh: '你周末做了什么？',
-    structure: '主语 + 助动词 + 过去分词 + 疑问代词 + 指示形容词 + 时间主语',
-    note: '口语过去时：avoir/être + 过去分词。faire 的过去分词是 fait（不变）。ce week-end = 这个周末。',
-    words: [
-      {
-        t: 'Tu',
-        r: 'sujet',
-        zh: '你'
-      },
-      {
-        t: 'as',
-        r: 'verbe',
-        zh: '有（助动词 avoir）'
-      },
-      {
-        t: 'fait',
-        r: 'verbe',
-        zh: '做（faire 的过去分词）'
-      },
-      {
-        t: 'quoi',
-        r: 'interrogation',
-        zh: '什么'
-      },
-      {
-        t: 'ce',
-        r: 'determinant',
-        zh: '这个（指示形容词）'
-      },
-      {
-        t: 'week-end ?',
-        r: 'sujet',
-        zh: '周末'
-      }
-    ]
-  },
-  {
-    id: 61,
-    cat: '过去的事',
-    emoji: '🎬',
-    fr: 'Je suis allé au cinéma hier.',
-    zh: '我昨天去电影院了。',
-    structure: '主语 + 助动词 + 过去分词 + 缩合冠词 + 地点 + 时间副词',
-    note: 'aller 用 être 作助动词：je suis allé（男）/ allée（女）。au cinéma = à + le cinéma，缩合成 au。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'suis',
-        r: 'verbe',
-        zh: '是（助动词 être）'
-      },
-      {
-        t: 'allé',
-        r: 'verbe',
-        zh: '去了（aller 的过去分词）'
-      },
-      {
-        t: 'au',
-        r: 'preposition',
-        zh: '到（à + le 缩合）'
-      },
-      {
-        t: 'cinéma',
-        r: 'complement',
-        zh: '电影院'
-      },
-      {
-        t: 'hier.',
-        r: 'complement',
-        zh: '昨天'
-      }
-    ]
-  },
-  {
-    id: 62,
-    cat: '过去的事',
-    emoji: '🖼️',
-    fr: 'Elle a visité le Louvre.',
-    zh: '她参观了卢浮宫。',
-    structure: '主语 + 助动词 + 过去分词 + 定冠词 + 宾语',
-    note: '第一组动词的过去分词 = 词干 + é：visiter → visité。avisiter le Louvre 是《你好，法语！》里的经典句子。',
-    words: [
-      {
-        t: 'Elle',
-        r: 'sujet',
-        zh: '她'
-      },
-      {
-        t: 'a',
-        r: 'verbe',
-        zh: '有（助动词 avoir）'
-      },
-      {
-        t: 'visité',
-        r: 'verbe',
-        zh: '参观了（visiter 的过去分词）'
-      },
-      {
-        t: 'le',
-        r: 'determinant',
-        zh: '（定冠词）'
-      },
-      {
-        t: 'Louvre.',
-        r: 'nom-propre',
-        zh: '卢浮宫'
-      }
-    ]
-  },
-  {
-    id: 63,
-    cat: '外貌衣着',
-    emoji: '👩',
-    fr: 'Elle a les cheveux longs et blonds.',
-    zh: '她有一头金色长发。',
-    structure: '主语 + 谓语 + 定冠词复数宾语 + 形容词 × 2（后置）',
-    note: '描述外貌用 avoir：Elle a les cheveux longs（她头发长）。法语形容词多数放在名词后面，还要阴阳性配合：blonds 是阳性复数。',
-    words: [
-      {
-        t: 'Elle',
-        r: 'sujet',
-        zh: '她'
-      },
-      {
-        t: 'a',
-        r: 'verbe',
-        zh: '有'
-      },
-      {
-        t: 'les',
-        r: 'determinant',
-        zh: '（定冠词复数）'
-      },
-      {
-        t: 'cheveux',
-        r: 'objet',
-        zh: '头发（复数）'
-      },
-      {
-        t: 'longs',
-        r: 'adjectif',
-        zh: '长的（阳性复数，后置）'
-      },
-      {
-        t: 'et',
-        r: 'conjonction',
-        zh: '并且'
-      },
-      {
-        t: 'blonds.',
-        r: 'adjectif',
-        zh: '金色的（阳性复数，后置）'
-      }
-    ]
-  },
-  {
-    id: 64,
-    cat: '外貌衣着',
-    emoji: '🧥',
-    fr: 'Il porte un pull bleu.',
-    zh: '他穿着一件蓝色毛衣。',
-    structure: '主语 + 谓语 + 不定冠词 + 宾语 + 形容词（后置）',
-    note: 'porter = 穿着/戴着。颜色形容词后置：un pull bleu（阴性则说 une jupe bleue）。',
-    words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '他'
-      },
-      {
-        t: 'porte',
-        r: 'verbe',
-        zh: '穿着；戴着（porter）'
-      },
-      {
-        t: 'un',
-        r: 'determinant',
-        zh: '一件（阳性不定冠词）'
-      },
-      {
-        t: 'pull',
-        r: 'objet',
-        zh: '毛衣'
-      },
-      {
-        t: 'bleu.',
-        r: 'adjectif',
-        zh: '蓝色的（后置）'
-      }
-    ]
-  },
-  {
-    id: 65,
-    cat: '日常生活',
-    emoji: '⏰',
-    fr: 'Je me lève à sept heures.',
-    zh: '我七点钟起床。',
-    structure: '主语 + 自反代词 + 谓语 + 介词 + 时间补语',
-    note: 'se lever 是代词式动词：je me lève, tu te lèves, il se lève… 主语代词和自反代词要配对出现。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'me',
-        r: 'complement',
-        zh: '我自己（自反代词）'
-      },
-      {
-        t: 'lève',
-        r: 'verbe',
-        zh: '举起；起身（se lever）'
-      },
-      {
-        t: 'à',
-        r: 'preposition',
-        zh: '在（时刻）'
-      },
-      {
-        t: 'sept',
-        r: 'numeral',
-        zh: '七'
-      },
-      {
-        t: 'heures.',
-        r: 'complement',
-        zh: '点钟'
-      }
-    ]
-  },
-  {
-    id: 66,
-    cat: '日常生活',
-    emoji: '🚇',
-    fr: 'Je prends le métro pour aller au bureau.',
-    zh: '我坐地铁去办公室。',
-    structure: '主语 + 谓语 + 宾语 + 目的连词 + 动词不定式 + 缩合冠词 + 地点',
-    note: 'prendre le métro 坐地铁（交通工具用 prendre 不加 in）；pour + 原形表目的；aller au bureau 去办公室。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'prends',
-        r: 'verbe',
-        zh: '拿；乘坐（prendre）'
-      },
-      {
-        t: 'le',
-        r: 'determinant',
-        zh: '（定冠词）'
-      },
-      {
-        t: 'métro',
-        r: 'objet',
-        zh: '地铁'
-      },
-      {
-        t: 'pour',
-        r: 'preposition',
-        zh: '为了；以便'
-      },
-      {
-        t: 'aller',
-        r: 'verbe',
-        zh: '去（动词不定式）'
-      },
-      {
-        t: 'au',
-        r: 'preposition',
-        zh: '到（à + le）'
-      },
-      {
-        t: 'bureau.',
-        r: 'complement',
-        zh: '办公室'
-      }
-    ]
-  },
-  {
-    id: 67,
-    cat: '约定',
-    emoji: '🤝',
-    fr: 'On se voit à huit heures ?',
-    zh: '我们八点见好吗？',
-    structure: '主语 + 自反代词 + 谓语 + 介词 + 时间（建议句型）',
-    note: 'on 口语里常当「我们」用；se voir 见面；上升语调就是提议：On se voit à huit heures ?',
-    words: [
-      {
-        t: 'On',
-        r: 'sujet',
-        zh: '人们；我们（口语）'
-      },
-      {
-        t: 'se',
-        r: 'complement',
-        zh: '互相（自反代词）'
-      },
-      {
-        t: 'voit',
-        r: 'verbe',
-        zh: '看见；见面（se voir）'
-      },
-      {
-        t: 'à',
-        r: 'preposition',
-        zh: '在（时刻）'
-      },
-      {
-        t: 'huit',
-        r: 'numeral',
-        zh: '八'
-      },
-      {
-        t: 'heures ?',
-        r: 'complement',
-        zh: '点钟'
-      }
-    ]
-  },
-  {
-    id: 68,
-    cat: '天气',
-    emoji: '☀️',
-    fr: 'Il fait beau aujourd\'hui.',
-    zh: '今天天气很好。',
-    structure: '形式主语 + 谓语 + 形容词 + 时间副词',
-    note: '问天气：Quel temps fait-il ? 回答：Il fait beau 晴天 / Il fait chaud 热 / Il pleut 下雨。',
-    words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '它（表天气的形式主语）'
-      },
-      {
-        t: 'fait',
-        r: 'verbe',
-        zh: '做；处于（faire）'
-      },
-      {
-        t: 'beau',
-        r: 'adjectif',
-        zh: '好的；晴朗的'
-      },
-      {
-        t: 'aujourd\'hui.',
-        r: 'complement',
-        zh: '今天'
-      }
-    ]
-  },
-  {
-    id: 69,
-    cat: '否定',
-    emoji: '🚗',
-    fr: 'Je n\'ai pas de voiture.',
-    zh: '我没有汽车。',
-    structure: '主语 + ne + 助动词 + pas + de + 宾语（否定句）',
-    note: '否定句 ne…pas 夹住动词：Je n\'ai pas de voiture. 注意否定句中不定冠词/部分冠词要换成 de。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'n\'ai',
-        r: 'verbe',
-        zh: '没有（ne + ai 省音）'
-      },
-      {
-        t: 'pas',
-        r: 'complement',
-        zh: '不（否定第二成分）'
-      },
-      {
-        t: 'de',
-        r: 'determinant',
-        zh: '（否定句中代替 du/des）'
-      },
-      {
-        t: 'voiture.',
-        r: 'objet',
-        zh: '汽车'
-      }
-    ]
-  },
-  {
-    id: 70,
-    cat: '地理',
-    emoji: '🗺️',
-    fr: 'La France est en Europe.',
-    zh: '法国在欧洲。',
-    structure: '定冠词 + 主语 + 系动词 + 介词 en + 大洲补语',
-    note: '阴性单数大洲/国家前用 en：en Europe, en France, en Chine；阳性用 au：au Japon, au Canada。',
-    words: [
-      {
-        t: 'La',
-        r: 'determinant',
-        zh: '（定冠词）'
-      },
-      {
-        t: 'France',
-        r: 'sujet',
-        zh: '法国'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是；位于'
-      },
-      {
-        t: 'en',
-        r: 'preposition',
-        zh: '在（阴性地点前）'
-      },
-      {
-        t: 'Europe.',
-        r: 'complement',
-        zh: '欧洲'
-      }
-    ]
-  },
-  {
-    id: 71,
-    cat: '存在',
-    emoji: '☕',
-    fr: 'Il y a un café sur la table.',
-    zh: '桌上有一杯咖啡。',
-    structure: '形式主语 + y + 谓语 + 不定冠词 + 宾语 + 方位短语',
-    note: 'il y a = 有（存在句），是法语里最高频的表达之一；否定是 il n\'y a pas de…。',
-    words: [
-      {
-        t: 'Il',
-        r: 'sujet',
-        zh: '它（形式主语）'
-      },
-      {
-        t: 'y',
-        r: 'complement',
-        zh: '那里（il y a 固定结构）'
-      },
-      {
-        t: 'a',
-        r: 'verbe',
-        zh: '有（avoir）'
-      },
-      {
-        t: 'un',
-        r: 'determinant',
-        zh: '一杯'
-      },
-      {
-        t: 'café',
-        r: 'objet',
-        zh: '咖啡'
-      },
-      {
-        t: 'sur',
-        r: 'preposition',
-        zh: '在……上'
-      },
-      {
-        t: 'la',
-        r: 'determinant',
-        zh: '（定冠词）'
-      },
-      {
-        t: 'table.',
-        r: 'complement',
-        zh: '桌子'
-      }
-    ]
-  },
-  {
-    id: 72,
-    cat: '感叹',
-    emoji: '😍',
-    fr: 'Comme elle est belle !',
-    zh: '她真美啊！',
-    structure: '感叹连词 + 主语 + 系动词 + 形容词（感叹句）',
-    note: 'comme 引导感叹句 = 多么……！另一种说法：Qu\'elle est belle ! 口语里 C\'est beau ! 更简单。',
-    words: [
-      {
-        t: 'Comme',
-        r: 'interrogation',
-        zh: '多么（感叹连词）'
-      },
-      {
-        t: 'elle',
-        r: 'sujet',
-        zh: '她'
-      },
-      {
-        t: 'est',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'belle !',
-        r: 'adjectif',
-        zh: '美的（阴性）'
-      }
-    ]
-  },
-  {
-    id: 73,
-    cat: '感叹',
-    emoji: '🚲',
-    fr: 'Quel beau vélo !',
-    zh: '多漂亮的自行车啊！',
-    structure: '感叹形容词 + 形容词 + 名词（省略句）',
-    note: 'quel 要与名词性数配合：Quel beau vélo !（阳单）/ Quelles belles fleurs !（阴复）。',
-    words: [
-      {
-        t: 'Quel',
-        r: 'interrogation',
-        zh: '多么（阳性感叹形容词）'
-      },
-      {
-        t: 'beau',
-        r: 'adjectif',
-        zh: '漂亮的（阳性）'
-      },
-      {
-        t: 'vélo !',
-        r: 'objet',
-        zh: '自行车'
-      }
-    ]
-  },
-  {
-    id: 74,
-    cat: '感叹',
-    emoji: '🌟',
-    fr: 'C\'est super !',
-    zh: '太棒了！',
-    structure: '指示代词 + 系动词 + 形容词（感叹省略句）',
-    note: '日常口语夸东西三连：C\'est super ! 太棒了 / C\'est génial ! 绝了 / C\'est pas mal ! 还不错。',
-    words: [
-      {
-        t: 'C\'est',
-        r: 'verbe',
-        zh: '这是'
-      },
-      {
-        t: 'super !',
-        r: 'adjectif',
-        zh: '超级棒的'
-      }
-    ]
-  },
-  {
-    id: 75,
-    cat: '口语',
-    emoji: '😅',
-    fr: 'Je suis désolé, je suis en retard !',
-    zh: '对不起，我迟到了！',
-    structure: '主语 + 系动词 + 形容词 + 主语 + 系动词 + 介词 + 名词',
-    note: '迟到道歉金句；女性说 Je suis désolée。en retard 迟到，反义词 à l\'heure 准时。',
-    words: [
-      {
-        t: 'Je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'suis',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'désolé,',
-        r: 'adjectif',
-        zh: '抱歉的（阳性）'
-      },
-      {
-        t: 'je',
-        r: 'sujet',
-        zh: '我'
-      },
-      {
-        t: 'suis',
-        r: 'verbe',
-        zh: '是'
-      },
-      {
-        t: 'en',
-        r: 'preposition',
-        zh: '处于（状态）'
-      },
-      {
-        t: 'retard !',
-        r: 'complement',
-        zh: '迟到'
-      }
-    ]
-  },
-  {
-    id: 76,
-    cat: '口语',
-    emoji: '🍽️',
-    fr: 'Bon appétit !',
-    zh: '好好享用！（用餐前的祝福）',
-    structure: '形容词 + 名词（固定祝福语）',
-    note: '开吃前全场说 Bon appétit ! 相当于日语「いただきます」、中文「请慢用」。',
-    words: [
-      {
-        t: 'Bon',
-        r: 'adjectif',
-        zh: '好的'
-      },
-      {
-        t: 'appétit !',
-        r: 'complement',
-        zh: '胃口'
-      }
-    ]
-  },
-  {
-    id: 77,
-    cat: '口语',
-    emoji: '👋',
-    fr: 'À tout à l\'heure !',
-    zh: '一会儿见！',
-    structure: '介词 + 代词 + 介词 + 时间名词（固定告别语）',
-    note: '当天还会见面说 À tout à l\'heure !；改天再见说 À bientôt !；明天见 À demain !',
-    words: [
-      {
-        t: 'À',
-        r: 'preposition',
-        zh: '到'
-      },
-      {
-        t: 'tout',
-        r: 'complement',
-        zh: '全部'
-      },
-      {
-        t: 'à',
-        r: 'preposition',
-        zh: '在'
-      },
-      {
-        t: 'l\'heure !',
-        r: 'complement',
-        zh: '时刻（le 的省音）'
-      }
-    ]
-  },
-  {
-    id: 78,
-    cat: '口语',
-    emoji: '🔁',
-    fr: 'Tu peux répéter, s\'il te plaît ?',
-    zh: '你能再说一遍吗？',
-    structure: '主语 + 谓语 + 动词不定式 + 礼貌插入语',
-    note: '没听清就礼貌地说这句；更短：Répète, s\'il te plaît ? 或 Pardon, tu peux répéter ?',
-    words: [
-      {
-        t: 'Tu',
-        r: 'sujet',
-        zh: '你'
-      },
-      {
-        t: 'peux',
-        r: 'verbe',
-        zh: '能够（pouvoir）'
-      },
-      {
-        t: 'répéter,',
-        r: 'verbe',
-        zh: '重复（动词不定式）'
-      },
-      {
-        t: 's\'il',
-        r: 'politesse',
-        zh: '如果（si + il 省音）'
-      },
-      {
-        t: 'te',
-        r: 'complement',
-        zh: '你（间接宾语代词）'
-      },
-      {
-        t: 'plaît ?',
-        r: 'politesse',
-        zh: '取悦（s\'il te plaît 请）'
-      }
-    ]
-  },
-  {
-    id: 79,
-    cat: '餐厅',
-    emoji: '🥖',
-    fr: 'Je voudrais une baguette, s\'il vous plaît.',
-    zh: '我想要一根法棍，麻烦您。',
-    structure: '主语 + 条件式（voudrais 委婉想要）+ 数量词 + 名词 + 礼貌插入语',
-    note: 'voudrais 是 vouloir 的条件式，比 je veux（我想要）礼貌得多，买东西点餐都用它。面包店说这句 + Merci, au revoir 就是一套完整对话。',
-    words: [
-      { t: 'Je', r: 'sujet', zh: '我' },
-      { t: 'voudrais', r: 'verbe', zh: '想要（vouloir 条件式，委婉）' },
-      { t: 'une', r: 'determinant', zh: '一根（阴性不定冠词）' },
-      { t: 'baguette,', r: 'nom', zh: '法棍面包（阴性）' },
-      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您（敬语）' }
-    ]
-  },
-  {
-    id: 80,
-    cat: '餐厅',
-    emoji: '🥘',
-    fr: 'C\'est délicieux !',
-    zh: '太好吃了！',
-    structure: '指示代词 + 系动词 + 品质形容词',
-    note: '饭桌上最讨喜的一句话！也常缩成 Mmm, c\'est bon !（嗯，真好吃！）。形容词 délicieux 阴性是 délicieuse。',
-    words: [
-      { t: 'C\'est', r: 'verbe', zh: '这是' },
-      { t: 'délicieux !', r: 'adjectif', zh: '美味的，好吃的' }
-    ]
-  },
-  {
-    id: 81,
-    cat: '餐厅',
-    emoji: '🧾',
-    fr: 'L\'addition, s\'il vous plaît.',
-    zh: '请结账（买单）。',
-    structure: '名词 + 礼貌插入语（省略句）',
-    note: '法国餐厅不会主动送账单，吃完了要自己喊 L\'addition, s\'il vous plaît !（请拿账单来）。addition 是阴性名词。',
-    words: [
-      { t: 'L\'addition,', r: 'nom', zh: '账单（阴性）' },
-      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您' }
-    ]
-  },
-  {
-    id: 82,
-    cat: '餐厅',
-    emoji: '☕',
-    fr: 'Un café, s\'il vous plaît.',
-    zh: '请来一杯咖啡。',
-    structure: '数量词（不定冠词）+ 名词 + 礼貌插入语（省略句）',
-    note: '吧台点咖啡的万能短句。一杯浓缩就是 un café，un café allongé 是加水拉长的美式，un cappuccino 就是卡布奇诺。',
-    words: [
-      { t: 'Un', r: 'determinant', zh: '一杯（阳性不定冠词）' },
-      { t: 'café,', r: 'nom', zh: '咖啡（阳性）' },
-      { t: 's\'il vous plaît.', r: 'politesse', zh: '麻烦您' }
-    ]
-  },
-  {
-    id: 83,
-    cat: '天气',
-    emoji: '☀️',
-    fr: 'Il fait beau aujourd\'hui.',
-    zh: '今天天气很好。',
-    structure: '无人称主语 + fait（faire）+ 形容词 + 时间副词',
-    note: '谈天气一律用无人称 il fait...：beau 好 / chaud 热 / froid 冷 / du vent 有风。Aujourd\'hui（今天）是超高频副词。',
-    words: [
-      { t: 'Il', r: 'sujet', zh: '它（无人称主语）' },
-      { t: 'fait', r: 'verbe', zh: '做（faire 变位，此处表天气）' },
-      { t: 'beau', r: 'adjectif', zh: '好的（beau 的阳性形）' },
-      { t: 'aujourd\'hui.', r: 'temps', zh: '今天' }
-    ]
-  },
-  {
-    id: 84,
-    cat: '天气',
-    emoji: '🌧️',
-    fr: 'Il pleut beaucoup en automne.',
-    zh: '秋天经常下雨。',
-    structure: '无人称主语 + pleuvoir 变位 + 副词 + 季节',
-    note: 'il pleut（在下雨）是 pleuvoir 的第三人称单数变位，只有这一种常用形式。季节前用 en：en automne、en été。',
-    words: [
-      { t: 'Il', r: 'sujet', zh: '它（无人称）' },
-      { t: 'pleut', r: 'verbe', zh: '下雨（pleuvoir 变位）' },
-      { t: 'beaucoup', r: 'adverbe', zh: '很多，非常' },
-      { t: 'en automne.', r: 'temps', zh: '在秋天' }
-    ]
-  },
-  {
-    id: 85,
-    cat: '时间',
-    emoji: '⏰',
-    fr: 'Quelle heure est-il ?',
-    zh: '现在几点了？',
-    structure: '疑问词 + 名词 + 倒装疑问（est-il）',
-    note: '问时间的固定句式，倒装语序显得正式。口语里更常直接说 Il est quelle heure ?（几点啦？）',
-    words: [
-      { t: 'Quelle', r: 'interrogation', zh: '哪一（阴性，配 heure）' },
-      { t: 'heure', r: 'nom', zh: '小时；钟点（阴性）' },
-      { t: 'est-il ?', r: 'verbe', zh: '是……吗（倒装）' }
-    ]
-  },
-  {
-    id: 86,
-    cat: '时间',
-    emoji: '🕗',
-    fr: 'Il est huit heures.',
-    zh: '现在是八点。',
-    structure: '无人称 il est + 数字 + heures',
-    note: '报时间用 il est...：il est huit heures（八点）、huit heures et demie（八点半）、huit heures et quart（八点一刻）。中午十二点后用 il est huit heures du soir（晚上八点）。',
-    words: [
-      { t: 'Il est', r: 'verbe', zh: '现在是（无人称）' },
-      { t: 'huit', r: 'numeral', zh: '八' },
-      { t: 'heures.', r: 'nom', zh: '小时（复数）' }
-    ]
-  },
-  {
-    id: 87,
-    cat: '时间',
-    emoji: '📅',
-    fr: 'On est lundi aujourd\'hui.',
-    zh: '今天是星期一。',
-    structure: 'on（泛指主语）+ est + 星期名词 + 时间副词',
-    note: '说周几用 on est + 星期，也可以说 Aujourd\'hui, c\'est lundi。法语星期不大写，日子从周一开始数。',
-    words: [
-      { t: 'On est', r: 'verbe', zh: '今天是（on 泛指我们）' },
-      { t: 'lundi', r: 'nom', zh: '星期一（不大写）' },
-      { t: 'aujourd\'hui.', r: 'temps', zh: '今天' }
-    ]
-  },
-  {
-    id: 88,
-    cat: '方位',
-    emoji: '🚉',
-    fr: 'Où est la gare, s\'il vous plaît ?',
-    zh: '请问火车站在哪里？',
-    structure: '疑问副词 où + est + 名词 + 礼貌插入语',
-    note: '问路的万能开头：Où est... ?（……在哪里？）。加上 s\'il vous plaît 更礼貌。la gare 是火车站，l\'arrêt de bus 是公交站。',
-    words: [
-      { t: 'Où', r: 'interrogation', zh: '哪里（带音符）' },
-      { t: 'est', r: 'verbe', zh: '是，在' },
-      { t: 'la gare,', r: 'nom', zh: '火车站（阴性）' },
-      { t: 's\'il vous plaît ?', r: 'politesse', zh: '请问（敬语）' }
-    ]
-  },
-  {
-    id: 89,
-    cat: '方位',
-    emoji: '➡️',
-    fr: 'Tournez à droite ici.',
-    zh: '在这里右转。',
-    structure: '命令式（tourner）+ 方位短语 + 地点副词',
-    note: '命令式去掉主语：Tournez à droite 右转 / Tournez à gauche 左转 / Tout droit 直走。导路人最常说的三个短语。',
-    words: [
-      { t: 'Tournez', r: 'verbe', zh: '转（命令式，礼貌）' },
-      { t: 'à droite', r: 'direction', zh: '向右' },
-      { t: 'ici.', r: 'lieu', zh: '在这里' }
-    ]
-  },
-  {
-    id: 90,
-    cat: '购物',
-    emoji: '🛒',
-    fr: 'Je voudrais acheter ce livre.',
-    zh: '我想买这本书。',
-    structure: '主语 + voudrais + 动词不定式 + 指示形容词 + 名词',
-    note: 'voudrais + 动词原形表示委婉的意愿。ce（这个）是阳性指示形容词，阴性是 cette（cette pomme 这个苹果）。',
-    words: [
-      { t: 'Je', r: 'sujet', zh: '我' },
-      { t: 'voudrais', r: 'verbe', zh: '想要（委婉）' },
-      { t: 'acheter', r: 'verbe', zh: '买（动词原形）' },
-      { t: 'ce livre.', r: 'nom', zh: '这本书（阳性）' }
-    ]
-  },
-  {
-    id: 91,
-    cat: '购物',
-    emoji: '💳',
-    fr: 'Je peux payer par carte ?',
-    zh: '可以刷卡吗？',
-    structure: '主语 + pouvoir + 动词原形 + 支付方式（语调疑问）',
-    note: '语调上扬就是疑问句，口语最常用。cash 是 espèces：Je peux payer en espèces ?（可以付现金吗？）',
-    words: [
-      { t: 'Je', r: 'sujet', zh: '我' },
-      { t: 'peux', r: 'verbe', zh: '能，可以（pouvoir 变位）' },
-      { t: 'payer', r: 'verbe', zh: '支付（动词原形）' },
-      { t: 'par carte ?', r: 'manière', zh: '用卡（刷卡）' }
-    ]
-  },
-  {
-    id: 92,
-    cat: '家庭',
-    emoji: '👨‍👩‍👧',
-    fr: 'J\'ai un frère et une sœur.',
-    zh: '我有一个兄弟和一个姐妹。',
-    structure: '主语 + avoir + 数量冠词 + 名词并列（et）',
-    note: '介绍家庭成员用 avoir（有）：J\'ai deux frères（我有两个兄弟，注意复数）。frère 是兄弟，sœur 是姐妹。',
-    words: [
-      { t: 'J\'ai', r: 'verbe', zh: '我有（avoir 变位）' },
-      { t: 'un frère', r: 'nom', zh: '一个兄弟（阳性）' },
-      { t: 'et', r: 'conjonction', zh: '和' },
-      { t: 'une sœur.', r: 'nom', zh: '一个姐妹（阴性）' }
-    ]
-  },
-  {
-    id: 93,
-    cat: '家庭',
-    emoji: '👵',
-    fr: 'Ma grand-mère est très gentille.',
-    zh: '我的奶奶（外婆）很和蔼。',
-    structure: '主有形容词 + 名词 + 系动词 + 副词 + 形容词（阴性）',
-    note: 'grand-mère 阴性所以用 ma，形容词也要阴性 gentille。阳性：Mon grand-père est très gentil（我的爷爷很和蔼）。',
-    words: [
-      { t: 'Ma', r: 'adjectif', zh: '我的（阴性主有词）' },
-      { t: 'grand-mère', r: 'nom', zh: '奶奶/外婆（阴性）' },
-      { t: 'est', r: 'verbe', zh: '是' },
-      { t: 'très gentille.', r: 'adjectif', zh: '很和蔼（阴性形）' }
-    ]
-  },
-  {
-    id: 94,
-    cat: '喜好',
-    emoji: '🎵',
-    fr: 'J\'adore écouter de la musique.',
-    zh: '我特别喜欢听音乐。',
-    structure: '主语 + aimer/adorer + 动词不定式 + 部分冠词 + 名词',
-    note: 'adorer 比 aimer 程度更强。喜欢做某事：adorer/aimer + 动词原形。écouter 后接部分冠词 de la（一些，阴性）。',
-    words: [
-      { t: 'J\'adore', r: 'verbe', zh: '我酷爱（adorer 变位）' },
-      { t: 'écouter', r: 'verbe', zh: '听（动词原形）' },
-      { t: 'de la musique.', r: 'nom', zh: '音乐（部分冠词 + 阴性）' }
-    ]
-  },
-  {
-    id: 95,
-    cat: '喜好',
-    emoji: '⚽',
-    fr: 'Je joue au football le week-end.',
-    zh: '我周末踢足球。',
-    structure: '主语 + jouer à（缩合 au）+ 运动 + 定冠词表时间',
-    note: '玩球类用 jouer au + 阳性名词（au foot / au basket），乐器用 jouer du piano。le week-end 里的 le 表示「每逢」。',
-    words: [
-      { t: 'Je joue', r: 'verbe', zh: '我玩/打（jouer 变位）' },
-      { t: 'au football,', r: 'nom', zh: '足球（à + le 缩合成 au）' },
-      { t: 'le week-end.', r: 'temps', zh: '每逢周末' }
-    ]
-  },
-  {
-    id: 96,
-    cat: '否定',
-    emoji: '🚫',
-    fr: 'Je n\'aime pas le froid.',
-    zh: '我不喜欢冷天。',
-    structure: 'ne + 动词 + pas（否定夹心）+ 定冠词表泛指',
-    note: '法语否定是 ne...pas 一对括号夹住动词。泛指一类事物用定冠词：le froid（寒冷这种东西）。也可以说 Je n\'aime pas l\'hiver（我不喜欢冬天）。',
-    words: [
-      { t: 'Je', r: 'sujet', zh: '我' },
-      { t: 'n\'aime', r: 'verbe', zh: '不喜欢（ne + aime 缩合）' },
-      { t: 'pas', r: 'négation', zh: '不（否定后半）' },
-      { t: 'le froid.', r: 'nom', zh: '寒冷，冷天' }
-    ]
-  },
-  {
-    id: 97,
-    cat: '存在',
-    emoji: '🏙️',
-    fr: 'Il y a beaucoup de touristes ici.',
-    zh: '这里有很多游客。',
-    structure: 'il y a（有）+ 数量副词 + de + 复数名词 + 地点副词',
-    note: 'il y a 表示「有/存在着」，万能开头。数量多时复数名词前加 de：beaucoup de（很多）、un peu de（一点）、trop de（太多）。',
-    words: [
-      { t: 'Il y a', r: 'verbe', zh: '有（无人称存在句）' },
-      { t: 'beaucoup de', r: 'adverbe', zh: '很多的（后接 de）' },
-      { t: 'touristes', r: 'nom', zh: '游客（复数）' },
-      { t: 'ici.', r: 'lieu', zh: '在这里' }
-    ]
-  },
-  {
-    id: 98,
-    cat: '约定',
-    emoji: '📆',
-    fr: 'On se voit samedi ?',
-    zh: '我们周六见面？',
-    structure: 'on + 相互代词 se + voir + 星期（语调疑问）',
-    note: '约人的超实用短句。更完整：On se voit samedi matin ?（周六上午见？）。回答 OK, à samedi !（好，周六见！）',
-    words: [
-      { t: 'On', r: 'sujet', zh: '我们（口语泛指）' },
-      { t: 'se voit', r: 'verbe', zh: '见面（相互 voir）' },
-      { t: 'samedi ?', r: 'temps', zh: '周六（语调上扬表疑问）' }
-    ]
-  }
 ];

@@ -50,7 +50,7 @@ function wordOffsets(chips){
 const PROGRESS_KEY = 'bonjour-fr-a1-progress-v1';
 const state = {
   progress: { built: [], readStars: {} },
-  build: { idx: 0, placed: [], bank: null, solved: false },
+  build: { idx: 0, inputs: [], solved: false, result: null },
   read:  { idx: 0 }
 };
 
@@ -178,37 +178,67 @@ function renderHome(){
   $('#progress-pct').textContent = pct + '%';
 }
 
-/* ---------- 句子选择器 ---------- */
+/* ---------- 句子选择器（造句按 U1/U2/U3 分组；朗读保持平铺） ---------- */
 function renderPickers(){
   ['build', 'read'].forEach(kind => {
     const box = $('#picker-' + kind);
+    if (!box) return;
     const scrollLeft = box.scrollLeft;
     box.innerHTML = '';
-    SENTENCES.forEach((s, i) => {
-      const b = document.createElement('button');
-      b.className = 'pick-chip' + ((kind === 'build' ? state.build.idx : state.read.idx) === i ? ' active' : '');
-      const st = sentenceStars(s);
-      b.innerHTML =
-        '<span class="pick-top"><span class="pick-emoji">' + s.emoji + '</span>' +
-        '<span class="pick-zh">' + esc(s.zh) + '</span></span>' +
-        '<span class="pick-cat">' + (i + 1) + ' · ' + esc(s.cat) + '</span>' +
-        '<span class="pick-star">' + (st ? '⭐'.repeat(st) : '&nbsp;') + '</span>';
-      b.onclick = () => { (kind === 'build' ? openBuild : openRead)(i); };
-      box.appendChild(b);
-    });
+    if (kind === 'build' && typeof UNITS !== 'undefined'){
+      /* 造句：按单元分组，每组一个标签行 */
+      Object.keys(UNITS).forEach(uid => {
+        const u = UNITS[uid];
+        const grp = document.createElement('div');
+        grp.className = 'pick-group';
+        const label = document.createElement('div');
+        label.className = 'pick-group-label';
+        label.innerHTML = '<b>' + u.emoji + ' ' + esc(u.name) + '</b><small>' + esc(u.sub) + '</small>';
+        grp.appendChild(label);
+        const chips = document.createElement('div');
+        chips.className = 'pick-group-chips';
+        SENTENCES.forEach((s, i) => {
+          if (s.unit !== uid) return;
+          chips.appendChild(makePickChip(s, i, kind));
+        });
+        grp.appendChild(chips);
+        box.appendChild(grp);
+      });
+    } else {
+      SENTENCES.forEach((s, i) => box.appendChild(makePickChip(s, i, kind)));
+    }
     box.scrollLeft = scrollLeft;
   });
+}
+
+function makePickChip(s, i, kind){
+  const b = document.createElement('button');
+  b.className = 'pick-chip' + ((kind === 'build' ? state.build.idx : state.read.idx) === i ? ' active' : '');
+  const st = sentenceStars(s);
+  b.innerHTML =
+    '<span class="pick-top"><span class="pick-emoji">' + s.emoji + '</span>' +
+    '<span class="pick-zh">' + esc(s.zh) + '</span></span>' +
+    '<span class="pick-cat">' + (kind === 'build' ? esc(s.unit) + ' · ' : '') + esc(s.cat) + '</span>' +
+    '<span class="pick-star">' + (st ? '⭐'.repeat(st) : '&nbsp;') + '</span>';
+  b.onclick = () => { (kind === 'build' ? openBuild : openRead)(i); };
+  return b;
 }
 
 /* =========================================================
    造句模块
    ========================================================= */
+/* 打字填空：比对时只把弯撇号 ’/` 归一化为直撇号 '，大小写与重音一律严格 */
+function normTyped(x){
+  return String(x == null ? '' : x).trim().replace(/[’`]/g, "'");
+}
+
 function openBuild(i){
+  const s = SENTENCES[i];
   state.build = {
     idx: i,
-    placed: [],
-    bank: shuffle(SENTENCES[i].words.map((_, k) => k)),
-    solved: false
+    inputs: s.words.map(() => ''),
+    solved: false,
+    result: null
   };
   $('#analysis-panel').hidden = true;
   $('#record-panel').hidden = true;
@@ -220,101 +250,141 @@ function openBuild(i){
 function renderBuild(){
   const s = SENTENCES[state.build.idx];
   $('#build-cat').textContent = s.emoji + ' ' + s.cat;
-  $('#build-zh').innerHTML = '请用法语说出：<b>' + esc(s.zh) + '</b>';
+  const u = (typeof UNITS !== 'undefined' && UNITS[s.unit]) ? UNITS[s.unit] : { name: s.unit };
+  $('#build-unit').textContent = u.name;
+  $('#build-zh').innerHTML = '请用法语写出：<b>' + esc(s.zh) + '</b>';
 
-  /* 单词银行（打乱顺序，已放入答题区的隐藏） */
-  const bank = $('#build-bank');
-  bank.innerHTML = '';
-  let bankCount = 0;
-  state.build.bank.forEach(wi => {
-    if (state.build.placed.includes(wi)) return;
-    bankCount++;
-    const w = s.words[wi];
-    const chip = document.createElement('button');
-    chip.className = 'word-chip';
-    chip.dataset.wi = wi;
-    chip.style.setProperty('--rc', ROLES[w.r].color);
-    chip.innerHTML = '<span>' + esc(w.t) + '</span><span class="r">' + ROLES[w.r].label + '</span>';
-    chip.onclick = () => placeWord(wi);
-    bank.appendChild(chip);
-  });
-  if (!bankCount){
-    bank.innerHTML = '<span class="bank-empty">单词都放上来啦，点「检查一下」看看对不对 👆</span>';
+  /* 提示行：点「提示结构」后显示句型结构（具体到成分） */
+  const hl = $('#build-hintline');
+  if (state.build.result || $('#build-hintline').dataset.show === '1'){
+    hl.innerHTML = '<b>💡 句型结构：</b>' + esc(s.structure);
+    hl.hidden = false;
+  } else {
+    hl.hidden = true;
   }
 
-  /* 答题区 */
+  /* 答题区：每个词一条横线输入框，数量 = 词数 */
   const ans = $('#build-answer');
+  const r = state.build.result;
   ans.innerHTML = '';
-  ans.classList.remove('ok');
-  if (!state.build.placed.length){
-    ans.innerHTML = '<span class="ans-hint">👇 点击下面的单词，把它们排成一句法语</span>';
-  }
-  state.build.placed.forEach(wi => {
-    const w = s.words[wi];
-    const chip = document.createElement('button');
-    chip.className = 'ans-chip';
-    chip.style.setProperty('--rc', ROLES[w.r].color);
-    chip.innerHTML = '<span>' + esc(w.t) + '</span><span class="r">' + ROLES[w.r].label + '</span>';
-    chip.onclick = () => removeWord(wi);
-    ans.appendChild(chip);
+  ans.classList.remove('ok', 'shake');
+  s.words.forEach((w, wi) => {
+    const row = document.createElement('div');
+    row.className = 'build-input-row';
+    const idx = document.createElement('span');
+    idx.className = 'bi-idx';
+    idx.textContent = (wi + 1) + '.';
+    const role = document.createElement('span');
+    role.className = 'bi-role';
+    role.style.setProperty('--rc', (ROLES[w.r] ? ROLES[w.r].color : '#888'));
+    role.textContent = ROLES[w.r] ? ROLES[w.r].label : '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'bi-input';
+    input.dataset.wi = wi;
+    input.autocomplete = 'off';
+    input.autocapitalize = 'off';
+    input.spellcheck = false;
+    input.placeholder = '第 ' + (wi + 1) + ' 格';
+    input.value = state.build.inputs[wi] || '';
+    input.disabled = !!state.build.solved;
+    if (r){
+      const correct = r.correct[wi];
+      row.classList.add(correct ? 'bi-ok' : 'bi-bad');
+      if (!correct){
+        input.classList.add('wrong');
+        input.title = '正确答案：' + w.t;
+      } else {
+        input.classList.add('right');
+      }
+    }
+    input.addEventListener('input', e => {
+      state.build.inputs[wi] = e.target.value;
+      e.target.classList.remove('wrong', 'right');
+      const btn = $('#btn-check');
+      if (btn && !state.build.solved){
+        btn.disabled = !state.build.inputs.every(x => String(x).trim());
+      }
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        const next = ans.querySelector('.bi-input[data-wi="' + (wi + 1) + '"]');
+        if (next) next.focus();
+      }
+    });
+    row.appendChild(idx);
+    row.appendChild(role);
+    row.appendChild(input);
+    if (r && !r.correct[wi]){
+      const ansSpan = document.createElement('span');
+      ansSpan.className = 'bi-answer';
+      ansSpan.textContent = w.t;
+      row.appendChild(ansSpan);
+    }
+    ans.appendChild(row);
   });
 
-  $('#btn-check').disabled = state.build.placed.length !== s.words.length || state.build.solved;
-  $('#btn-check').textContent = state.build.solved ? '🎉 已完成 +1 ⭐' : '✅ 检查一下';
-}
+  /* 批改结果区 */
+  const res = $('#build-result');
+  if (r){
+    res.hidden = false;
+    res.className = 'build-result ' + (r.ok ? 'ok' : 'bad');
+    if (r.ok){
+      res.innerHTML = '<b>🎉 完全正确！</b> ' + esc(s.fr);
+    } else {
+      const hit = r.correct.filter(Boolean).length;
+      res.innerHTML = '<b>还差一点～</b> 答对 ' + hit + ' / ' + s.words.length +
+        ' 格。红色格子已标出正确答案，改完再点「提交批改」。<br><span class="br-answer">完整句子：' +
+        esc(s.fr) + '</span>';
+    }
+  } else {
+    res.hidden = true;
+  }
 
-function placeWord(wi){
-  if (state.build.solved) return;
-  state.build.placed.push(wi);
-  renderBuild();
-}
-function removeWord(wi){
-  if (state.build.solved) return;
-  state.build.placed = state.build.placed.filter(x => x !== wi);
-  renderBuild();
+  const filled = state.build.inputs.every(x => String(x).trim());
+  $('#btn-check').disabled = !filled || state.build.solved;
+  $('#btn-check').textContent = state.build.solved ? '🎉 已完成 +1 ⭐' : '✅ 提交批改';
 }
 
 function checkBuild(){
   const s = SENTENCES[state.build.idx];
-  const ok = state.build.placed.every((wi, i) => wi === i);
+  if (!state.build.inputs.every(x => String(x).trim())){
+    toast('还有空格没填哦，全部填完再提交～');
+    return;
+  }
+  /* 严格比对：逐词，大小写 + 重音敏感，仅撇号弯直归一化 */
+  const correct = s.words.map((w, i) => normTyped(state.build.inputs[i]) === normTyped(w.t));
+  const ok = correct.every(Boolean);
+  state.build.result = { ok: ok, correct: correct };
+  state.build.solved = ok;
   if (ok){
-    state.build.solved = true;
     if (!state.progress.built.includes(s.id)){
       state.progress.built.push(s.id);
       saveProgress();
     }
-    $('#build-answer').classList.add('ok');
-    $('#btn-check').disabled = true;
-    $('#btn-check').textContent = '🎉 已完成 +1 ⭐';
     confetti();
     chime(true);
     renderAnalysis(s);
     $('#analysis-panel').hidden = false;
     if (!$('#record-panel').hidden) renderBuildRecord();
-    toast('太棒了！句子排对啦 🎉 +1 ⭐');
+    toast('太棒了！全部写对 🎉 +1 ⭐');
     renderHome();
-    renderPickers();
   } else {
     chime(false);
-    const ans = $('#build-answer');
-    ans.classList.remove('shake');
-    void ans.offsetWidth; /* 重置动画 */
-    ans.classList.add('shake');
-    toast('顺序还不对哦，再试试～（小提示：法语基本句型是 主语 + 谓语 + 宾语）');
+    toast('批改完成，红框是写错的格子，对照改正后再提交～');
   }
+  renderBuild();
+  renderPickers();
 }
 
 function hintBuild(){
   const s = SENTENCES[state.build.idx];
-  const need = state.build.placed.length;
-  if (need >= s.words.length) return;
-  if (state.build.placed.every((wi, i) => wi === i)){
-    state.build.placed.push(need);
-    renderBuild();
-    toast('已帮你放入第 ' + (need + 1) + ' 个单词：' + s.words[need].t);
-  } else {
-    toast('结构提示：' + s.structure);
-  }
+  const hl = $('#build-hintline');
+  const show = hl.dataset.show === '1';
+  hl.dataset.show = show ? '0' : '1';
+  renderBuild();
+  if (!show) toast('已显示句型结构提示');
 }
 
 /* =========================================================
@@ -1301,11 +1371,18 @@ function init(){
   $('#btn-check').onclick = checkBuild;
   $('#btn-hint').onclick = hintBuild;
   $('#btn-reset').onclick = () => {
-    state.build.placed = [];
-    state.build.bank = shuffle(SENTENCES[state.build.idx].words.map((_, k) => k));
+    const s = SENTENCES[state.build.idx];
+    state.build.inputs = s.words.map(() => '');
     state.build.solved = false;
+    state.build.result = null;
     $('#analysis-panel').hidden = true;
+    const hl = $('#build-hintline'); if (hl) hl.dataset.show = '0';
     renderBuild();
+  };
+  $('#btn-audio').onclick = () => {
+    /* 造句界面听当前句：临时把朗读目标设为同一句，只播放音频、不切视图 */
+    state.read.idx = state.build.idx;
+    speakSentence(0.9);
   };
   $('#btn-prev').onclick = () => nextBuild(-1);
   $('#btn-next').onclick = () => nextBuild(1);

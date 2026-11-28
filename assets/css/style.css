@@ -311,7 +311,71 @@ main{
   transition: border-color .2s ease;
 }
 .answer-slots.ok{ border-color: var(--sage); background: #F2F8F3; }
+.answer-slots.shake{ animation: shake .4s ease; }
 .ans-hint{ color: #B7A78F; font-size: .92rem; padding: .3rem; }
+
+/* 句型打字练习 */
+.unit-badge{
+  background: #EAF2F7; border: 2px solid #BBD5E6; color: #3C6E8F;
+  padding: .3rem .75rem; border-radius: 999px;
+  font-weight: 700; font-size: .8rem; white-space: nowrap;
+}
+.build-hintline{
+  background: #FDF6E8; border: 2px solid #E8D9B8; color: #7A5E2E;
+  border-radius: 12px; padding: .6rem .8rem; margin-bottom: .9rem;
+  font-size: .92rem; line-height: 1.6;
+}
+.answer-slots{ flex-direction: column; align-items: stretch; gap: .6rem; }
+.build-input-row{
+  display: flex; align-items: center; gap: .6rem;
+  padding: .35rem .5rem; border-radius: 12px;
+}
+.build-input-row.bi-ok{ background: rgba(94,143,109,.10); }
+.build-input-row.bi-bad{ background: rgba(192,74,74,.08); }
+.bi-idx{ font-weight: 800; color: var(--ink-soft); min-width: 1.6rem; text-align: right; font-size: 1rem; }
+.bi-role{
+  --rc: #888; font-size: .74rem; font-weight: 700; color: var(--rc);
+  min-width: 4.2rem; text-align: center;
+  background: color-mix(in srgb, var(--rc) 12%, transparent);
+  border-radius: 999px; padding: .18rem .3rem;
+}
+.bi-input{
+  flex: 1; min-width: 0;
+  border: 2px solid var(--line); border-bottom: 3px solid var(--line-strong);
+  border-radius: 10px; padding: .5rem .7rem;
+  font-size: 1.08rem; font-weight: 700; color: var(--ink);
+  background: #FFFDF4; outline: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+.bi-input:focus{ border-color: var(--amber); background: #fff; }
+.bi-input:disabled{ background: #F4F1E9; color: var(--ink); }
+.bi-input.wrong{ border-color: #C04A4A; background: #FDECEC; }
+.bi-input.right{ border-color: var(--sage); background: #EEF7F0; }
+.bi-answer{ font-weight: 800; color: #C04A4A; font-size: 1rem; white-space: nowrap; }
+.build-result{
+  border-radius: 12px; padding: .7rem .9rem; margin-bottom: 1rem;
+  font-size: .96rem; line-height: 1.6;
+}
+.build-result.ok{ background: #EEF7F0; border: 2px solid var(--sage); color: #2F6B40; }
+.build-result.bad{ background: #FDECEC; border: 2px solid #E0A0A0; color: #9C3A3A; }
+.build-result .br-answer{ color: var(--ink); }
+@keyframes shake{
+  0%,100%{ transform: translateX(0); }
+  20%{ transform: translateX(-8px); }
+  40%{ transform: translateX(8px); }
+  60%{ transform: translateX(-5px); }
+  80%{ transform: translateX(5px); }
+}
+
+/* 选择器按单元分组 */
+.picker#picker-build{ flex-direction: column; gap: .9rem; }
+.pick-group{ display: flex; flex-direction: column; gap: .45rem; }
+.pick-group-label{ display: flex; align-items: baseline; gap: .6rem; padding-left: .2rem; }
+.pick-group-label b{ color: var(--ink); font-size: .95rem; }
+.pick-group-label small{ color: var(--ink-soft); font-size: .75rem; }
+.pick-group-chips{ display: flex; gap: .55rem; overflow-x: auto; padding-bottom: .35rem; }
+.pick-group-chips::-webkit-scrollbar{ height: 6px; }
+.pick-group-chips::-webkit-scrollbar-thumb{ background: var(--line-strong); border-radius: 99px; }
 
 .word-chip, .ans-chip{
   --rc: #ccc;

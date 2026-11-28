@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Caveat:wght@600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261124k">
+<link rel="stylesheet" href="assets/css/style.css?v=20261125a">
 </head>
 <body>
 
@@ -76,7 +76,7 @@
     <div class="hero card">
       <div class="hero-text">
         <h2>Bonjour ! 今天想练点什么？</h2>
-        <p>从最常用的 A1 句型开始，<b>先会造句，再会开口读</b> ✨<br>76 句日常法语 + 单词小图鉴，每句每词都带结构分析和跟读打分。</p>
+        <p>从讲义精选 A1 核心句型开始，<b>先会写句，再会开口读</b> ✨<br>35 句分 U1/U2/U3 三个单元，打字填空 + 逐词批改，每句都带结构提示、法语音和跟读打分。</p>
       </div>
       <div class="hero-doodles" aria-hidden="true">
         <!-- 熊头套 chibi -->
@@ -135,7 +135,7 @@
     <div class="card progress-card">
       <div class="progress-info">
         <div class="stat"><b id="stat-stars">0</b><span>已获星星 ⭐</span></div>
-        <div class="stat"><b id="stat-built">0 / 76</b><span>已解锁造句 🧩</span></div>
+        <div class="stat"><b id="stat-built">0 / 35</b><span>已写对句型 ✍️</span></div>
         <div class="stat"><b id="stat-total">228</b><span>星星总数 🏆</span></div>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -145,8 +145,8 @@
     <div class="menu-grid">
       <button class="menu-card" id="card-build">
         <div class="menu-icon icon-build">🧩</div>
-        <h3>造句小工厂</h3>
-        <p>把打乱的法语单词排成正确句子，看懂「主语 + 谓语 + 宾语」结构</p>
+        <h3>句型打字练习</h3>
+        <p>看中文意思逐词打出法语句子，一词一格，提交后逐词批改，看懂句子结构</p>
         <span class="menu-tag">句子结构分析</span>
       </button>
       <button class="menu-card" id="card-read">
@@ -184,7 +184,7 @@
     <div class="card how-card">
       <h3>🌱 四步练习法</h3>
       <ol>
-        <li><b>拼一拼</b>：在「造句小工厂」把单词排成句子，看清句子结构</li>
+        <li><b>写一写</b>：在「句型打字练习」看中文意思逐词打出法语句子，提交后逐词批改</li>
         <li><b>听一听</b>：在「朗读小剧场」点 🐢 慢速朗读，注意单词怎么连读</li>
         <li><b>跟一跟</b>：点 🎤 跟读挑战，读一句，最多拿 3 颗星</li>
         <li><b>记一记</b>：在「单词小图鉴」跟读单词、看音标拆解，玩 📞 电话听写练数字</li>
@@ -195,21 +195,24 @@
   <!-- ===== 造句 ===== -->
   <section id="view-build" class="view" hidden>
     <div class="view-head">
-      <h2>🧩 造句小工厂</h2>
-      <p>点击下方单词放入答题区，把它们排成一句正确的法语</p>
+      <h2>✍️ 句型打字练习</h2>
+      <p>看中文意思，在每个横线上打出对应的法语单词（一词一格），全部填完点提交批改</p>
     </div>
-    <div class="picker" id="picker-build" aria-label="选择句子"></div>
+    <div class="picker" id="picker-build" aria-label="选择句型"></div>
 
     <div class="card build-card">
       <div class="build-goal">
-        <span class="cat-badge" id="build-cat">👋 寒暄</span>
-        <p class="goal-zh" id="build-zh">请用法语说出：<b>你好！</b></p>
-        <button class="btn btn-ghost" id="btn-hint">💡 提示</button>
+        <span class="cat-badge" id="build-cat">👋 问候</span>
+        <span class="unit-badge" id="build-unit">U1 相遇</span>
+        <p class="goal-zh" id="build-zh">请用法语写出：<b>你好！</b></p>
+        <button class="btn btn-ghost" id="btn-hint">💡 提示结构</button>
+        <button class="btn btn-ghost" id="btn-audio">🔊 听这句</button>
       </div>
+      <div class="build-hintline" id="build-hintline" hidden></div>
       <div class="answer-slots" id="build-answer" aria-live="polite"></div>
-      <div class="word-bank" id="build-bank"></div>
+      <div class="build-result" id="build-result" hidden></div>
       <div class="btn-row">
-        <button class="btn btn-primary" id="btn-check">✅ 检查一下</button>
+        <button class="btn btn-primary" id="btn-check">✅ 提交批改</button>
         <button class="btn btn-ghost" id="btn-reset">🔄 重来</button>
         <button class="btn btn-ghost" id="btn-prev">← 上一句</button>
         <button class="btn btn-ghost" id="btn-next">下一句 →</button>
@@ -499,29 +502,29 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
-<script src="assets/js/data.js?v=20261124k"></script>
-<script src="assets/js/app.js?v=20261124k"></script>
-<script src="assets/js/words-data.js?v=20261124k"></script>
-<script src="assets/js/countries-data.js?v=20261124k"></script>
-<script src="assets/js/pron-rules.js?v=20261124k"></script>
-<script src="assets/js/extras-data.js?v=20261124k"></script>
-<script src="assets/js/verbs-data.js?v=20261124k"></script>
-<script src="assets/js/videos-data.js?v=20261124k" onerror="reloadScript(this)"></script>
-<script src="assets/js/videos.js?v=20261124k" onerror="reloadScript(this)"></script>
-<script src="assets/js/games-data.js?v=20261124k" onerror="reloadScript(this)"></script>
-<script src="assets/js/games.js?v=20261124k" onerror="reloadScript(this)"></script>
-<script src="assets/js/words.js?v=20261124k"></script>
-<script src="assets/js/textbook-data.js?v=20261124k" onerror="reloadScript(this)"></script>
-<script src="assets/js/textbook-u3.js?v=20261124k"></script>
-<script src="assets/js/textbook-u4.js?v=20261124k"></script>
-<script src="assets/js/textbook-u5.js?v=20261124k"></script>
-<script src="assets/js/textbook-u6.js?v=20261124k"></script>
-<script src="assets/js/textbook-u7.js?v=20261124k"></script>
-<script src="assets/js/textbook-u8.js?v=20261124k"></script>
-<script src="assets/js/textbook-u9.js?v=20261124k"></script>
-<script src="assets/js/mp4-remux.js?v=20261124k"></script>
-<script src="assets/js/textbook.js?v=20261124k" onerror="reloadScript(this)"></script>
+<script src="assets/js/data.js?v=20261125a"></script>
+<script src="assets/js/app.js?v=20261125a"></script>
+<script src="assets/js/words-data.js?v=20261125a"></script>
+<script src="assets/js/countries-data.js?v=20261125a"></script>
+<script src="assets/js/pron-rules.js?v=20261125a"></script>
+<script src="assets/js/extras-data.js?v=20261125a"></script>
+<script src="assets/js/verbs-data.js?v=20261125a"></script>
+<script src="assets/js/videos-data.js?v=20261125a" onerror="reloadScript(this)"></script>
+<script src="assets/js/videos.js?v=20261125a" onerror="reloadScript(this)"></script>
+<script src="assets/js/games-data.js?v=20261125a" onerror="reloadScript(this)"></script>
+<script src="assets/js/games.js?v=20261125a" onerror="reloadScript(this)"></script>
+<script src="assets/js/words.js?v=20261125a"></script>
+<script src="assets/js/textbook-data.js?v=20261125a" onerror="reloadScript(this)"></script>
+<script src="assets/js/textbook-u3.js?v=20261125a"></script>
+<script src="assets/js/textbook-u4.js?v=20261125a"></script>
+<script src="assets/js/textbook-u5.js?v=20261125a"></script>
+<script src="assets/js/textbook-u6.js?v=20261125a"></script>
+<script src="assets/js/textbook-u7.js?v=20261125a"></script>
+<script src="assets/js/textbook-u8.js?v=20261125a"></script>
+<script src="assets/js/textbook-u9.js?v=20261125a"></script>
+<script src="assets/js/mp4-remux.js?v=20261125a"></script>
+<script src="assets/js/textbook.js?v=20261125a" onerror="reloadScript(this)"></script>
 <!-- 查词词库(lexicon-data/extra/rich + lexicon.js)改为进入查词/默写视图时按需加载，避免拖慢首屏 -->
-<script src="assets/js/dictation.js?v=20261124k"></script>
+<script src="assets/js/dictation.js?v=20261125a"></script>
 </body>
 </html>
