@@ -267,6 +267,34 @@ function buildSentences(g){
   return g.lines.map(id => SENTENCES.find(s => s.id === id)).filter(Boolean);
 }
 
+/* 从完整法语句子推断每个词「后面」应显示的标点（逗号/问号/句号/感叹号/冒号/分号）。
+   标点只作显示，不参与逐词批改。词形里的弯撇号先归一，便于在原句中定位。 */
+function normFr(x){ return String(x == null ? '' : x).replace(/[’`]/g, "'"); }
+function wordPuncts(s){
+  const fr = normFr(s.fr);
+  const marks = /[,.;:!?…]+/g;
+  const res = s.words.map(() => '');
+  let pos = 0;
+  s.words.forEach((w, wi) => {
+    const t = normFr(w.t);
+    let idx = fr.indexOf(t, pos);
+    if (idx < 0) idx = fr.toLowerCase().indexOf(t.toLowerCase(), pos);
+    if (idx < 0) return;
+    const end = idx + t.length;
+    let nextStart = fr.length;
+    if (wi + 1 < s.words.length){
+      const nt = normFr(s.words[wi + 1].t);
+      let ni = fr.indexOf(nt, end);
+      if (ni < 0) ni = fr.toLowerCase().indexOf(nt.toLowerCase(), end);
+      if (ni >= 0) nextStart = ni;
+    }
+    const found = fr.slice(end, nextStart).match(marks);
+    if (found) res[wi] = found[found.length - 1];
+    pos = end;
+  });
+  return res;
+}
+
 /* 整句默写比对：大小写 + 重音严格；仅归一化弯撇号、标点、首尾与连续空白。
    这样“严格匹配问句与答句”落在词形本身，而不因手写标点/换行被误判。 */
 function normSentence(x){
@@ -306,8 +334,8 @@ function renderBuild(){
   $('#build-cat').textContent = g.emoji + ' ' + g.cat;
   $('#build-unit').textContent = u.name;
   $('#build-zh').innerHTML = g.qa
-    ? '看中文意思，一行一词填出<b>问句</b>与<b>答句</b>（一词一横线，一行写不下自动换到下一行）'
-    : '请用法语写出：<b>' + esc(sent[0] ? sent[0].zh : '') + '</b>（一词一横线，一行写不下自动换到下一行）';
+    ? '看中文意思，一行一词填出<b>问句</b>与<b>答句</b>'
+    : '请用法语写出：<b>' + esc(sent[0] ? sent[0].zh : '') + '</b>';
 
   /* 提示行：点「提示结构」后显示每句句型结构（具体到成分） */
   const hl = $('#build-hintline');
@@ -353,6 +381,7 @@ function renderBuild(){
 
     const line = document.createElement('div');
     line.className = 'bl-words';
+    const puncts = wordPuncts(s);
     s.words.forEach((w, wi) => {
       const input = document.createElement('input');
       input.type = 'text';
@@ -386,7 +415,16 @@ function renderBuild(){
           else e.target.blur();
         }
       });
-      line.appendChild(input);
+      const slot = document.createElement('span');
+      slot.className = 'bl-slot';
+      slot.appendChild(input);
+      if (puncts[wi]){
+        const p = document.createElement('span');
+        p.className = 'bl-punct';
+        p.textContent = puncts[wi];
+        slot.appendChild(p);
+      }
+      line.appendChild(slot);
     });
     row.appendChild(line);
 

@@ -382,6 +382,12 @@ main{
   display: flex; flex-wrap: wrap; align-items: flex-end;
   gap: .5rem .55rem;
 }
+.bl-slot{ display: inline-flex; align-items: flex-end; gap: .05rem; }
+.bl-punct{
+  flex: none;
+  font-size: 1.08rem; font-weight: 800; color: var(--ink-soft);
+  padding-bottom: .1rem; line-height: 1;
+}
 .bl-word{
   flex: none;
   min-width: 3ch;
