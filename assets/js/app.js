@@ -172,6 +172,16 @@ function showView(name){
       renderPickers();
     }
   }
+  /* 进入朗读视图：若句子区尚未渲染（例如从导航栏直接点进来），则渲染当前句，
+     避免看到空白、还要再点一下句子卡片才出现内容。 */
+  if (name === 'read' && typeof SENTENCES !== 'undefined' && SENTENCES.length){
+    const box = $('#read-sentence');
+    if (box && !box.children.length){
+      state.read.idx = Math.min(state.read.idx || 0, SENTENCES.length - 1);
+      renderRead();
+      renderPickers();
+    }
+  }
   if (name === 'dictation' && typeof ensureDictation === 'function') ensureDictation();
   // 查词词库与默写 gender 推断都依赖 RICH：进入这两个视图时才加载大词库
   if ((name === 'lexicon' || name === 'dictation') && typeof ensureLexicon === 'function') ensureLexicon();
