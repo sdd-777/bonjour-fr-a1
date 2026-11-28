@@ -357,7 +357,7 @@ main{
 .answer-slots.qa-mode{ gap: 1rem; }
 .bl-row{
   position: relative;
-  padding: .55rem .7rem .7rem 3.4rem;
+  padding: .6rem .75rem .75rem;
   border: 2px solid var(--line);
   border-radius: 14px;
   background: #FFFDF4;
@@ -365,41 +365,44 @@ main{
 }
 .bl-row.bl-ok{ border-color: var(--sage); background: #F2F8F3; }
 .bl-row.bl-bad{ border-color: #E0A0A0; background: #FDF1F1; }
+.bl-row-head{ display: flex; align-items: center; gap: .5rem; margin-bottom: .55rem; }
 .bl-role{
-  position: absolute; top: .6rem; left: .7rem;
+  flex: none;
   font-size: .82rem; font-weight: 800; color: #fff;
   border-radius: 8px; padding: .2rem .55rem; line-height: 1.4;
 }
 .bl-role.q{ background: #B04E7E; }
 .bl-role.a{ background: #3E8A86; }
 .bl-zh{
+  flex: 1; min-width: 0;
   font-size: .95rem; font-weight: 600; color: var(--ink-soft);
-  margin: 0 2rem .4rem 0;
 }
-.bl-line{
-  display: block; width: 100%;
-  font-size: 1.12rem; font-weight: 600; color: var(--ink);
-  line-height: 2.15rem;                 /* 与横格间距对齐 */
-  min-height: 4.3rem; padding: .1rem .35rem;
-  border: none; outline: none; resize: vertical;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0, transparent calc(2.15rem - 1px),
-    #D9C69C calc(2.15rem - 1px), #D9C69C 2.15rem
-  );
-  background-position: 0 .1rem;
-  overflow: hidden;
+/* 逐词填空：一行横排多个词，写不下自动换到下一行 */
+.bl-words{
+  display: flex; flex-wrap: wrap; align-items: flex-end;
+  gap: .5rem .55rem;
 }
-.bl-line::placeholder{ color: #C4B69C; font-weight: 400; }
-.bl-line:disabled{ color: var(--ink); }
-.bl-line.wrong{ color: #9C3A3A; }
-.bl-line.right{ color: #2F6B40; }
+.bl-word{
+  flex: none;
+  min-width: 3ch;
+  font-size: 1.08rem; font-weight: 700; color: var(--ink);
+  text-align: center;
+  padding: .18rem .25rem .12rem;
+  border: none; border-bottom: 2.5px solid #B79A63;
+  border-radius: 0; outline: none; background: transparent;
+  caret-color: var(--amber);
+  transition: border-color .15s ease, background .15s ease;
+}
+.bl-word:focus{ border-bottom-color: var(--amber); background: #FFF8E6; }
+.bl-word:disabled{ color: var(--ink); }
+.bl-word.wrong{ border-bottom-color: #C04A4A; color: #9C3A3A; background: #FDECEC; }
+.bl-word.right{ border-bottom-color: var(--sage); color: #2F6B40; background: #EEF7F0; }
 .bl-audio{
-  position: absolute; right: .6rem; bottom: .7rem;
   border: 1px solid #D9C69C; background: #FBF3E2; color: #8A6B3B;
   border-radius: 10px; padding: .18rem .5rem; font-size: 1rem;
   cursor: pointer; line-height: 1.3;
 }
+.bl-audio-inline{ flex: none; margin-left: auto; }
 .bl-audio:hover{ background: #F3E6C8; }
 .bl-answer{
   margin: .5rem .2rem 0 .2rem; padding: .35rem .6rem;

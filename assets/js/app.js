@@ -159,6 +159,19 @@ function showView(name){
   if (typeof tbRecStop === 'function') tbRecStop();
   if (typeof stopDictation === 'function') stopDictation();
   if (typeof stopLexicon === 'function') stopLexicon();
+  /* 进入造句视图：若答题区尚未渲染（例如从导航栏直接点进来），则初始化当前题组并渲染，
+     避免用户看到空白框、还要再点一下题组才出现填写区。 */
+  if (name === 'build' && typeof BUILD_GROUPS !== 'undefined'){
+    const ans = $('#build-answer');
+    if (ans && !ans.children.length){
+      state.build.idx = Math.min(state.build.idx || 0, BUILD_GROUPS.length - 1);
+      state.build.inputs = buildInputs(BUILD_GROUPS[state.build.idx]);
+      state.build.solved = false;
+      state.build.result = null;
+      renderBuild();
+      renderPickers();
+    }
+  }
   if (name === 'dictation' && typeof ensureDictation === 'function') ensureDictation();
   // 查词词库与默写 gender 推断都依赖 RICH：进入这两个视图时才加载大词库
   if ((name === 'lexicon' || name === 'dictation') && typeof ensureLexicon === 'function') ensureLexicon();
@@ -264,12 +277,17 @@ function normSentence(x){
     .trim();
 }
 
+/* 题组的输入骨架：inputs[句索引][词索引]，逐词填空 */
+function buildInputs(g){
+  return buildSentences(g).map(s => s.words.map(() => ''));
+}
+
 function openBuild(i){
   const g = BUILD_GROUPS[i];
   if (!g) return;
   state.build = {
     idx: i,
-    inputs: g.lines.map(() => ''),
+    inputs: buildInputs(g),
     solved: false,
     result: null
   };
@@ -288,8 +306,8 @@ function renderBuild(){
   $('#build-cat').textContent = g.emoji + ' ' + g.cat;
   $('#build-unit').textContent = u.name;
   $('#build-zh').innerHTML = g.qa
-    ? '看中文意思，在横线上分别写出<b>问句</b>与<b>答句</b>（整句手写，写不下自动换到下一行）'
-    : '请用法语写出：<b>' + esc(sent[0] ? sent[0].zh : '') + '</b>（整句手写，写不下自动换到下一行）';
+    ? '看中文意思，一行一词填出<b>问句</b>与<b>答句</b>（一词一横线，一行写不下自动换到下一行）'
+    : '请用法语写出：<b>' + esc(sent[0] ? sent[0].zh : '') + '</b>（一词一横线，一行写不下自动换到下一行）';
 
   /* 提示行：点「提示结构」后显示每句句型结构（具体到成分） */
   const hl = $('#build-hintline');
@@ -302,7 +320,7 @@ function renderBuild(){
     hl.hidden = true;
   }
 
-  /* 答题区：每句一条横线（textarea 自动换行），问答组标注「问 / 答」 */
+  /* 答题区：逐词填空——一词一横线，一行横排多个词（flex-wrap 自动换行），无序号/成分标签 */
   const ans = $('#build-answer');
   const r = state.build.result;
   ans.innerHTML = '';
@@ -311,49 +329,66 @@ function renderBuild(){
   sent.forEach((s, li) => {
     const row = document.createElement('div');
     row.className = 'bl-row';
+    const head = document.createElement('div');
+    head.className = 'bl-row-head';
     if (g.qa){
       const lab = document.createElement('span');
       lab.className = 'bl-role ' + (li === 0 ? 'q' : 'a');
       lab.textContent = li === 0 ? '问' : '答';
-      row.appendChild(lab);
+      head.appendChild(lab);
     }
-    const zh = document.createElement('div');
+    const zh = document.createElement('span');
     zh.className = 'bl-zh';
     zh.textContent = s.zh;
-    row.appendChild(zh);
-
-    const ta = document.createElement('textarea');
-    ta.className = 'bl-line';
-    ta.dataset.li = li;
-    ta.rows = 2;
-    ta.placeholder = '在此手写整句法语…';
-    ta.value = state.build.inputs[li] || '';
-    ta.disabled = !!state.build.solved;
-    ta.spellcheck = false;
-    ta.autocomplete = 'off';
-    if (r){
-      const okLine = r.lineOk[li];
-      row.classList.add(okLine ? 'bl-ok' : 'bl-bad');
-      ta.classList.add(okLine ? 'right' : 'wrong');
-    }
-    ta.addEventListener('input', e => {
-      state.build.inputs[li] = e.target.value;
-      e.target.classList.remove('wrong', 'right');
-      const btn = $('#btn-check');
-      if (btn && !state.build.solved){
-        btn.disabled = !state.build.inputs.every(x => String(x).trim());
-      }
-    });
-    row.appendChild(ta);
-
+    head.appendChild(zh);
     /* 每句独立法语读音按钮 */
     const ab = document.createElement('button');
-    ab.className = 'bl-audio';
+    ab.className = 'bl-audio bl-audio-inline';
     ab.type = 'button';
     ab.textContent = '🔊';
     ab.title = '听这句法语';
     ab.onclick = () => { state.read.idx = SENTENCES.indexOf(s); speakSentence(0.9); };
-    row.appendChild(ab);
+    head.appendChild(ab);
+    row.appendChild(head);
+
+    const line = document.createElement('div');
+    line.className = 'bl-words';
+    s.words.forEach((w, wi) => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'bl-word';
+      input.dataset.li = li;
+      input.dataset.wi = wi;
+      input.autocomplete = 'off';
+      input.autocapitalize = 'off';
+      input.spellcheck = false;
+      /* 横线宽度随词长自适应，至少 3 字符宽 */
+      input.style.width = Math.max(3, w.t.length + 1) + 'ch';
+      input.value = (state.build.inputs[li] && state.build.inputs[li][wi]) || '';
+      input.disabled = !!state.build.solved;
+      if (r){
+        const okWord = r.wordOk[li][wi];
+        input.classList.add(okWord ? 'right' : 'wrong');
+        if (!okWord) input.title = '正确答案：' + w.t;
+      }
+      input.addEventListener('input', e => {
+        if (!state.build.inputs[li]) state.build.inputs[li] = s.words.map(() => '');
+        state.build.inputs[li][wi] = e.target.value;
+        e.target.classList.remove('wrong', 'right');
+        const btn = $('#btn-check');
+        if (btn && !state.build.solved) btn.disabled = !allFilled();
+      });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          const next = ans.querySelector('.bl-word[data-li="' + li + '"][data-wi="' + (wi + 1) + '"]');
+          if (next) next.focus();
+          else e.target.blur();
+        }
+      });
+      line.appendChild(input);
+    });
+    row.appendChild(line);
 
     if (r && !r.lineOk[li]){
       const corr = document.createElement('div');
@@ -380,22 +415,34 @@ function renderBuild(){
     res.hidden = true;
   }
 
-  const filled = state.build.inputs.every(x => String(x).trim());
+  const filled = allFilled();
   $('#btn-check').disabled = !filled || state.build.solved;
   $('#btn-check').textContent = state.build.solved ? '🎉 已完成 +1 ⭐' : '✅ 提交批改';
+}
+
+/* 当前题组所有句子的所有词是否都已填写 */
+function allFilled(){
+  const g = BUILD_GROUPS[state.build.idx];
+  return buildSentences(g).every((s, li) =>
+    (state.build.inputs[li] || []).length === s.words.length &&
+    state.build.inputs[li].every(x => String(x).trim())
+  );
 }
 
 function checkBuild(){
   const g = BUILD_GROUPS[state.build.idx];
   const sent = buildSentences(g);
-  if (!state.build.inputs.every(x => String(x).trim())){
+  if (!allFilled()){
     toast('还有横线没写完，全部写完再提交～');
     return;
   }
-  /* 逐句严格比对整句 */
-  const lineOk = sent.map((s, li) => normSentence(state.build.inputs[li]) === normSentence(s.fr));
+  /* 逐词严格比对：大小写 + 重音敏感，仅弯撇号归一 */
+  const wordOk = sent.map((s, li) =>
+    s.words.map((w, wi) => normTyped(state.build.inputs[li][wi]) === normTyped(w.t))
+  );
+  const lineOk = wordOk.map(arr => arr.every(Boolean));
   const ok = lineOk.every(Boolean);
-  state.build.result = { ok: ok, lineOk: lineOk };
+  state.build.result = { ok: ok, lineOk: lineOk, wordOk: wordOk };
   state.build.solved = ok;
   if (ok){
     let gained = 0;
@@ -1426,7 +1473,7 @@ function init(){
   $('#btn-hint').onclick = hintBuild;
   $('#btn-reset').onclick = () => {
     const g = BUILD_GROUPS[state.build.idx];
-    state.build.inputs = g.lines.map(() => '');
+    state.build.inputs = buildInputs(g);
     state.build.solved = false;
     state.build.result = null;
     $('#analysis-panel').hidden = true;
